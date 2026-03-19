@@ -1,180 +1,213 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Calculator, TrendingUp, AlertTriangle } from "lucide-react";
+import { Calculator, AlertTriangle, ArrowUpRight, Info, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
 
-const categories = [
-  { label: "Ăn uống", key: "food", placeholder: "VD: 5000000", weight: 0.35 },
-  { label: "Nhà ở / Thuê trọ", key: "housing", placeholder: "VD: 3000000", weight: 0.2 },
-  { label: "Đi lại (xăng, grab)", key: "transport", placeholder: "VD: 1500000", weight: 0.12 },
-  { label: "Giáo dục", key: "education", placeholder: "VD: 2000000", weight: 0.1 },
-  { label: "Y tế / Sức khỏe", key: "health", placeholder: "VD: 500000", weight: 0.08 },
-  { label: "Giải trí", key: "entertainment", placeholder: "VD: 1000000", weight: 0.08 },
-  { label: "Khác", key: "other", placeholder: "VD: 1000000", weight: 0.07 },
-];
-
-const officialCPI = 3.8;
-const categoryInflation: Record<string, number> = {
-  food: 6.2,
-  housing: 8.5,
-  transport: 4.1,
-  education: 5.8,
-  health: 4.5,
-  entertainment: 2.3,
-  other: 3.0,
+/* ─── Budget → CPI mapping ─── */
+const BUDGET_TO_CPI: Record<string, string> = {
+  "Ăn uống": "food",
+  "Shopping": "other",
+  "Đi lại": "transport",
+  "Nhà ở": "housing",
+  "Giải trí": "entertainment",
+  "Sức khỏe": "healthcare",
+  "Học tập": "education",
 };
 
+const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+
 export default function PersonalCPIPage() {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<{
-    personalCPI: number;
-    breakdown: { category: string; amount: number; inflation: number; impact: number }[];
-    total: number;
-  } | null>(null);
+  const [weights, setWeights] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
+    return init;
+  });
+  const [imported, setImported] = useState(false);
 
-  function calculate() {
-    const breakdown = categories.map((c) => {
-      const amount = parseInt(values[c.key] || "0") || 0;
-      const inflation = categoryInflation[c.key];
-      return { category: c.label, amount, inflation, impact: 0 };
-    });
+  const importFromBudget = () => {
+    try {
+      const savedPots = localStorage.getItem("vietfi_pots");
+      const savedExpenses = localStorage.getItem("vietfi_expenses");
+      if (!savedPots) return;
+      const pots: { id: string; name: string; allocated: number }[] = JSON.parse(savedPots);
+      const expenses: { potId: string; amount: number }[] = savedExpenses ? JSON.parse(savedExpenses) : [];
 
-    const total = breakdown.reduce((s, b) => s + b.amount, 0);
-    if (total === 0) return;
+      // Tính tổng chi/allocated cho mỗi pot
+      const potSpend: Record<string, number> = {};
+      for (const pot of pots) {
+        const spent = expenses
+          .filter((e) => e.potId === pot.id)
+          .reduce((s, e) => s + e.amount, 0);
+        potSpend[pot.name] = spent || pot.allocated;
+      }
 
-    const withImpact = breakdown.map((b) => ({
-      ...b,
-      impact: total > 0 ? (b.amount / total) * categoryInflation[b.category === "Ăn uống" ? "food" : b.category === "Nhà ở / Thuê trọ" ? "housing" : b.category === "Đi lại (xăng, grab)" ? "transport" : b.category === "Giáo dục" ? "education" : b.category === "Y tế / Sức khỏe" ? "health" : b.category === "Giải trí" ? "entertainment" : "other"] : 0,
-    }));
+      // Map budget → CPI weights
+      const newWeights: Record<string, number> = {};
+      CPI_CATEGORIES.forEach((c) => { newWeights[c.id] = 0; });
 
-    const personalCPI = withImpact.reduce((s, b) => s + b.impact, 0);
-    setResult({ personalCPI, breakdown: withImpact, total });
-  }
+      let total = 0;
+      for (const [potName, amount] of Object.entries(potSpend)) {
+        const cpiId = BUDGET_TO_CPI[potName];
+        if (cpiId) {
+          newWeights[cpiId] = (newWeights[cpiId] || 0) + amount;
+          total += amount;
+        }
+      }
+
+      // Normalize to percentage
+      if (total > 0) {
+        for (const id of Object.keys(newWeights)) {
+          newWeights[id] = Math.round((newWeights[id] / total) * 100);
+        }
+      }
+
+      setWeights(newWeights);
+      setImported(true);
+    } catch { /* ignore */ }
+  };
+
+  const result = calculatePersonalCPI(weights);
+
+  const handleSlider = (id: string, value: number) => {
+    setWeights((prev) => ({ ...prev, [id]: value }));
+  };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h1 className="text-2xl font-bold text-white mb-2">
-        <span className="text-gradient">Personal CPI</span> Calculator
-      </h1>
-      <p className="text-[#8888AA] mb-8">
-        Lạm phát chính thức 3.8%, nhưng lạm phát THỰC SỰ ảnh hưởng đến BẠN là bao nhiêu?
-        Nhập chi tiêu hàng tháng để tính lạm phát cá nhân.
-      </p>
+    <motion.div initial="hidden" animate="visible" variants={stagger}>
+      <motion.div variants={fadeIn} className="mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
+          Lạm phát <span className="text-gradient">của tôi</span>
+        </h1>
+        <p className="text-[13px] text-white/40">
+          Điều chỉnh trọng số chi tiêu → tính lạm phát &ldquo;thật sự&rdquo; ảnh hưởng đến bạn
+        </p>
+      </motion.div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Input form */}
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-[#FFD700]" />
-            Chi tiêu hàng tháng (VNĐ)
+      {/* Big Number */}
+      <motion.div variants={fadeIn} className="grid sm:grid-cols-2 gap-3 mb-6">
+        <div className="glass-card p-5 text-center border-[#E6B84F]/10 relative overflow-hidden">
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+          <div className="relative z-10">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">LẠM PHÁT CỦA BẠN</span>
+            <div className="text-5xl font-black mt-2" style={{ color: result.isHigher ? "#EF4444" : "#22C55E" }}>
+              {result.personalRate}%
+            </div>
+            {result.isHigher && (
+              <p className="text-xs text-[#EF4444] mt-2 flex items-center justify-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Cao hơn CPI chính thức {(result.personalRate - result.officialRate).toFixed(1)}%
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="glass-card p-5 text-center">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">CPI CHÍNH THỨC (GSO 2025)</span>
+          <div className="text-5xl font-black text-white/50 mt-2">{result.officialRate}%</div>
+          <p className="text-xs text-white/25 mt-2">Tổng cục Thống kê</p>
+        </div>
+      </motion.div>
+
+      {/* Ratio Bar */}
+      {result.isHigher && (
+        <motion.div variants={fadeIn} className="glass-card p-4 mb-6 border-[#EF4444]/10">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-semibold text-[#EF4444]">Lạm phát ảnh hưởng bạn gấp {result.ratio}x!</h3>
+              <p className="text-xs text-white/40 mt-1">
+                Chi tiêu của bạn tập trung vào các danh mục có CPI cao (nhà ở, ăn uống). 
+                Lãi suất tiết kiệm 5.2%/năm có thể chưa đủ bù lạm phát thực tế.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Sliders */}
+      <motion.div variants={fadeIn} className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-[#E6B84F]" />
+            Trọng số chi tiêu của bạn
           </h3>
-
-          <div className="space-y-4">
-            {categories.map((c) => (
-              <div key={c.key}>
-                <label className="text-sm text-[#8888AA] mb-1 block">{c.label}</label>
-                <input
-                  type="number"
-                  placeholder={c.placeholder}
-                  value={values[c.key] || ""}
-                  onChange={(e) => setValues({ ...values, [c.key]: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/[0.04] border border-[#2A2A3A] text-white text-sm focus:border-[#FFD700]/50 focus:outline-none transition-colors"
-                />
-              </div>
-            ))}
-
+          <div className="flex items-center gap-2">
             <button
-              onClick={calculate}
-              className="w-full py-3 bg-gradient-primary text-black font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.2)] transition-all"
+              onClick={importFromBudget}
+              className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${imported ? "text-[#22C55E] bg-[#22C55E]/10" : "text-[#E6B84F] hover:bg-[#E6B84F]/10"}`}
             >
-              Tính lạm phát cá nhân
+              <Download className="w-3 h-3" />
+              {imported ? "Đã nhập ✓" : "Nhập từ Quỹ Chi tiêu"}
+            </button>
+            <button
+              onClick={() => {
+                const init: Record<string, number> = {};
+                CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
+                setWeights(init);
+                setImported(false);
+              }}
+              className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
+            >
+              Reset
             </button>
           </div>
         </div>
 
-        {/* Result */}
-        <div>
-          {result ? (
-            <div className="space-y-6">
-              {/* Main result */}
-              <div className="glass-card p-8 text-center glow-primary" style={{ borderColor: "rgba(255, 215, 0, 0.15)" }}>
-                <p className="text-sm text-[#8888AA] mb-2">Lạm phát cá nhân của bạn</p>
-                <div className="text-5xl font-black text-gradient mb-2">
-                  {result.personalCPI.toFixed(1)}%
-                </div>
-                <div className="flex items-center justify-center gap-4 text-sm">
-                  <span className="text-[#8888AA]">CPI chính thức: {officialCPI}%</span>
-                  <span className={result.personalCPI > officialCPI ? "text-[#FF5252]" : "text-[#00E676]"}>
-                    {result.personalCPI > officialCPI ? "+" : ""}
-                    {(result.personalCPI - officialCPI).toFixed(1)}% so với chính thức
-                  </span>
-                </div>
-              </div>
-
-              {/* Comparison */}
-              {result.personalCPI > officialCPI && (
-                <div className="glass-card p-4 border-[#FF5252]/20 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-[#FFAB40] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-[#FFAB40] font-medium">Lạm phát cá nhân cao hơn chính thức</p>
-                    <p className="text-xs text-[#8888AA] mt-1">
-                      Cơ cấu chi tiêu của bạn tập trung vào nhóm hàng có tốc độ tăng giá cao (ăn uống, nhà ở).
-                      Nếu không đầu tư, sức mua thực tế giảm {result.personalCPI.toFixed(1)}% mỗi năm.
-                    </p>
+        <div className="space-y-4">
+          {CPI_CATEGORIES.map((cat) => {
+            const w = weights[cat.id] || 0;
+            const catResult = result.categories.find((c) => c.name === cat.name);
+            return (
+              <div key={cat.id}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{cat.emoji}</span>
+                    <span className="text-xs text-white/60">{cat.name}</span>
+                    <span className="text-[9px] text-white/20">(CPI: {cat.officialRate}%)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white/80">{catResult?.userWeight.toFixed(0)}%</span>
+                    <span className="text-[9px] text-white/20">GSO: {cat.officialWeight}%</span>
                   </div>
                 </div>
-              )}
-
-              {/* Breakdown */}
-              <div className="glass-card p-6">
-                <h3 className="font-semibold text-white mb-4">Chi tiết theo danh mục</h3>
-                <div className="space-y-3">
-                  {result.breakdown.filter(b => b.amount > 0).map((b) => (
-                    <div key={b.category} className="flex items-center gap-3">
-                      <span className="text-sm text-[#8888AA] w-36">{b.category}</span>
-                      <div className="flex-1 h-2 bg-[#2A2A3A] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${Math.min(b.inflation * 10, 100)}%`,
-                            backgroundColor: b.inflation > 5 ? "#FF5252" : b.inflation > 3 ? "#FFAB40" : "#00E676",
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-white w-12 text-right">
-                        {b.inflation.toFixed(1)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={60}
+                  step={1}
+                  value={w}
+                  onChange={(e) => handleSlider(cat.id, Number(e.target.value))}
+                  className="w-full h-1.5 rounded-full appearance-none bg-white/5 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#E6B84F] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(230,184,79,0.3)]"
+                />
               </div>
-
-              {/* AI Insight */}
-              <div className="glass-card p-6 border-[#FFD700]/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-[#FFD700]" />
-                  <span className="text-sm font-semibold text-[#FFD700]">AI Insight</span>
-                </div>
-                <p className="text-sm text-[#8888AA] leading-relaxed">
-                  Với lạm phát cá nhân {result.personalCPI.toFixed(1)}%, để giữ nguyên sức mua sau 5 năm, 
-                  tổng tài sản của bạn cần tăng ít nhất{" "}
-                  <strong className="text-white">
-                    {(Math.pow(1 + result.personalCPI / 100, 5) * 100 - 100).toFixed(0)}%
-                  </strong>. 
-                  Gửi tiết kiệm 5.2%/năm chỉ đủ bù {(5.2 / result.personalCPI * 100).toFixed(0)}% lạm phát.
-                  AI khuyến nghị phân bổ ít nhất 30-40% vào các kênh có lợi nhuận kỳ vọng cao hơn.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="glass-card p-12 flex flex-col items-center justify-center text-center h-full">
-              <Calculator className="w-12 h-12 text-[#2A2A3A] mb-4" />
-              <p className="text-[#8888AA]">Nhập chi tiêu hàng tháng và nhấn &quot;Tính&quot; để xem kết quả</p>
-            </div>
-          )}
+            );
+          })}
         </div>
-      </div>
+
+        {/* Contribution Breakdown */}
+        <div className="mt-6 pt-4 border-t border-white/[0.04]">
+          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/20 mb-3">ĐÓNG GÓP VÀO LẠM PHÁT CÁ NHÂN</h4>
+          <div className="space-y-1.5">
+            {result.categories
+              .sort((a, b) => b.contribution - a.contribution)
+              .map((cat) => (
+                <div key={cat.name} className="flex items-center gap-2">
+                  <span className="text-sm w-6">{cat.emoji}</span>
+                  <span className="text-xs text-white/40 w-28 truncate">{cat.name}</span>
+                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#E6B84F]"
+                      style={{ width: `${(cat.contribution / result.personalRate) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-white/30 w-12 text-right">{cat.contribution.toFixed(2)}%</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

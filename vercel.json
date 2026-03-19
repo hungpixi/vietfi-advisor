@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/market-data",
+      "schedule": "30 8 * * 1-5",
+      "comment": "15:30 ICT = 08:30 UTC, Mon-Fri, sau đóng cửa sàn HOSE"
+    },
+    {
+      "path": "/api/cron/morning-brief",
+      "schedule": "0 23 * * *",
+      "comment": "6:00 AM ICT = 23:00 UTC hôm trước, hàng ngày"
+    },
+    {
+      "path": "/api/cron/macro-update",
+      "schedule": "0 0 1 * *",
+      "comment": "Đầu tháng, World Bank API update"
+    }
+  ]
+}

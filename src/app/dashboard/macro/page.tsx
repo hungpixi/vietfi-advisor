@@ -1,162 +1,81 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from "recharts";
-import { BarChart3, Sparkles } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Minus, Globe, Sparkles } from "lucide-react";
 
-const cpiData = [
-  { month: "T8/25", cpi: 3.2 },
-  { month: "T9/25", cpi: 3.4 },
-  { month: "T10/25", cpi: 3.5 },
-  { month: "T11/25", cpi: 3.6 },
-  { month: "T12/25", cpi: 3.7 },
-  { month: "T1/26", cpi: 3.9 },
-  { month: "T2/26", cpi: 3.8 },
-];
-
-const interestRateData = [
-  { month: "T8/25", rate: 4.8 },
-  { month: "T9/25", rate: 4.9 },
-  { month: "T10/25", rate: 5.0 },
-  { month: "T11/25", rate: 5.0 },
-  { month: "T12/25", rate: 5.1 },
-  { month: "T1/26", rate: 5.2 },
-  { month: "T2/26", rate: 5.2 },
-];
-
-const fxData = [
-  { month: "T8/25", rate: 25100 },
-  { month: "T9/25", rate: 25200 },
-  { month: "T10/25", rate: 25250 },
-  { month: "T11/25", rate: 25300 },
-  { month: "T12/25", rate: 25350 },
-  { month: "T1/26", rate: 25420 },
-  { month: "T2/26", rate: 25480 },
-];
-
+/* ─── Data ─── */
 const macroIndicators = [
-  { name: "GDP (Q4/2025)", value: "6.8%", change: "+0.3%", positive: true },
-  { name: "CPI YoY", value: "3.8%", change: "+0.1%", positive: false },
-  { name: "Lãi suất TB 12T", value: "5.2%", change: "+0.1%", positive: true },
-  { name: "USD/VND", value: "25,480", change: "+0.1%", positive: false },
-  { name: "FDI (2 tháng)", value: "$3.2B", change: "+12%", positive: true },
-  { name: "Xuất khẩu", value: "$53B", change: "+8.5%", positive: true },
+  { name: "GDP Growth", value: "5.2%", change: "+0.3%", trend: "up" as const, desc: "Quý 4/2025 — tăng trưởng ổn định", emoji: "📈" },
+  { name: "CPI (YoY)", value: "3.31%", change: "-0.2%", trend: "down" as const, desc: "Tháng 3/2026 — lạm phát giảm nhẹ", emoji: "💰" },
+  { name: "Lãi suất kỳ hạn 12T", value: "5.2%", change: "0%", trend: "neutral" as const, desc: "Trung bình Top 10 ngân hàng", emoji: "🏦" },
+  { name: "USD/VND", value: "25,480", change: "+0.1%", trend: "up" as const, desc: "Ổn định, NHNN kiểm soát tốt", emoji: "💵" },
+  { name: "Foreign Net Buy", value: "-200 tỷ", change: "-50 tỷ", trend: "down" as const, desc: "Khối ngoại tiếp tục bán ròng", emoji: "🌍" },
+  { name: "Gold SJC", value: "93.5tr", change: "+1.2%", trend: "up" as const, desc: "Lập đỉnh mới — chênh thế giới 18tr", emoji: "🪙" },
 ];
 
-const chartStyle = {
-  background: "#12121A",
-  border: "1px solid #2A2A3A",
-  borderRadius: 8,
-  color: "#F0F0F5",
-  fontSize: 12,
+const aiCommentary = {
+  title: "Tóm tắt vĩ mô AI",
+  content: "Kinh tế Việt Nam Q1/2026 duy trì đà tăng trưởng 5.2%, lạm phát kiểm soát tốt dưới 3.5%. Tuy nhiên, rủi ro đến từ áp lực tỷ giá do Fed chậm giảm lãi suất và dòng tiền khối ngoại bán ròng liên tục. Vàng SJC tiếp tục tăng mạnh do yếu tố địa chính trị. Khuyến nghị: theo dõi sát chính sách tiền tệ NHNN trong Q2.",
+  sources: ["World Bank", "GSO", "NHNN", "Bloomberg"],
 };
+
+const trendColor = { up: "#22C55E", down: "#EF4444", neutral: "#8B8D96" };
+const TrendIcons = { up: TrendingUp, down: TrendingDown, neutral: Minus };
+
+const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 export default function MacroPage() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h1 className="text-2xl font-bold text-white mb-2">
-        <span className="text-gradient">Macro Map</span> — Bản đồ Vĩ mô
-      </h1>
-      <p className="text-[#8888AA] mb-8">
-        Dữ liệu kinh tế vĩ mô Việt Nam + AI commentary giải thích tác động lên các kênh đầu tư.
-      </p>
+    <motion.div initial="hidden" animate="visible" variants={stagger}>
+      <motion.div variants={fadeIn} className="mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
+          Xu hướng <span className="text-gradient">kinh tế</span>
+        </h1>
+        <p className="text-[13px] text-white/40">
+          6 chỉ số kinh tế chính — dữ liệu từ World Bank, GSO, NHNN
+        </p>
+      </motion.div>
 
-      {/* Indicator cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {macroIndicators.map((ind) => (
-          <div key={ind.name} className="glass-card p-4">
-            <p className="text-xs text-[#8888AA] mb-1">{ind.name}</p>
-            <p className="text-lg font-bold text-white">{ind.value}</p>
-            <p className={`text-xs ${ind.positive ? "text-[#00E676]" : "text-[#FF5252]"}`}>{ind.change}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-8">
-        {/* CPI */}
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4">CPI (YoY %)</h3>
-          <div className="h-48">
-            <ResponsiveContainer>
-              <AreaChart data={cpiData}>
-                <defs>
-                  <linearGradient id="cpiGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FF6B35" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#FF6B35" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A3A" />
-                <XAxis dataKey="month" tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <YAxis domain={[2.5, 4.5]} tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <Tooltip contentStyle={chartStyle} />
-                <Area type="monotone" dataKey="cpi" stroke="#FF6B35" fill="url(#cpiGrad)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Interest Rate */}
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4">Lãi suất TK 12 tháng (%)</h3>
-          <div className="h-48">
-            <ResponsiveContainer>
-              <LineChart data={interestRateData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A3A" />
-                <XAxis dataKey="month" tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <YAxis domain={[4, 6]} tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <Tooltip contentStyle={chartStyle} />
-                <Line type="monotone" dataKey="rate" stroke="#00E5FF" strokeWidth={2} dot={{ fill: "#00E5FF", r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* FX */}
-        <div className="glass-card p-6">
-          <h3 className="font-semibold text-white mb-4">USD/VND</h3>
-          <div className="h-48">
-            <ResponsiveContainer>
-              <AreaChart data={fxData}>
-                <defs>
-                  <linearGradient id="fxGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FFD700" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#FFD700" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A3A" />
-                <XAxis dataKey="month" tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <YAxis domain={[24800, 25800]} tick={{ fill: "#8888AA", fontSize: 10 }} axisLine={false} />
-                <Tooltip contentStyle={chartStyle} />
-                <Area type="monotone" dataKey="rate" stroke="#FFD700" fill="url(#fxGrad)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+      {/* Indicators Grid */}
+      <motion.div variants={stagger} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        {macroIndicators.map((ind) => {
+          const TIcon = TrendIcons[ind.trend];
+          const color = trendColor[ind.trend];
+          return (
+            <motion.div key={ind.name} variants={fadeIn} className="glass-card glass-card-hover p-5 transition-all cursor-default">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xl">{ind.emoji}</span>
+                <TIcon className="w-4 h-4" style={{ color }} />
+              </div>
+              <div className="text-2xl font-bold text-white mb-0.5">{ind.value}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-white/60">{ind.name}</span>
+                <span className="text-[10px] font-medium" style={{ color }}>{ind.change}</span>
+              </div>
+              <p className="text-[10px] text-white/25 mt-1.5">{ind.desc}</p>
+            </motion.div>
+          );
+        })}
+      </motion.div>
 
       {/* AI Commentary */}
-      <div className="glass-card p-6 border-[#FFD700]/10">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-[#FFD700]" />
-          <span className="text-sm font-semibold text-[#FFD700]">AI Macro Commentary</span>
+      <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-[#E6B84F]" />
+            <h2 className="text-sm font-semibold text-white">{aiCommentary.title}</h2>
+          </div>
+          <p className="text-[13px] text-white/50 leading-relaxed mb-3">{aiCommentary.content}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Globe className="w-3 h-3 text-white/20" />
+            {aiCommentary.sources.map((s) => (
+              <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.03] text-white/25 border border-white/[0.05]">{s}</span>
+            ))}
+          </div>
         </div>
-        <div className="text-sm text-[#8888AA] leading-relaxed space-y-3">
-          <p>
-            <strong className="text-white">Tổng quan:</strong> Kinh tế VN Q1/2026 tăng trưởng ổn định 6.8% GDP,
-            lạm phát kiểm soát ở 3.8%. NHNN duy trì chính sách tiền tệ nới lỏng có kiểm soát.
-          </p>
-          <p>
-            <strong className="text-white">Tác động lên kênh đầu tư:</strong>
-          </p>
-          <ul className="space-y-2 ml-4">
-            <li>🟡 <strong>Vàng:</strong> Đang ở vùng rủi ro cao (chênh thế giới 18 triệu). Nên hold, tránh mua mới.</li>
-            <li>🟢 <strong>Chứng khoán:</strong> Mặt bằng lãi suất thấp hỗ trợ, nhưng cần chờ VN-Index test lại hỗ trợ 1,250.</li>
-            <li>🔵 <strong>Tiết kiệm:</strong> Lãi suất thực âm (5.2% - 3.8% = 1.4%), không nên để quá 30% tài sản.</li>
-            <li>🔴 <strong>BĐS:</strong> Thanh khoản thấp, nên tránh trong ngắn hạn trừ khi có cơ hội cụ thể.</li>
-          </ul>
-        </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

@@ -1,230 +1,179 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { UserCircle, ChevronRight, Shield, Sparkles, Share2, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { UserCircle, ChevronRight, Shield, Sparkles } from "lucide-react";
+import { RISK_QUESTIONS, calculateRiskProfile, type RiskResult } from "@/lib/calculations/risk-scoring";
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import Link from "next/link";
 
-type Answer = "a" | "b" | "c";
-
-const questions = [
-  {
-    id: 1,
-    question: "Thị trường giảm 15% trong tuần, bạn sẽ:",
-    options: [
-      { value: "a" as Answer, label: "Bán ngay để cắt lỗ" },
-      { value: "b" as Answer, label: "Giữ nguyên, chờ hồi phục" },
-      { value: "c" as Answer, label: "Mua thêm vì đây là cơ hội" },
-    ],
-  },
-  {
-    id: 2,
-    question: "Bạn có quỹ dự phòng bao nhiêu tháng chi tiêu?",
-    options: [
-      { value: "a" as Answer, label: "Dưới 3 tháng" },
-      { value: "b" as Answer, label: "3-6 tháng" },
-      { value: "c" as Answer, label: "Trên 6 tháng" },
-    ],
-  },
-  {
-    id: 3,
-    question: "Bạn sẵn sàng chờ bao lâu để thấy lợi nhuận?",
-    options: [
-      { value: "a" as Answer, label: "Dưới 6 tháng" },
-      { value: "b" as Answer, label: "1-3 năm" },
-      { value: "c" as Answer, label: "Trên 3 năm, không vấn đề" },
-    ],
-  },
-  {
-    id: 4,
-    question: "Thu nhập hiện tại của bạn có ổn định không?",
-    options: [
-      { value: "a" as Answer, label: "Không ổn định (freelance, kinh doanh)" },
-      { value: "b" as Answer, label: "Khá ổn (hợp đồng lương)" },
-      { value: "c" as Answer, label: "Rất ổn (doanh thu đa nguồn)" },
-    ],
-  },
-  {
-    id: 5,
-    question: "Nếu mất 20% vốn đầu tư, bạn cảm thấy:",
-    options: [
-      { value: "a" as Answer, label: "Rất lo lắng, mất ngủ" },
-      { value: "b" as Answer, label: "Khó chịu nhưng chấp nhận được" },
-      { value: "c" as Answer, label: "Bình thường, chuyện thường ngày" },
-    ],
-  },
-];
-
-const scoreMap: Record<Answer, number> = { a: 1, b: 2, c: 3 };
-
-const profiles = [
-  {
-    range: [5, 8],
-    name: "Bảo thủ",
-    emoji: "🛡️",
-    color: "#00E5FF",
-    desc: "Bạn ưu tiên bảo toàn vốn. Nên tập trung tiết kiệm + vàng, tránh crypto và cổ phiếu volatility cao.",
-    traits: ["Bảo toàn vốn là ưu tiên #1", "Thích ổn định, không thích rủi ro", "Nên focus: Tiết kiệm, Vàng, Trái phiếu"],
-  },
-  {
-    range: [9, 12],
-    name: "Cân bằng",
-    emoji: "⚖️",
-    color: "#FFD700",
-    desc: "Bạn chấp nhận rủi ro vừa phải. Phân bổ đều giữa các kênh an toàn và tăng trưởng.",
-    traits: ["Cân bằng rủi ro và lợi nhuận", "Có thể chịu biến động ngắn hạn", "Nên focus: Mix đều 5 kênh"],
-  },
-  {
-    range: [13, 15],
-    name: "Tăng trưởng",
-    emoji: "🚀",
-    color: "#00E676",
-    desc: "Bạn sẵn sàng chấp nhận rủi ro cao để tìm kiếm lợi nhuận vượt trội. Phù hợp chứng khoán + crypto.",
-    traits: ["Chấp nhận rủi ro cao", "Kiên nhẫn, tầm nhìn dài hạn", "Nên focus: Chứng khoán, Crypto, BĐS"],
-  },
-];
+const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
 
 export default function RiskProfilePage() {
-  const [answers, setAnswers] = useState<Record<number, Answer>>({});
-  const [showResult, setShowResult] = useState(false);
+  const [step, setStep] = useState(0); // 0-4 quiz, 5 = result
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [result, setResult] = useState<RiskResult | null>(null);
 
-  const totalScore = Object.values(answers).reduce(
-    (sum, a) => sum + scoreMap[a],
-    0
-  );
-  const profile = profiles.find(
-    (p) => totalScore >= p.range[0] && totalScore <= p.range[1]
-  ) || profiles[1];
+  const handleAnswer = (value: number) => {
+    const newAnswers = [...answers, value];
+    setAnswers(newAnswers);
 
-  const allAnswered = Object.keys(answers).length === questions.length;
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      // Calculate result
+      const r = calculateRiskProfile(newAnswers);
+      setResult(r);
+      setStep(5);
+    }
+  };
+
+  const restart = () => {
+    setStep(0);
+    setAnswers([]);
+    setResult(null);
+  };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h1 className="text-2xl font-bold text-white mb-2">
-        Risk <span className="text-gradient">DNA</span> Profile
-      </h1>
-      <p className="text-[#8888AA] mb-8">
-        Đánh giá profile rủi ro thực sự của bạn qua 5 câu hỏi tình huống — không phải trắc nghiệm nhàm chán.
-      </p>
+    <motion.div initial="hidden" animate="visible" variants={stagger}>
+      <motion.div variants={fadeIn} className="mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
+          Tính cách <span className="text-gradient">đầu tư</span>
+        </h1>
+        <p className="text-[13px] text-white/40">
+          5 câu hỏi tâm lý học hành vi → biết mình thuộc tuýp nhà đầu tư nào
+        </p>
+      </motion.div>
 
-      {!showResult ? (
-        <div className="max-w-2xl mx-auto space-y-6">
-          {questions.map((q, idx) => (
-            <motion.div
-              key={q.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="glass-card p-6"
-            >
-              <p className="text-sm text-[#FFD700] mb-1">Câu {q.id}/5</p>
-              <p className="text-base font-medium text-white mb-4">{q.question}</p>
-              <div className="space-y-2">
-                {q.options.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setAnswers({ ...answers, [q.id]: opt.value })}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-all flex items-center gap-3 ${
-                      answers[q.id] === opt.value
-                        ? "bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30"
-                        : "bg-white/[0.03] text-[#8888AA] border border-[#2A2A3A] hover:border-[#FFD700]/20 hover:text-white"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        answers[q.id] === opt.value
-                          ? "border-[#FFD700] bg-[#FFD700]"
-                          : "border-[#2A2A3A]"
-                      }`}
-                    >
-                      {answers[q.id] === opt.value && (
-                        <div className="w-2 h-2 rounded-full bg-black" />
-                      )}
-                    </div>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-
-          <button
-            onClick={() => setShowResult(true)}
-            disabled={!allAnswered}
-            className={`w-full py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 ${
-              allAnswered
-                ? "bg-gradient-primary text-black hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]"
-                : "bg-[#2A2A3A] text-[#666680] cursor-not-allowed"
-            }`}
-          >
-            Xem kết quả <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-2xl mx-auto space-y-6"
-        >
-          {/* Profile card */}
-          <div
-            className="glass-card p-8 text-center"
-            style={{ borderColor: `${profile.color}30`, boxShadow: `0 0 40px ${profile.color}10` }}
-          >
-            <div className="text-6xl mb-4">{profile.emoji}</div>
-            <h2 className="text-3xl font-black mb-2" style={{ color: profile.color }}>
-              {profile.name}
-            </h2>
-            <p className="text-[#8888AA] mb-4">Điểm rủi ro: {totalScore}/15</p>
-            <div className="w-full h-3 bg-[#2A2A3A] rounded-full overflow-hidden mb-6">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${(totalScore / 15) * 100}%`,
-                  backgroundColor: profile.color,
-                }}
-              />
+      {/* Progress */}
+      {step < 5 && (
+        <motion.div variants={fadeIn} className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-mono text-white/25">CÂU {step + 1}/5</span>
+            <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full transition-all duration-500" style={{ width: `${((step + 1) / 5) * 100}%` }} />
             </div>
-            <p className="text-sm text-[#8888AA] leading-relaxed">{profile.desc}</p>
           </div>
+        </motion.div>
+      )}
 
-          {/* Traits */}
-          <div className="glass-card p-6">
-            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-[#FFD700]" />
-              Đặc điểm Risk DNA
-            </h3>
+      {/* Quiz */}
+      {step < 5 && (
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -30 }}
+          transition={{ duration: 0.3 }}
+          className="max-w-2xl mx-auto"
+        >
+          <div className="glass-card p-6 mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCircle className="w-5 h-5 text-[#E6B84F]" />
+              <h2 className="text-lg font-bold text-white">{RISK_QUESTIONS[step].question}</h2>
+            </div>
             <div className="space-y-3">
-              {profile.traits.map((t, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm text-[#8888AA]">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: `${profile.color}15`, color: profile.color }}>
-                    {i + 1}
+              {RISK_QUESTIONS[step].options.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleAnswer(opt.value)}
+                  className="w-full text-left p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-[#E6B84F]/30 hover:bg-[#E6B84F]/5 transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{opt.emoji}</span>
+                    <span className="text-sm text-white/70 group-hover:text-white transition-colors flex-1">{opt.label}</span>
+                    <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-[#E6B84F] transition-colors" />
                   </div>
-                  {t}
-                </div>
+                </button>
               ))}
             </div>
           </div>
+        </motion.div>
+      )}
 
-          {/* AI Advice */}
-          <div className="glass-card p-6 border-[#FFD700]/10">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-[#FFD700]" />
-              <span className="text-sm font-semibold text-[#FFD700]">AI Lời khuyên</span>
+      {/* Result */}
+      {step === 5 && result && (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="max-w-3xl mx-auto">
+          {/* Result Card */}
+          <div className="glass-card p-6 mb-4 border-[#E6B84F]/10 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-[#E6B84F]" />
+                <span className="text-[10px] text-[#E6B84F] font-mono uppercase tracking-wider">KẾT QUẢ TÍNH CÁCH ĐẦU TƯ</span>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-4xl">{result.emoji}</span>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{result.label}</h2>
+                  <p className="text-xs text-white/40">Score: {result.score}/15</p>
+                </div>
+              </div>
+              <p className="text-[13px] text-white/50 leading-relaxed mb-4">{result.description}</p>
+
+              {/* Traits */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {result.traits.map((trait) => (
+                  <span key={trait} className="text-[10px] px-2.5 py-1 rounded-full bg-white/[0.04] text-white/50 border border-white/[0.06]">
+                    {trait}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-2 mb-4">
+                <button onClick={restart} className="px-4 py-2 text-xs font-medium text-white/50 bg-white/[0.04] rounded-lg hover:bg-white/[0.08] transition-colors">
+                  Làm lại
+                </button>
+                <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-gradient-primary text-black rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
+                  <Share2 className="w-3.5 h-3.5" />
+                  Chia sẻ
+                </button>
+              </div>
+
+              {/* CTA → Portfolio */}
+              <Link href="/dashboard/portfolio" className="group flex items-center justify-between p-3 rounded-xl bg-[#E6B84F]/5 border border-[#E6B84F]/10 hover:bg-[#E6B84F]/10 transition-all">
+                <div>
+                  <span className="text-xs font-semibold text-[#E6B84F]">🎯 Xây danh mục theo tính cách của bạn</span>
+                  <p className="text-[10px] text-white/30 mt-0.5">AI sẽ gợi ý phân bổ tài sản phù hợp với mức chấp nhận rủi ro của bạn</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#E6B84F] group-hover:translate-x-1 transition-transform" />
+              </Link>
+
+              {/* Re-test hint */}
+              <p className="text-[10px] text-white/20 mt-3 text-center">💡 Tâm lý đầu tư thay đổi theo thị trường — làm lại mỗi quý để cập nhật</p>
             </div>
-            <p className="text-sm text-[#8888AA] leading-relaxed">
-              Với profile <strong className="text-white">{profile.name}</strong> và bối cảnh thị trường hiện tại
-              (Fear & Greed = 38, lạm phát 3.8%), AI khuyến nghị bạn sử dụng trang{" "}
-              <strong className="text-[#FFD700]">Portfolio Advisor</strong> để nhận gợi ý phân bổ vốn
-              tối ưu theo profile rủi ro này.
-            </p>
           </div>
 
-          <button
-            onClick={() => { setShowResult(false); setAnswers({}); }}
-            className="w-full py-3 border border-[#2A2A3A] rounded-lg text-[#8888AA] hover:text-white hover:border-[#FFD700]/30 transition-all text-sm"
-          >
-            Làm lại
-          </button>
+          {/* Allocation */}
+          <div className="glass-card p-5">
+            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#E6B84F]" />
+              Gợi ý phân bổ
+            </h3>
+            <div className="flex items-center gap-5">
+              <div className="w-40 h-40 flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={result.allocation} cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={3} dataKey="percent" stroke="none">
+                      {result.allocation.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 space-y-2">
+                {result.allocation.map((item) => (
+                  <div key={item.asset} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs text-white/50">{item.asset}</span>
+                    </div>
+                    <span className="text-xs font-bold text-white/80">{item.percent}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
     </motion.div>

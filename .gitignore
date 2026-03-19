@@ -57,3 +57,10 @@ __pycache__/
 
 # Context file (private keys/config — KHÔNG push)
 context.md
+
+# Local Netlify folder
+.netlify
+
+# Brain context (private)
+.brain/
+context.md
