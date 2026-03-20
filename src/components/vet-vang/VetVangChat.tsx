@@ -40,6 +40,22 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   });
   
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  // ── Khi AI fail → hiện fallback response ──
+  useEffect(() => {
+    if (error) {
+      const fallbackItem = getScriptedResponse("motivate");
+      const fallbackText = fallbackItem?.text || "Tao bận xíu, thử lại nha! 🦜";
+      setMessages((prev: any) => [
+        ...prev,
+        {
+          id: `bot-err-${Date.now()}`,
+          role: "assistant" as const,
+          parts: [{ type: "text" as const, text: fallbackText }],
+        },
+      ]);
+    }
+  }, [error, setMessages]);
   
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -49,7 +65,6 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const lastSpokenIdRef = useRef<string>("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ── TTS: Edge TTS API (giọng Việt thật, miễn phí) ──
   // ── TTS: Pre-generated audio cho static, API cho dynamic/AI ──
   const speak = useCallback(async (text: string, audioId?: string) => {
     if (!voiceEnabled) return;
