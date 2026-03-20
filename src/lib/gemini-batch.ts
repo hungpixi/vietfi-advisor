@@ -26,7 +26,12 @@ interface BatchResult {
   error?: string;
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
+
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 /**
  * Process multiple prompts - simulated batch via sequential calls
@@ -90,7 +95,7 @@ export async function batchProcess(
           text: match ? match[1].trim() : text, // Fallback: trả full text nếu không parse được
         });
       }
-    } catch (error) {
+    } catch {
       // Nếu batch call fail, fallback từng cái
       for (const req of batch) {
         try {
@@ -165,10 +170,22 @@ Format: Tiêu đề bold + 3-4 câu tóm tắt. Ngắn gọn, dễ hiểu.
   return result.response.text();
 }
 
-// ── Simple in-memory cache ──────────────────────────────────────
+// ── Simple in-memory cache with eviction ──────────────────────────
 const cache = new Map<string, { data: string; expiry: number }>();
+let lastCleanup = Date.now();
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+function evictExpired() {
+  const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+  for (const [key, entry] of cache.entries()) {
+    if (now >= entry.expiry) cache.delete(key);
+  }
+}
 
 export function getCached(key: string): string | null {
+  evictExpired();
   const entry = cache.get(key);
   if (!entry) return null;
   if (Date.now() > entry.expiry) {
@@ -179,5 +196,6 @@ export function getCached(key: string): string | null {
 }
 
 export function setCache(key: string, data: string, ttlMs: number = 15 * 60 * 1000) {
+  evictExpired();
   cache.set(key, { data, expiry: Date.now() + ttlMs });
 }

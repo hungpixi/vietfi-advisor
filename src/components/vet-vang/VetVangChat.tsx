@@ -168,8 +168,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     
     recognition.onstart = () => setIsListening(true);
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput((prev) => prev + " " + transcript);
+      const raw = event.results[0][0].transcript as string;
+      // Strip HTML special chars from speech recognition output (user-controlled)
+      const transcript = raw.replace(/[<>&"']/g, "").trim();
+      setInput((prev) => (prev + " " + transcript).trim());
     };
     recognition.onerror = (e: any) => {
       console.error("Speech error", e);

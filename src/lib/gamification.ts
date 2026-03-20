@@ -68,19 +68,46 @@ const DEFAULT_STATE: GamificationState = {
   questCompleted: false,
 };
 
+/* ─── Schema validation (security: prevent localStorage tampering) ─── */
+function validateGamification(raw: unknown): Partial<GamificationState> | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const s = raw as Record<string, unknown>;
+
+  // Type-check every field to block injected garbage
+  if (typeof s.xp           !== "number" || !Number.isFinite(s.xp)           || s.xp           < 0)      return null;
+  if (typeof s.level        !== "number" || !Number.isInteger(s.level)        || s.level        < 0)      return null;
+  if (typeof s.streak       !== "number" || !Number.isInteger(s.streak)        || s.streak       < 0)      return null;
+  if (typeof s.levelName    !== "string")                                                     return null;
+  if (typeof s.lastActiveDate !== "string")                                                  return null;
+  if (!Array.isArray(s.actions))                                                           return null;
+
+  // Cap xp and streak to reasonable bounds (prevent inflate via DevTools)
+  const xp     = Math.min(Math.max(s.xp, 0), 1_000_000);
+  const streak = Math.min(Math.max(s.streak, 0), 365);
+  const level  = Math.min(Math.max(s.level, 0), LEVELS.length - 1);
+
+  return { xp, level, streak, levelName: s.levelName, lastActiveDate: s.lastActiveDate, actions: s.actions, questCompleted: !!s.questCompleted };
+}
+
 /* ─── Read / Write ─── */
 export function getGamification(): GamificationState {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const state = { ...DEFAULT_STATE, ...JSON.parse(saved) };
-      // Reset actions nếu ngày mới
-      if (state.lastActiveDate !== todayStr()) {
-        state.actions = [];
-        state.questCompleted = false;
+      const parsed = JSON.parse(saved);
+      const valid  = validateGamification(parsed);
+      if (valid) {
+        const state = { ...DEFAULT_STATE, ...valid };
+        // Reset actions nếu ngày mới
+        if (state.lastActiveDate !== todayStr()) {
+          state.actions = [];
+          state.questCompleted = false;
+        }
+        return state;
       }
-      return state;
+      // Invalid data — discard and start fresh
+      localStorage.removeItem(STORAGE_KEY);
     }
   } catch { /* ignore */ }
   return DEFAULT_STATE;

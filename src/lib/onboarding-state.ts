@@ -25,7 +25,33 @@ export function getOnboardingData(): OnboardingData {
   if (typeof window === "undefined") return DEFAULT_DATA;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return { ...DEFAULT_DATA, ...JSON.parse(saved) };
+    if (saved) {
+      const raw = JSON.parse(saved) as Record<string, unknown>;
+      // Validate schema to prevent localStorage tampering
+      if (
+        typeof raw === "object" && raw !== null &&
+        typeof raw.completed     === "boolean"  &&
+        typeof raw.hasDebt      === "boolean"  &&
+        typeof raw.riskProfile  === "string"   &&
+        typeof raw.setupAt      === "string"
+      ) {
+        const validProfiles = ["conservative", "balanced", "growth", ""];
+        if (!validProfiles.includes(raw.riskProfile)) return DEFAULT_DATA;
+        // Cap income to reasonable max (100B VND)
+        const income = typeof raw.income === "number"
+          ? Math.min(Math.max(raw.income, 0), 100_000_000_000)
+          : 0;
+        return {
+          ...DEFAULT_DATA,
+          completed:   raw.completed,
+          income,
+          hasDebt:     raw.hasDebt,
+          riskProfile: raw.riskProfile,
+          setupAt:     raw.setupAt,
+        };
+      }
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch { /* ignore */ }
   return DEFAULT_DATA;
 }
