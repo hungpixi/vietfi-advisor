@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, BookOpen, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -162,16 +162,20 @@ const LESSONS: Lesson[] = [
 
 /* ─── Learn Page ─── */
 export default function LearnPage() {
+  const [mounted, setMounted] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [slideIdx, setSlideIdx] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
-  const completedIds = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("vietfi_lessons_done") || "[]")
-    : [];
+  useEffect(() => {
+    const done = JSON.parse(localStorage.getItem("vietfi_lessons_done") || "[]");
+    setCompletedIds(done);
+    setMounted(true);
+  }, []);
 
   function startLesson(l: Lesson) {
     setActiveLesson(l);
@@ -191,12 +195,21 @@ export default function LearnPage() {
       if (!done.includes(activeLesson.id)) {
         done.push(activeLesson.id);
         localStorage.setItem("vietfi_lessons_done", JSON.stringify(done));
+        setCompletedIds(done);
       }
       setShowConfetti(true);
     }
   }
 
   // Lesson list
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 rounded-full border-2 border-[#E6B84F]/30 border-t-[#E6B84F] animate-spin" />
+      </div>
+    );
+  }
+
   if (!activeLesson) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">

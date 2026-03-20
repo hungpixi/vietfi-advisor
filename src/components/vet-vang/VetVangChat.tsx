@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, Volume2 } from "lucide-react";
+import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
 
 /* ─── Vẹt Vàng Personality System ─── */
 const ROAST_RESPONSES: Record<string, string[]> = {
@@ -45,12 +46,7 @@ const QUICK_ACTIONS = [
   { label: "💪 Motivate tôi!", key: "motivation" },
 ];
 
-interface Message {
-  id: string;
-  role: "user" | "vet";
-  content: string;
-  timestamp: Date;
-}
+// Using Message from ai sdk
 
 function getRandomResponse(category: string): string {
   const responses = ROAST_RESPONSES[category] || ROAST_RESPONSES.greeting;
@@ -66,72 +62,101 @@ interface VetVangChatProps {
 }
 
 export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: VetVangChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const { messages, setMessages, sendMessage, status, error } = useChat({
+    messages: [
+      {
+        id: "greet-1",
+        role: "assistant",
+        parts: [{ type: "text", text: getRandomResponse("greeting") }],
+      } as any
+    ]
+  });
+  
+  const isLoading = status === 'submitted' || status === 'streaming';
+  
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastSpokenIdRef = useRef<string>("");
+
+  // ── TTS: Web Speech API ──
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "vi-VN";
+    utterance.rate = 1.1;
+    utterance.pitch = 1.3; // Higher pitch cho giọng vẹt
+    // Try to find Vietnamese voice
+    const voices = window.speechSynthesis.getVoices();
+    const viVoice = voices.find(v => v.lang.startsWith("vi"));
+    if (viVoice) utterance.voice = viVoice;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  }, [voiceEnabled]);
+
+  // Auto-speak new assistant messages
+  useEffect(() => {
+    if (!voiceEnabled || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1] as any;
+    if (lastMsg?.role === "assistant" && lastMsg.id !== lastSpokenIdRef.current) {
+      const text = lastMsg.parts?.[0]?.text || lastMsg.content || "";
+      if (text && status !== "streaming") {
+        lastSpokenIdRef.current = lastMsg.id;
+        speak(text);
+      }
+    }
+  }, [messages, status, voiceEnabled, speak]);
+
+  // Stop speaking when chat closes
+  useEffect(() => {
+    if (!isOpen && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, [isOpen]);
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Initial greeting
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setIsTyping(true);
-      setTimeout(() => {
-        setMessages([{
-          id: Date.now().toString(),
-          role: "vet",
-          content: getRandomResponse("greeting"),
-          timestamp: new Date(),
-        }]);
-        setIsTyping(false);
-      }, 800);
+  // Handle Voice Input (Web Speech API)
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Trình duyệt không hỗ trợ nhận diện giọng nói!");
+      return;
     }
-    if (isOpen) inputRef.current?.focus();
-  }, [isOpen]);
-
-  const simulateVetResponse = (category: string) => {
-    setIsTyping(true);
-    const delay = 600 + Math.random() * 800;
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: "vet",
-          content: getRandomResponse(category),
-          timestamp: new Date(),
-        },
-      ]);
-      setIsTyping(false);
-    }, delay);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'vi-VN';
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput((prev) => prev + " " + transcript);
+    };
+    recognition.onerror = (e: any) => {
+      console.error("Speech error", e);
+      setIsListening(false);
+    };
+    recognition.onend = () => setIsListening(false);
+    
+    recognition.start();
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+  const submitForm = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
     setInput("");
-
-    // Simple keyword matching for demo
-    const lower = input.toLowerCase();
-    let category = "greeting";
-    if (lower.includes("chi tiêu") || lower.includes("tiêu") || lower.includes("mua") || lower.includes("trà sữa")) category = "spending";
-    else if (lower.includes("nợ") || lower.includes("thẻ") || lower.includes("vay") || lower.includes("trả")) category = "debt";
-    else if (lower.includes("đầu tư") || lower.includes("chứng khoán") || lower.includes("crypto") || lower.includes("vàng")) category = "investment";
-    else if (lower.includes("tiết kiệm") || lower.includes("saving") || lower.includes("gửi")) category = "saving";
-    else if (lower.includes("động viên") || lower.includes("motivat") || lower.includes("buồn") || lower.includes("chán")) category = "motivation";
-
-    simulateVetResponse(category);
   };
 
   const handleQuickAction = (key: string) => {
@@ -141,14 +166,8 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       investment: "Nên đầu tư gì bây giờ?",
       motivation: "Motivate tôi đi!",
     };
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: labels[key] || key,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    simulateVetResponse(key);
+    if (isLoading) return;
+    sendMessage({ text: labels[key] || key });
   };
 
   return (
@@ -182,8 +201,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <button className="p-1.5 rounded-lg hover:bg-white/[0.05] text-white/30 hover:text-white/60 transition-colors">
-                <Volume2 className="w-3.5 h-3.5" />
+              <button
+                onClick={() => {
+                  setVoiceEnabled(v => !v);
+                  if (voiceEnabled) window.speechSynthesis?.cancel();
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${voiceEnabled ? 'bg-[#E6B84F]/10 text-[#E6B84F] hover:bg-[#E6B84F]/20' : 'hover:bg-white/[0.05] text-white/30 hover:text-white/60'}`}
+                title={voiceEnabled ? "Tắt giọng nói" : "Bật giọng nói"}
+              >
+                {voiceEnabled ? (
+                  <Volume2 className={`w-3.5 h-3.5 ${isSpeaking ? 'animate-pulse' : ''}`} />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5" />
+                )}
               </button>
               <button
                 onClick={onClose}
@@ -213,7 +243,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin">
-            {messages.map((msg) => (
+            {messages.map((msg: any) => (
               <motion.div
                 key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
@@ -221,7 +251,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                 transition={{ duration: 0.2 }}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {msg.role === "vet" && <span className="text-lg mr-1.5 mt-1 flex-shrink-0">🦜</span>}
+                {msg.role === "assistant" && <span className="text-lg mr-1.5 mt-1 flex-shrink-0">🦜</span>}
                 <div
                   className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
                     msg.role === "user"
@@ -229,13 +259,13 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                       : "bg-white/[0.04] text-white/70 rounded-bl-sm border border-white/[0.06]"
                   }`}
                 >
-                  {msg.content}
+                  {msg.parts?.[0]?.text || msg.content}
                 </div>
               </motion.div>
             ))}
 
             {/* Typing indicator */}
-            {isTyping && (
+            {isLoading && messages[messages.length - 1]?.role === "user" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -253,6 +283,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                       />
                     ))}
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-1.5"
+              >
+                <span className="text-lg">🦜</span>
+                <div className="bg-red-500/10 text-red-400 rounded-2xl rounded-bl-sm px-3 py-2 border border-red-500/20 text-[13px]">
+                  Bực mình ghê, đường mạng kẹt quá tao nói không được. Thử lại sau nha 🤬
                 </div>
               </motion.div>
             )}
@@ -279,24 +322,38 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
           {/* Input */}
           <div className="px-3 py-2.5 border-t border-white/[0.06]">
-            <div className="flex items-center gap-2">
+            <form onSubmit={submitForm} className="flex items-center gap-2">
+              <button 
+                type="button" 
+                onClick={startListening}
+                className={`p-2 rounded-xl border transition-all ${isListening ? 'bg-red-500/20 border-red-500/50 text-red-400' : 'bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white/80 hover:bg-white/[0.06]'}`}
+              >
+                {isListening ? (
+                  <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+                    <Mic className="w-4 h-4" />
+                  </motion.div>
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && submitForm(e)}
                 placeholder="Hỏi Vẹt Vàng..."
                 className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E6B84F]/30 transition-colors"
+                disabled={isLoading}
               />
               <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className="p-2 rounded-xl bg-gradient-to-r from-[#E6B84F] to-[#D4A43F] text-black disabled:opacity-30 hover:shadow-[0_0_16px_rgba(230,184,79,0.3)] transition-all"
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="p-2 rounded-xl bg-gradient-to-r from-[#E6B84F] to-[#D4A43F] text-black disabled:opacity-30 hover:shadow-[0_0_16px_rgba(230,184,79,0.3)] transition-all flex items-center justify-center min-w-[36px]"
               >
                 <Send className="w-4 h-4" />
               </button>
-            </div>
+            </form>
           </div>
         </motion.div>
       )}

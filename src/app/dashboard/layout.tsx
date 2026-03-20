@@ -22,6 +22,7 @@ import {
   Plus,
   Flame,
   Zap,
+  Trophy,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -36,6 +37,7 @@ const navGroups = [
     label: "TỔNG QUAN",
     items: [
       { href: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+      { href: "/dashboard/leaderboard", label: "Bảng xếp hạng", icon: Trophy },
     ],
   },
   {
@@ -316,17 +318,6 @@ export default function DashboardLayout({
       {/* Vẹt Vàng Floating Chatbot */}
       <VetVangFloat />
 
-      {/* FAB Ghi chi nhanh */}
-      <Link
-        href="/dashboard/budget"
-        className="fixed bottom-6 right-20 z-40 w-12 h-12 rounded-full bg-gradient-primary shadow-[0_0_25px_rgba(230,184,79,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all group"
-        title="Ghi chi nhanh"
-      >
-        <Plus className="w-5 h-5 text-black" />
-        <span className="absolute right-full mr-2 px-2 py-1 bg-[#1A1B23] text-[10px] text-white/60 rounded-lg border border-white/[0.06] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          Ghi chi nhanh
-        </span>
-      </Link>
     </div>
   );
 }

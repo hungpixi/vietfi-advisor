@@ -22,13 +22,17 @@ export async function callGemini(
   options: GeminiOptions = {}
 ): Promise<string> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const requestOptions = process.env.GEMINI_BASE_URL
+    ? { baseUrl: process.env.GEMINI_BASE_URL }
+    : undefined;
+
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     generationConfig: {
       temperature: opts.temperature,
       maxOutputTokens: opts.maxTokens,
     },
-  });
+  }, requestOptions);
 
   let lastError: Error | null = null;
 
