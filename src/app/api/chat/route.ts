@@ -25,16 +25,17 @@ interface RequestBody {
   messages: AIMessage[];
 }
 
-// ── Security: Fail fast if API key is missing ──────────────────────
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+// ── Google AI client (lazy — only created when Gemini is needed) ────
+let _google: ReturnType<typeof createGoogleGenerativeAI> | null = null;
+function getGoogleClient() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  _google ??= createGoogleGenerativeAI({
+    apiKey,
+    baseURL: process.env.GEMINI_BASE_URL || undefined,
+  });
+  return _google;
 }
-
-const google = createGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-  baseURL: process.env.GEMINI_BASE_URL || undefined,
-});
 
 // ── Rate limiting: in-memory token bucket (per-IP) ────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -113,12 +114,12 @@ export async function POST(req: Request) {
     // ── Security: Sanitize messages array ────────────────────────
     // CRITICAL: block role:"system" injection — attacker could override SYSTEM_PROMPT
     const MAX_MESSAGES = 20;
-    const sanitized = messages.slice(-MAX_MESSAGES).map((m): { role: string; parts: { type: "text"; text: string }[] } | null => {
+    const sanitized = messages.slice(-MAX_MESSAGES).map((m): { role: "user" | "assistant"; content: string } | null => {
       if (!m || typeof m !== "object") return null;
       const role: unknown = m.role;
       if (!["user", "assistant", "model"].includes(role as string)) return null;
 
-      // Extract text from Vercel AI SDK format (parts[]) or OpenAI format (content string)
+      // Extract text from OpenAI format (content string) or Vercel AI SDK format (parts[])
       let text: string = "";
       if (typeof m.content === "string") {
         text = m.content;
@@ -128,8 +129,8 @@ export async function POST(req: Request) {
       if (!text) return null;
 
       return {
-        role: role === "model" ? "assistant" : role as string,
-        parts: [{ type: "text", text }],
+        role: role === "model" ? "assistant" : "user",
+        content: text,
       };
     }).filter((m): m is NonNullable<typeof m> => m !== null);
 
@@ -139,8 +140,8 @@ export async function POST(req: Request) {
       });
     }
 
-    const lastUserMsg = [...sanitized].reverse().find((m: { role: string; parts: AIMessagePart[] }) => m.role === "user");
-    const userText = lastUserMsg?.parts[0]?.text || "";
+    const lastUserMsg = [...sanitized].reverse().find((m) => m.role === "user");
+    const userText = lastUserMsg?.content || "";
 
     // ── STEP 1: Try expense parsing (0 API calls) ───────────────
     const expense = parseExpenseWithContext(userText);
@@ -159,8 +160,14 @@ export async function POST(req: Request) {
     }
 
     // ── STEP 3: Fallback to Gemini (only when needed) ───────────
+    const googleClient = getGoogleClient();
+    if (!googleClient) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured on the server." }), {
+        status: 500, headers: { "Content-Type": "application/json" }
+      });
+    }
     const result = streamText({
-      model: google("gemini-2.0-flash"),
+      model: googleClient("gemini-2.0-flash"),
       system: SYSTEM_PROMPT,
       messages: sanitized,
       temperature: 0.7,

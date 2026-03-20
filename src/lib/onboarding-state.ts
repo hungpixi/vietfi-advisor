@@ -46,7 +46,7 @@ export function getOnboardingData(): OnboardingData {
           completed:   raw.completed,
           income,
           hasDebt:     raw.hasDebt,
-          riskProfile: raw.riskProfile,
+          riskProfile: raw.riskProfile as OnboardingData["riskProfile"],
           setupAt:     raw.setupAt,
         };
       }
