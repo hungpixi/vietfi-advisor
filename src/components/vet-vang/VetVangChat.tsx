@@ -108,18 +108,23 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     }
   }, [voiceEnabled]);
 
-  // Auto-speak new assistant messages
+  // Auto-speak ONLY AI streaming responses (local responses are spoken explicitly)
   useEffect(() => {
-    if (!voiceEnabled || messages.length === 0) return;
+    if (!voiceEnabled || !isOpen || messages.length === 0) return;
     const lastMsg = messages[messages.length - 1] as any;
-    if (lastMsg?.role === "assistant" && lastMsg.id !== lastSpokenIdRef.current) {
+    if (
+      lastMsg?.role === "assistant" &&
+      lastMsg.id !== lastSpokenIdRef.current &&
+      !lastMsg.id.startsWith("bot-") && // skip local responses (spoken explicitly)
+      lastMsg.id !== "greet-1"           // skip initial greeting
+    ) {
       const text = lastMsg.parts?.[0]?.text || lastMsg.content || "";
       if (text && status !== "streaming") {
         lastSpokenIdRef.current = lastMsg.id;
         speak(text);
       }
     }
-  }, [messages, status, voiceEnabled, speak]);
+  }, [messages, status, voiceEnabled, speak, isOpen]);
 
   // Stop speaking when chat closes
   useEffect(() => {
@@ -212,9 +217,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first (0 API calls)
     const localReply = tryLocalResponse(text);
     if (localReply) {
+      const botId = `bot-${Date.now() + 1}`;
+      lastSpokenIdRef.current = botId; // prevent useEffect double-speak
       addLocalMessage(text, localReply.text);
-      // Speak with pre-generated audio if available
-      if (voiceEnabled) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
+      if (voiceEnabled && isOpen) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
@@ -223,11 +229,12 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   };
 
   const handleQuickAction = (key: string) => {
+    // Labels chứa keyword khớp intent patterns
     const labels: Record<string, string> = {
-      spending: "Phân tích chi tiêu của tôi",
-      debt: "Tình hình nợ của tôi thế nào?",
-      investment: "Nên đầu tư gì bây giờ?",
-      motivation: "Motivate tôi đi!",
+      ask_spending: "phân tích chi tiêu của tôi",
+      ask_debt: "tình hình nợ của tôi",
+      ask_invest: "tư vấn đầu tư",
+      motivate: "motivate tôi đi",
     };
     if (isLoading) return;
     const text = labels[key] || key;
@@ -235,8 +242,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first
     const localReply = tryLocalResponse(text);
     if (localReply) {
+      const botId = `bot-${Date.now() + 1}`;
+      lastSpokenIdRef.current = botId;
       addLocalMessage(text, localReply.text);
-      if (voiceEnabled) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
+      if (voiceEnabled && isOpen) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
