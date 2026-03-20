@@ -105,17 +105,21 @@ function buildExpenseResponse(expense: ParsedExpense): string {
 }
 
 // ── Helper: Non-streaming text response ──
+// Must match Vercel AI SDK Data Stream Protocol for useChat() hook
 function createTextResponse(text: string): Response {
-  // Format as Vercel AI SDK data stream protocol
-  // Simple format: return as a plain text assistant message
   const encoder = new TextEncoder();
+
+  // Properly escape for JSON string inside data stream
+  const escaped = JSON.stringify(text);
 
   const stream = new ReadableStream({
     start(controller) {
-      // Data stream protocol: text part
-      controller.enqueue(encoder.encode(`0:"${text.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"\n`));
-      // Finish message
-      controller.enqueue(encoder.encode(`d:{"finishReason":"stop"}\n`));
+      // Text part: 0:<json-string>\n
+      controller.enqueue(encoder.encode(`0:${escaped}\n`));
+      // Finish step: e:{...}\n
+      controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
+      // Finish message: d:{...}\n
+      controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
       controller.close();
     }
   });
@@ -127,3 +131,4 @@ function createTextResponse(text: string): Response {
     },
   });
 }
+

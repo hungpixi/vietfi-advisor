@@ -4,6 +4,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
+import { parseExpenseWithContext } from "@/lib/expense-parser";
+import {
+  detectIntent, getScriptedResponse, getExpenseRoast,
+  getComparison, needsAI,
+} from "@/lib/scripted-responses";
 
 /* ─── Vẹt Vàng Personality System ─── */
 const ROAST_RESPONSES: Record<string, string[]> = {
@@ -87,19 +92,37 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     if (!voiceEnabled || !window.speechSynthesis) return;
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
+
+    // Tìm giọng tiếng Việt — nếu không có thì KHÔNG đọc (tránh đọc bằng giọng EN)
+    const voices = window.speechSynthesis.getVoices();
+    const viVoice = voices.find(v => v.lang.startsWith("vi"));
+    if (!viVoice) {
+      // Retry 1 lần sau 500ms (voices có thể load chậm)
+      setTimeout(() => {
+        const retryVoices = window.speechSynthesis.getVoices();
+        const retryVi = retryVoices.find(v => v.lang.startsWith("vi"));
+        if (retryVi) {
+          doSpeak(text, retryVi);
+        }
+        // Nếu vẫn không có → skip, chỉ hiển thị text
+      }, 500);
+      return;
+    }
+
+    doSpeak(text, viVoice);
+  }, [voiceEnabled]);
+
+  const doSpeak = (text: string, voice: SpeechSynthesisVoice) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "vi-VN";
     utterance.rate = 1.1;
-    utterance.pitch = 1.3; // Higher pitch cho giọng vẹt
-    // Try to find Vietnamese voice
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find(v => v.lang.startsWith("vi"));
-    if (viVoice) utterance.voice = viVoice;
+    utterance.pitch = 1.3;
+    utterance.voice = voice;
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
     window.speechSynthesis.speak(utterance);
-  }, [voiceEnabled]);
+  };
 
   // Auto-speak new assistant messages
   useEffect(() => {
@@ -152,11 +175,61 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     recognition.start();
   };
 
+  // ── Client-side local-first handler ──
+  const tryLocalResponse = (text: string): string | null => {
+    // Step 1: Try expense parsing
+    const expense = parseExpenseWithContext(text);
+    if (expense && expense.confidence >= 0.5) {
+      const amt = expense.amount.toLocaleString('vi-VN');
+      const roast = getExpenseRoast(expense.category, expense.amount);
+      if (expense.amount >= 500_000) {
+        const compare = getComparison(expense.amount);
+        return getScriptedResponse('expense_high', { amount: `${amt}đ`, item: expense.item, compare }) || `${amt}đ cho ${expense.item}?! ${roast} 🦜`;
+      }
+      if (expense.amount <= 20_000) {
+        return getScriptedResponse('expense_low', { amount: `${amt}đ`, item: expense.item }) || `${amt}đ — tiết kiệm ghê! 🦜`;
+      }
+      return getScriptedResponse('expense_logged', { amount: `${amt}đ`, item: expense.item, category: expense.category, pot: expense.pot, roast, total: '...', remaining: '...' }) || `✅ Ghi ${amt}đ — ${expense.item}. ${roast} 🦜`;
+    }
+
+    // Step 2: Try scripted response
+    const intent = detectIntent(text);
+    if (intent !== 'unknown' && !needsAI(intent, text)) {
+      return getScriptedResponse(intent) || null;
+    }
+
+    return null; // → fallback to AI
+  };
+
+  const addLocalMessage = (userText: string, botText: string) => {
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      role: "user" as const,
+      parts: [{ type: "text" as const, text: userText }],
+    };
+    const botMsg = {
+      id: `bot-${Date.now() + 1}`,
+      role: "assistant" as const,
+      parts: [{ type: "text" as const, text: botText }],
+    };
+    setMessages((prev: any) => [...prev, userMsg, botMsg]);
+  };
+
   const submitForm = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading) return;
-    sendMessage({ text: input });
+    const text = input.trim();
     setInput("");
+
+    // Try local-first (0 API calls)
+    const localReply = tryLocalResponse(text);
+    if (localReply) {
+      addLocalMessage(text, localReply);
+      return;
+    }
+
+    // Fallback to AI
+    sendMessage({ text });
   };
 
   const handleQuickAction = (key: string) => {
@@ -167,7 +240,16 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       motivation: "Motivate tôi đi!",
     };
     if (isLoading) return;
-    sendMessage({ text: labels[key] || key });
+    const text = labels[key] || key;
+
+    // Try local-first
+    const localReply = tryLocalResponse(text);
+    if (localReply) {
+      addLocalMessage(text, localReply);
+      return;
+    }
+
+    sendMessage({ text });
   };
 
   return (
