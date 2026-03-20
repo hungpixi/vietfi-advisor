@@ -28,14 +28,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Deploy to Vercel (Preview)
-        if: github.event_name == 'pull_request'
-        run: |
-          preview_url=$(vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes)
-          echo "Preview URL: $preview_url"
-        
-      - name: Deploy to Vercel (Production)
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      - name: Deploy ALL to Vercel (Direct to Production)
         run: |
           prod_url=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes)
           echo "Production URL: $prod_url"
