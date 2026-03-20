@@ -86,43 +86,52 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSpokenIdRef = useRef<string>("");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ── TTS: Web Speech API ──
-  const speak = useCallback((text: string) => {
-    if (!voiceEnabled || !window.speechSynthesis) return;
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
+  // ── TTS: Edge TTS API (giọng Việt thật, miễn phí) ──
+  const speak = useCallback(async (text: string) => {
+    if (!voiceEnabled) return;
 
-    // Tìm giọng tiếng Việt — nếu không có thì KHÔNG đọc (tránh đọc bằng giọng EN)
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find(v => v.lang.startsWith("vi"));
-    if (!viVoice) {
-      // Retry 1 lần sau 500ms (voices có thể load chậm)
-      setTimeout(() => {
-        const retryVoices = window.speechSynthesis.getVoices();
-        const retryVi = retryVoices.find(v => v.lang.startsWith("vi"));
-        if (retryVi) {
-          doSpeak(text, retryVi);
-        }
-        // Nếu vẫn không có → skip, chỉ hiển thị text
-      }, 500);
-      return;
+    // Cancel audio đang phát
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
     }
 
-    doSpeak(text, viVoice);
-  }, [voiceEnabled]);
+    try {
+      setIsSpeaking(true);
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.slice(0, 500) }),
+      });
 
-  const doSpeak = (text: string, voice: SpeechSynthesisVoice) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "vi-VN";
-    utterance.rate = 1.1;
-    utterance.pitch = 1.3;
-    utterance.voice = voice;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  };
+      if (!res.ok) {
+        setIsSpeaking(false);
+        return;
+      }
+
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+
+      await audio.play();
+    } catch {
+      setIsSpeaking(false);
+    }
+  }, [voiceEnabled]);
 
   // Auto-speak new assistant messages
   useEffect(() => {
@@ -139,8 +148,9 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
   // Stop speaking when chat closes
   useEffect(() => {
-    if (!isOpen && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (!isOpen && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
       setIsSpeaking(false);
     }
   }, [isOpen]);
