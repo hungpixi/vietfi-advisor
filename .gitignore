@@ -67,3 +67,4 @@ context.md
 # Brain context (private)
 .brain/
 context.md
+.vercel

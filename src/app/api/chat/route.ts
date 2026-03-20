@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     if (intent !== 'unknown' && !needsAI(intent, userText)) {
       const response = getScriptedResponse(intent);
       if (response) {
-        return createTextResponse(response);
+        return createTextResponse(response.text);
       }
     }
 
@@ -81,7 +81,7 @@ function buildExpenseResponse(expense: ParsedExpense): string {
       item: expense.item,
       compare,
     });
-    return tmpl || `${amt}đ cho ${expense.item}?! ${roast} 🦜`;
+    return tmpl?.text || `${amt}đ cho ${expense.item}?! ${roast} 🦜`;
   }
 
   if (expense.amount <= 20_000) {
@@ -89,7 +89,7 @@ function buildExpenseResponse(expense: ParsedExpense): string {
       amount: `${amt}đ`,
       item: expense.item,
     });
-    return tmpl || `${amt}đ — tiết kiệm ghê! ${roast} 🦜`;
+    return tmpl?.text || `${amt}đ — tiết kiệm ghê! ${roast} 🦜`;
   }
 
   const tmpl = getScriptedResponse('expense_logged', {
@@ -101,7 +101,7 @@ function buildExpenseResponse(expense: ParsedExpense): string {
     total: '...',
     remaining: '...',
   });
-  return tmpl || `✅ Ghi ${amt}đ — ${expense.item} (${expense.category}). ${roast} 🦜`;
+  return tmpl?.text || `✅ Ghi ${amt}đ — ${expense.item} (${expense.category}). ${roast} 🦜`;
 }
 
 // ── Helper: Non-streaming text response ──

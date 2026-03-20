@@ -8,55 +8,15 @@ import { parseExpenseWithContext } from "@/lib/expense-parser";
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
   getComparison, needsAI,
+  type ScriptedResponseItem,
 } from "@/lib/scripted-responses";
 
-/* ─── Vẹt Vàng Personality System ─── */
-const ROAST_RESPONSES: Record<string, string[]> = {
-  greeting: [
-    "Ê! Mở app mà không ghi chi tiêu là phí 3 phút đời rồi đó nghen 🦜",
-    "Quay lại rồi hả? Ví tiền có kêu cứu gì không? 💸",
-    "Chào chủ tịch! Hôm nay tiêu gì vô lý chưa? 🤡",
-  ],
-  spending: [
-    "Trà sữa 50K/ngày = 1.5 triệu/tháng = 18 triệu/năm. Đủ mua iPhone đó chủ tịch 📱",
-    "Chi tiêu kiểu này thì cuối tháng ăn mì gói là đúng rồi 🍜",
-    "Tiêu nhiều hơn kiếm à? Genius move! 🧠",
-  ],
-  saving: [
-    "Gửi tiết kiệm 5.2%/năm, lạm phát 3.5%. Lãi thật = 1.7%. Giàu chắc kiếp sau 🐌",
-    "Tiết kiệm tốt lắm! Nhưng mà ít quá... thêm tí nữa nha 💰",
-    "Ô hay, biết tiết kiệm rồi à? Proud of you! Nhưng đừng có rút ra nghen 😤",
-  ],
-  debt: [
-    "Nợ thẻ tín dụng lãi 25%/năm mà chỉ trả minimum? Ngân hàng cảm ơn bạn 🏦❤️",
-    "Tín dụng đen 60%/năm? Thôi... im lặng 3 giây tưởng niệm ví tiền 🕯️",
-    "DTI 30% rồi đó, cẩn thận kẻo ngân hàng thấy hồ sơ mà chạy 🏃‍♂️",
-  ],
-  investment: [
-    "All-in crypto à? Bold move! Hoặc là lambo hoặc là xe đạp 🚲",
-    "VN-Index đang sợ hãi = cơ hội mua. Nhưng mà tiền đâu? 🤷",
-    "Đa dạng hóa danh mục đi, đừng bỏ trứng 1 rổ. Cơ bản vậy mà! 🥚",
-  ],
-  motivation: [
-    "Mày uống trà sữa 50K, Warren Buffett uống Coca 10K. Thấy chưa? 🥤",
-    "3 ngày không mở app rồi nha, tiền thì vẫn bay — giỏi thật đấy 🪂",
-    "Ghi chi tiêu đi, đừng để cuối tháng hỏi 'tiền đi đâu hết rồi?' 🕵️",
-  ],
-};
-
 const QUICK_ACTIONS = [
-  { label: "💸 Phân tích chi tiêu", key: "spending" },
-  { label: "🏦 Tư vấn nợ", key: "debt" },
-  { label: "📈 Tư vấn đầu tư", key: "investment" },
-  { label: "💪 Motivate tôi!", key: "motivation" },
+  { label: "💸 Phân tích chi tiêu", key: "ask_spending" },
+  { label: "🏦 Tư vấn nợ", key: "ask_debt" },
+  { label: "📈 Tư vấn đầu tư", key: "ask_invest" },
+  { label: "💪 Motivate tôi!", key: "motivate" },
 ];
-
-// Using Message from ai sdk
-
-function getRandomResponse(category: string): string {
-  const responses = ROAST_RESPONSES[category] || ROAST_RESPONSES.greeting;
-  return responses[Math.floor(Math.random() * responses.length)];
-}
 
 interface VetVangChatProps {
   isOpen: boolean;
@@ -68,12 +28,13 @@ interface VetVangChatProps {
 
 export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: VetVangChatProps) {
   const [input, setInput] = useState("");
+  const greetingItem = getScriptedResponse("greeting");
   const { messages, setMessages, sendMessage, status, error } = useChat({
     messages: [
       {
         id: "greet-1",
         role: "assistant",
-        parts: [{ type: "text", text: getRandomResponse("greeting") }],
+        parts: [{ type: "text", text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
       } as any
     ]
   });
@@ -89,7 +50,8 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── TTS: Edge TTS API (giọng Việt thật, miễn phí) ──
-  const speak = useCallback(async (text: string) => {
+  // ── TTS: Pre-generated audio cho static, API cho dynamic/AI ──
+  const speak = useCallback(async (text: string, audioId?: string) => {
     if (!voiceEnabled) return;
 
     // Cancel audio đang phát
@@ -100,16 +62,29 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
     try {
       setIsSpeaking(true);
+
+      // Thử pre-generated audio trước
+      if (audioId) {
+        const preGenUrl = `/audio/tts/${audioId}.mp3`;
+        const checkRes = await fetch(preGenUrl, { method: "HEAD" }).catch(() => null);
+        if (checkRes?.ok) {
+          const audio = new Audio(preGenUrl);
+          audioRef.current = audio;
+          audio.onended = () => { setIsSpeaking(false); audioRef.current = null; };
+          audio.onerror = () => { setIsSpeaking(false); audioRef.current = null; };
+          await audio.play();
+          return;
+        }
+      }
+
+      // Fallback: real-time Edge TTS API
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text.slice(0, 500) }),
       });
 
-      if (!res.ok) {
-        setIsSpeaking(false);
-        return;
-      }
+      if (!res.ok) { setIsSpeaking(false); return; }
 
       const audioBlob = await res.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -186,7 +161,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   };
 
   // ── Client-side local-first handler ──
-  const tryLocalResponse = (text: string): string | null => {
+  const tryLocalResponse = (text: string): ScriptedResponseItem | null => {
     // Step 1: Try expense parsing
     const expense = parseExpenseWithContext(text);
     if (expense && expense.confidence >= 0.5) {
@@ -194,12 +169,15 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       const roast = getExpenseRoast(expense.category, expense.amount);
       if (expense.amount >= 500_000) {
         const compare = getComparison(expense.amount);
-        return getScriptedResponse('expense_high', { amount: `${amt}đ`, item: expense.item, compare }) || `${amt}đ cho ${expense.item}?! ${roast} 🦜`;
+        return getScriptedResponse('expense_high', { amount: `${amt}đ`, item: expense.item, compare })
+          || { id: 'fallback', text: `${amt}đ cho ${expense.item}?! ${roast} 🦜`, ttsText: `${amt} đồng cho ${expense.item}? ${roast}` };
       }
       if (expense.amount <= 20_000) {
-        return getScriptedResponse('expense_low', { amount: `${amt}đ`, item: expense.item }) || `${amt}đ — tiết kiệm ghê! 🦜`;
+        return getScriptedResponse('expense_low', { amount: `${amt}đ`, item: expense.item })
+          || { id: 'fallback', text: `${amt}đ — tiết kiệm ghê! 🦜`, ttsText: `${amt} đồng, tiết kiệm ghê!` };
       }
-      return getScriptedResponse('expense_logged', { amount: `${amt}đ`, item: expense.item, category: expense.category, pot: expense.pot, roast, total: '...', remaining: '...' }) || `✅ Ghi ${amt}đ — ${expense.item}. ${roast} 🦜`;
+      return getScriptedResponse('expense_logged', { amount: `${amt}đ`, item: expense.item, category: expense.category, pot: expense.pot, roast, total: '...', remaining: '...' })
+        || { id: 'fallback', text: `✅ Ghi ${amt}đ — ${expense.item}. ${roast} 🦜`, ttsText: `Ghi ${amt} đồng, ${expense.item}. ${roast}` };
     }
 
     // Step 2: Try scripted response
@@ -234,7 +212,9 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first (0 API calls)
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      addLocalMessage(text, localReply);
+      addLocalMessage(text, localReply.text);
+      // Speak with pre-generated audio if available
+      if (voiceEnabled) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
@@ -255,7 +235,8 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      addLocalMessage(text, localReply);
+      addLocalMessage(text, localReply.text);
+      if (voiceEnabled) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
