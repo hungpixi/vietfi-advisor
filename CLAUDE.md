@@ -16,11 +16,10 @@ No existing CLAUDE.md, `.cursorrules`, or Copilot instructions found.
 npm run dev     # Start dev server → http://localhost:3000
 npm run build   # Production build
 npm run lint    # ESLint (eslint.config.mjs, ESLint 9)
+npm test        # Vitest unit tests (36 tests passing)
 ```
 
-**No test framework installed yet.** Phase 4 plans: `vitest` for unit tests, `playwright` for E2E.
-
-**No `.env.example` exists.** Required env vars (documented in README):
+**Required env vars** (documented in README):
 ```
 GEMINI_API_KEY=          # Required — Google AI API key
 GEMINI_BASE_URL=         # Optional — proxy URL (e.g. Cloudflare Worker)
@@ -43,6 +42,9 @@ CRON_SECRET=
 
 - **`POST /api/chat`** — Edge Runtime. Custom Data Stream Protocol for Gemini streaming. Requires `GEMINI_API_KEY`.
 - **`POST /api/tts`** — Node.js Runtime. Edge TTS (Microsoft, free Vietnamese voice `vi-VN-HoaiMyNeural`). Returns audio blob.
+- **`GET /api/market-data`** — Node.js Runtime. Returns live `MarketSnapshot`: VN-Index (cafef), Gold SJC (Yahoo Finance USD/oz → VND/tael), USD/VND (SBV homepage with open.er-api.com fallback). Auto-refreshes every 5 minutes.
+- **`POST /api/cron/market-data`** — Node.js Runtime. CRON_SECRET Bearer auth. Same data as `/api/market-data` for Vercel cron scheduling.
+- **`GET /api/market`** — *(deprecated alias, points to `/api/market-data`)*
 
 ### Data Persistence
 
@@ -81,8 +83,6 @@ All dashboard pages share `dashboard/layout.tsx` which mounts: sidebar navigatio
 
 ## Pending Work (by priority)
 
-1. **Hoàng's crawl data** — VN-Index, Gold SJC, USD/VND scraping via Cheerio. `src/app/api/market-data/` and cron routes in `vercel.json` are reserved.
-2. **Supabase migration** — wire up `src/lib/supabase.ts` to replace localStorage across all modules.
-3. **Vercel deploy** — `vercel.json` cron jobs ready (market-data at 8:30am weekdays, morning-brief at 11pm, macro-update monthly).
-4. **PWA** — service worker + offline support.
-5. **Tests** — install vitest + playwright and write tests before Phase 4 features.
+1. **Supabase migration** — wire up `src/lib/supabase.ts` to replace localStorage across all modules.
+2. **PWA** — service worker + offline support.
+3. **Playwright E2E tests** — vitest covers unit tests; playwright needed for critical user flows.

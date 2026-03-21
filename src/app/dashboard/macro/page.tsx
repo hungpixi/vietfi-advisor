@@ -1,81 +1,311 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, TrendingDown, Minus, Globe, Sparkles } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  BarChart3, TrendingUp, TrendingDown, Minus,
+  Globe, Sparkles, AlertCircle, RefreshCw, Clock,
+} from 'lucide-react';
+import type { MarketSnapshot } from '@/lib/market-data/crawler';
 
-/* ─── Data ─── */
-const macroIndicators = [
-  { name: "GDP Growth", value: "5.2%", change: "+0.3%", trend: "up" as const, desc: "Quý 4/2025 — tăng trưởng ổn định", emoji: "📈" },
-  { name: "CPI (YoY)", value: "3.31%", change: "-0.2%", trend: "down" as const, desc: "Tháng 3/2026 — lạm phát giảm nhẹ", emoji: "💰" },
-  { name: "Lãi suất kỳ hạn 12T", value: "5.2%", change: "0%", trend: "neutral" as const, desc: "Trung bình Top 10 ngân hàng", emoji: "🏦" },
-  { name: "USD/VND", value: "25,480", change: "+0.1%", trend: "up" as const, desc: "Ổn định, NHNN kiểm soát tốt", emoji: "💵" },
-  { name: "Foreign Net Buy", value: "-200 tỷ", change: "-50 tỷ", trend: "down" as const, desc: "Khối ngoại tiếp tục bán ròng", emoji: "🌍" },
-  { name: "Gold SJC", value: "93.5tr", change: "+1.2%", trend: "up" as const, desc: "Lập đỉnh mới — chênh thế giới 18tr", emoji: "🪙" },
-];
+// ── Formatting helpers ──────────────────────────────────────────────────────
 
-const aiCommentary = {
-  title: "Tóm tắt vĩ mô AI",
-  content: "Kinh tế Việt Nam Q1/2026 duy trì đà tăng trưởng 5.2%, lạm phát kiểm soát tốt dưới 3.5%. Tuy nhiên, rủi ro đến từ áp lực tỷ giá do Fed chậm giảm lãi suất và dòng tiền khối ngoại bán ròng liên tục. Vàng SJC tiếp tục tăng mạnh do yếu tố địa chính trị. Khuyến nghị: theo dõi sát chính sách tiền tệ NHNN trong Q2.",
-  sources: ["World Bank", "GSO", "NHNN", "Bloomberg"],
-};
+function fmtVnd(value: number): string {
+  return new Intl.NumberFormat('vi-VN').format(value);
+}
 
-const trendColor = { up: "#22C55E", down: "#EF4444", neutral: "#8B8D96" };
-const TrendIcons = { up: TrendingUp, down: TrendingDown, neutral: Minus };
+function fmtVnIndex(price: number): string {
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
+}
 
-const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
+function fmtGold(vnd: number): string {
+  const tr = vnd / 1_000_000;
+  return `${tr.toFixed(1)} tr`;
+}
+
+function fmtChangePct(pct: number): string {
+  const sign = pct >= 0 ? '+' : '';
+  return `${sign}${pct.toFixed(2)}%`;
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+
+function SkeletonCard({ delay = 0 }: { delay?: number }) {
+  return (
+    <motion.div
+      data-testid="macro-skeleton"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay, duration: 0.3 }}
+      className="glass-card p-5 animate-pulse"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-7 h-7 rounded bg-white/5" />
+        <div className="w-4 h-4 rounded bg-white/5" />
+      </div>
+      <div className="w-24 h-8 rounded bg-white/5 mb-2" />
+      <div className="w-16 h-4 rounded bg-white/5" />
+    </motion.div>
+  );
+}
+
+// ── Indicator card ─────────────────────────────────────────────────────────
+
+function IndicatorCard({
+  emoji,
+  label,
+  value,
+  sub,
+  trend,
+  delay = 0,
+}: {
+  emoji: string;
+  label: string;
+  value: string;
+  sub?: string;
+  trend: 'up' | 'down' | 'neutral';
+  delay?: number;
+}) {
+  const color = trend === 'up' ? '#22C55E' : trend === 'down' ? '#EF4444' : '#8B8D96';
+  const TIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      className="glass-card glass-card-hover p-5 transition-all cursor-default"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xl">{emoji}</span>
+        <TIcon className="w-4 h-4" style={{ color }} />
+      </div>
+      <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-white/60">{label}</span>
+        {trend !== 'neutral' && (
+          <span className="text-[10px] font-medium" style={{ color }}>
+            {trend === 'up' ? '+' : ''}{sub ?? ''}
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Error state ───────────────────────────────────────────────────────────
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      data-testid="macro-error"
+      className="glass-card p-6 text-center flex flex-col items-center gap-3"
+    >
+      <AlertCircle className="w-8 h-8 text-red-400" />
+      <p className="text-sm text-white/60">Không lấy được dữ liệu thị trường</p>
+      <p className="text-xs text-white/30">Có thể do mạng hoặc nguồn dữ liệu tạm thời ngoại tuyến</p>
+      <button
+        onClick={onRetry}
+        className="flex items-center gap-2 text-xs text-[#E6B84F] hover:text-[#f0c84f] transition-colors"
+      >
+        <RefreshCw className="w-3 h-3" />
+        Thử lại
+      </button>
+    </div>
+  );
+}
+
+// ── Source badge ──────────────────────────────────────────────────────────
+
+function SourceBadge({ label }: { label: string }) {
+  return (
+    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.03] text-white/25 border border-white/[0.05]">
+      {label}
+    </span>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────
+
+type FetchState = 'idle' | 'loading' | 'success' | 'error';
 
 export default function MacroPage() {
+  const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
+  const [fetchState, setFetchState] = useState<FetchState>('idle');
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setFetchState('loading');
+    setFetchError(null);
+    try {
+      const resp = await fetch('/api/market-data')
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      const data: MarketSnapshot = await resp.json()
+      setSnapshot(data)
+      setFetchState('success')
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Unknown error')
+      setFetchState('error')
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    if (fetchState !== 'success') return;
+    const id = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchState]);
+
+  const isLoading = fetchState === 'idle' || fetchState === 'loading';
+
+  // AI commentary derived from real data
+  const commentary = (() => {
+    if (!snapshot) return null;
+    const vn = snapshot.vnIndex;
+    const gold = snapshot.goldSjc;
+    const fx = snapshot.usdVnd;
+    const lines: string[] = [];
+
+    if (vn) {
+      const dir = vn.changePct >= 0 ? 'tăng' : 'giảm';
+      lines.push(
+        `VN-Index hiện ${fmtVnIndex(vn.price)} — ${dir} ${fmtChangePct(vn.changePct)} ` +
+        `(${fmtChangePct(Math.abs(vn.changePct))}) so với phiên trước.`
+      );
+    }
+    if (gold) {
+      const dir = gold.changePct >= 0 ? 'tăng' : 'giảm';
+      lines.push(
+        `Vàng SJC ${fmtGold(gold.goldVnd)}/lượng — ${dir} ${fmtChangePct(Math.abs(gold.changePct))} ` +
+        `(${gold.source}).`
+      );
+    }
+    if (fx) {
+      lines.push(`Tỷ giá USD/VND: ${fmtVnd(Math.round(fx.rate))} (${fx.source}).`);
+    }
+
+    return lines.join(' ');
+  })();
+
   return (
-    <motion.div initial="hidden" animate="visible" variants={stagger}>
-      <motion.div variants={fadeIn} className="mb-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      {/* Header */}
+      <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
           Xu hướng <span className="text-gradient">kinh tế</span>
         </h1>
-        <p className="text-[13px] text-white/40">
-          6 chỉ số kinh tế chính — dữ liệu từ World Bank, GSO, NHNN
-        </p>
-      </motion.div>
-
-      {/* Indicators Grid */}
-      <motion.div variants={stagger} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-        {macroIndicators.map((ind) => {
-          const TIcon = TrendIcons[ind.trend];
-          const color = trendColor[ind.trend];
-          return (
-            <motion.div key={ind.name} variants={fadeIn} className="glass-card glass-card-hover p-5 transition-all cursor-default">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xl">{ind.emoji}</span>
-                <TIcon className="w-4 h-4" style={{ color }} />
-              </div>
-              <div className="text-2xl font-bold text-white mb-0.5">{ind.value}</div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-white/60">{ind.name}</span>
-                <span className="text-[10px] font-medium" style={{ color }}>{ind.change}</span>
-              </div>
-              <p className="text-[10px] text-white/25 mt-1.5">{ind.desc}</p>
-            </motion.div>
-          );
-        })}
-      </motion.div>
-
-      {/* AI Commentary */}
-      <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-[#E6B84F]" />
-            <h2 className="text-sm font-semibold text-white">{aiCommentary.title}</h2>
-          </div>
-          <p className="text-[13px] text-white/50 leading-relaxed mb-3">{aiCommentary.content}</p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Globe className="w-3 h-3 text-white/20" />
-            {aiCommentary.sources.map((s) => (
-              <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.03] text-white/25 border border-white/[0.05]">{s}</span>
-            ))}
-          </div>
+        <div className="flex items-center gap-2">
+          <Clock className="w-3 h-3 text-white/25" />
+          <p className="text-[13px] text-white/40">
+            {snapshot
+              ? `Cập nhật: ${new Date(snapshot.fetchedAt).toLocaleTimeString('vi-VN')}`
+              : 'Đang tải dữ liệu...'}
+          </p>
+          {snapshot && (
+            <SourceBadge label={snapshot.vnIndex?.source ?? snapshot.goldSjc?.source ?? 'live'} />
+          )}
         </div>
-      </motion.div>
+      </div>
+
+      {/* Loading skeletons */}
+      {isLoading && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <SkeletonCard delay={0} />
+          <SkeletonCard delay={0.05} />
+          <SkeletonCard delay={0.1} />
+        </div>
+      )}
+
+      {/* Error state */}
+      {fetchState === 'error' && (
+        <ErrorState onRetry={fetchData} />
+      )}
+
+      {/* Live data */}
+      {fetchState === 'success' && snapshot && (
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+            {/* VN-Index */}
+            {snapshot.vnIndex ? (
+              <IndicatorCard
+                emoji="📊"
+                label="VN-Index"
+                value={fmtVnIndex(snapshot.vnIndex.price)}
+                sub={fmtChangePct(snapshot.vnIndex.changePct)}
+                trend={snapshot.vnIndex.changePct > 0 ? 'up' : snapshot.vnIndex.changePct < 0 ? 'down' : 'neutral'}
+                delay={0}
+              />
+            ) : (
+              <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-white/30" />
+                <span className="text-sm text-white/40">VN-Index: không có dữ liệu</span>
+              </div>
+            )}
+
+            {/* Gold SJC */}
+            {snapshot.goldSjc ? (
+              <IndicatorCard
+                emoji="🪙"
+                label="Vàng SJC"
+                value={`${fmtGold(snapshot.goldSjc.goldVnd)}/lượng`}
+                sub={fmtChangePct(snapshot.goldSjc.changePct)}
+                trend={snapshot.goldSjc.changePct > 0 ? 'up' : 'neutral'}
+                delay={0.05}
+              />
+            ) : (
+              <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-white/30" />
+                <span className="text-sm text-white/40">Vàng SJC: không có dữ liệu</span>
+              </div>
+            )}
+
+            {/* USD/VND */}
+            {snapshot.usdVnd ? (
+              <IndicatorCard
+                emoji="💵"
+                label="USD/VND"
+                value={fmtVnd(Math.round(snapshot.usdVnd.rate))}
+                trend="neutral"
+                delay={0.1}
+              />
+            ) : (
+              <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-white/30" />
+                <span className="text-sm text-white/40">USD/VND: không có dữ liệu</span>
+              </div>
+            )}
+          </div>
+
+          {/* AI Commentary */}
+          {commentary && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden"
+            >
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-[#E6B84F]" />
+                  <h2 className="text-sm font-semibold text-white">Tóm tắt thị trường</h2>
+                </div>
+                <p className="text-[13px] text-white/50 leading-relaxed mb-3">{commentary}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Globe className="w-3 h-3 text-white/20" />
+                  <SourceBadge label={snapshot.vnIndex?.source ?? 'cafef.vn'} />
+                  <SourceBadge label={snapshot.goldSjc?.source ?? 'Yahoo Finance'} />
+                  <SourceBadge label={snapshot.usdVnd?.source ?? 'SBV'} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </>
+      )}
     </motion.div>
   );
 }

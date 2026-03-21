@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import QuickSetupWizard from "@/components/onboarding/QuickSetupWizard";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
-import { getDailyQuests, addXP, getGamification, type DailyQuest } from "@/lib/gamification";
+import { getDailyQuests, type DailyQuest } from "@/lib/gamification";
+import type { MarketSnapshot } from '@/lib/market-data/crawler';
 import { cn } from "@/lib/utils";
 import { ConfettiCannon, QuestCompleteToast } from "@/components/gamification/Celebration";
 import { BadgeGrid } from "@/components/gamification/Badges";
@@ -32,17 +33,80 @@ import {
   Tooltip,
 } from "recharts";
 
-/* ─── Dummy data (sẽ thay bằng API thực) ─── */
-const fgScore = 38;
-const fgLabel = fgScore < 25 ? "Cực kỳ sợ hãi" : fgScore < 45 ? "Sợ hãi" : fgScore < 55 ? "Trung lập" : fgScore < 75 ? "Tham lam" : "Cực kỳ tham lam";
-const fgColor = fgScore < 25 ? "#FF1744" : fgScore < 45 ? "#FF5252" : fgScore < 55 ? "#E6B84F" : fgScore < 75 ? "#22C55E" : "#00C853";
+/* ─── Live market data (via /api/market-data) ─── */
+interface MarketCardData {
+  label: string;
+  value: string;
+  change: number;
+  icon: typeof TrendingUp;
+}
 
-const marketCards = [
-  { label: "VN-Index", value: "1,268.45", change: -0.32, icon: TrendingDown },
-  { label: "Vàng SJC", value: "93.5tr", change: 1.2, icon: TrendingUp },
-  { label: "USD/VND", value: "25,480", change: 0.1, icon: TrendingUp },
+const DEFAULT_MARKET_CARDS: MarketCardData[] = [
+  { label: "VN-Index", value: "--", change: 0, icon: TrendingDown },
+  { label: "Vàng SJC", value: "--", change: 0, icon: TrendingUp },
+  { label: "USD/VND", value: "--", change: 0, icon: TrendingUp },
   { label: "BTC", value: "$83,450", change: -0.8, icon: TrendingDown },
 ];
+
+function getFgLabel(score: number) {
+  if (score < 25) return "Cực kỳ sợ hãi";
+  if (score < 45) return "Sợ hãi";
+  if (score < 55) return "Trung lập";
+  if (score < 75) return "Tham lam";
+  return "Cực kỳ tham lam";
+}
+
+function getFgColor(score: number) {
+  if (score < 25) return "#FF1744";
+  if (score < 45) return "#FF5252";
+  if (score < 55) return "#E6B84F";
+  if (score < 75) return "#22C55E";
+  return "#00C853";
+}
+
+function calculateFgScore(snapshot: MarketSnapshot | null) {
+  if (!snapshot || !snapshot.vnIndex) return 38;
+  const vn = snapshot.vnIndex.changePct ?? 0;
+  const gold = snapshot.goldSjc?.changePct ?? 0;
+
+  const score = Math.round(Math.max(0, Math.min(100, 50 + vn * 1.5 - gold * 1.2)));
+  return score;
+}
+
+function buildMarketCards(snapshot: MarketSnapshot | null) {
+  if (!snapshot) return DEFAULT_MARKET_CARDS;
+
+  const vnIdx = snapshot.vnIndex;
+  const gold = snapshot.goldSjc;
+  const fx = snapshot.usdVnd;
+
+  return [
+    {
+      label: "VN-Index",
+      value: vnIdx ? vnIdx.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "--",
+      change: vnIdx?.changePct ?? 0,
+      icon: (vnIdx?.changePct ?? 0) >= 0 ? TrendingUp : TrendingDown,
+    },
+    {
+      label: "Vàng SJC",
+      value: gold ? `${(gold.goldVnd / 1_000_000).toFixed(1)}tr` : "--",
+      change: gold?.changePct ?? 0,
+      icon: (gold?.changePct ?? 0) >= 0 ? TrendingUp : TrendingDown,
+    },
+    {
+      label: "USD/VND",
+      value: fx ? fx.rate.toLocaleString("vi-VN") : "--",
+      change: 0,
+      icon: fx ? TrendingUp : TrendingDown,
+    },
+    {
+      label: "BTC",
+      value: "$83,450",
+      change: -0.8,
+      icon: TrendingDown,
+    },
+  ];
+}
 
 const portfolioData = [
   { name: "Tiết kiệm", value: 30, color: "#00E5FF" },
@@ -89,7 +153,7 @@ const stagger = {
 
 /* ═══════════════════ COMPONENTS ═══════════════════ */
 
-function MarketCard({ label, value, change, icon: Icon }: typeof marketCards[0]) {
+function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
   const positive = change >= 0;
   return (
     <motion.div variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all cursor-default">
@@ -105,8 +169,11 @@ function MarketCard({ label, value, change, icon: Icon }: typeof marketCards[0])
   );
 }
 
-function FGGauge() {
-  const angle = -90 + (fgScore / 100) * 180;
+function FGGauge({ score }: { score: number }) {
+  const fgLabel = getFgLabel(score);
+  const fgColor = getFgColor(score);
+  const angle = -90 + (score / 100) * 180;
+
   return (
     <motion.div variants={fadeIn} className="glass-card p-5">
       <div className="flex items-center justify-between mb-3">
@@ -132,7 +199,7 @@ function FGGauge() {
             </defs>
             <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeG)" strokeWidth="6" strokeLinecap="round" opacity="0.2" />
             <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeG)" strokeWidth="6" strokeLinecap="round"
-              strokeDasharray={`${(fgScore / 100) * 251} 251`} />
+              strokeDasharray={`${(score / 100) * 251} 251`} />
             <line x1="100" y1="100"
               x2={100 + 55 * Math.cos((angle * Math.PI) / 180)}
               y2={100 + 55 * Math.sin((angle * Math.PI) / 180)}
@@ -140,7 +207,7 @@ function FGGauge() {
             <circle cx="100" cy="100" r="4" fill={fgColor} />
           </svg>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-            <div className="text-3xl font-black" style={{ color: fgColor }}>{fgScore}</div>
+            <div className="text-3xl font-black" style={{ color: fgColor }}>{score}</div>
           </div>
         </div>
       </div>
@@ -411,10 +478,40 @@ function DailyQuestCard() {
 /* ═══════════════════ PAGE ═══════════════════ */
 export default function DashboardOverview() {
   const [showSetup, setShowSetup] = useState(false);
+  const [marketSnapshot, setMarketSnapshot] = useState<MarketSnapshot | null>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
+  const [marketError, setMarketError] = useState<string | null>(null);
+
+  const fetchMarketData = useCallback(async () => {
+    setMarketLoading(true);
+    setMarketError(null);
+    try {
+      const resp = await fetch('/api/market-data');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data: MarketSnapshot = await resp.json();
+      setMarketSnapshot(data);
+    } catch (err) {
+      setMarketError(err instanceof Error ? err.message : 'Lỗi không xác định');
+    } finally {
+      setMarketLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (isFirstTimeUser()) setShowSetup(true);
-  }, []);
+    fetchMarketData();
+  }, [fetchMarketData]);
+
+  useEffect(() => {
+    if (!marketSnapshot) return;
+    const timer = setInterval(() => {
+      fetchMarketData();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [marketSnapshot, fetchMarketData]);
+
+  const cards = buildMarketCards(marketSnapshot);
+  const fgScore = calculateFgScore(marketSnapshot);
 
   return (
     <>
@@ -467,8 +564,13 @@ export default function DashboardOverview() {
       </motion.div>
 
       {/* Market Metrics Grid */}
+      {marketError && (
+        <div className="glass-card p-3 mb-4 text-sm text-red-300">
+          Lỗi lấy dữ liệu thị trường: {marketError}
+        </div>
+      )}
       <motion.div variants={stagger} className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        {marketCards.map((card) => <MarketCard key={card.label} {...card} />)}
+        {cards.map((card) => <MarketCard key={card.label} {...card} />)}
       </motion.div>
 
       {/* Morning Brief — Full width */}
@@ -490,7 +592,7 @@ export default function DashboardOverview() {
 
       {/* 3-Column: F&G + Portfolio + Vẹt Vàng */}
       <motion.div variants={stagger} className="grid lg:grid-cols-3 gap-3 mb-4">
-        <FGGauge />
+        <FGGauge score={fgScore} />
         <PortfolioMini />
         <VetVangFloat />
       </motion.div>
