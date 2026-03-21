@@ -73,12 +73,16 @@ function calculateFgScore(snapshot: MarketSnapshot | null) {
   return score;
 }
 
-function buildMarketCards(snapshot: MarketSnapshot | null) {
+function buildMarketCards(snapshot: MarketSnapshot | null, prevSnapshot: MarketSnapshot | null) {
   if (!snapshot) return DEFAULT_MARKET_CARDS;
 
   const vnIdx = snapshot.vnIndex;
   const gold = snapshot.goldSjc;
   const fx = snapshot.usdVnd;
+
+  const usdChange = (fx && prevSnapshot?.usdVnd)
+    ? Number(((fx.rate - prevSnapshot.usdVnd.rate) / prevSnapshot.usdVnd.rate * 100).toFixed(2))
+    : 0;
 
   return [
     {
@@ -96,14 +100,14 @@ function buildMarketCards(snapshot: MarketSnapshot | null) {
     {
       label: "USD/VND",
       value: fx ? fx.rate.toLocaleString("vi-VN") : "--",
-      change: 0,
-      icon: fx ? TrendingUp : TrendingDown,
+      change: usdChange,
+      icon: fx ? (usdChange >= 0 ? TrendingUp : TrendingDown) : TrendingDown,
     },
     {
       label: "BTC",
-      value: "$83,450",
-      change: -0.8,
-      icon: TrendingDown,
+      value: snapshot.btc ? `$${snapshot.btc.priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--",
+      change: snapshot.btc ? snapshot.btc.changePct24h : 0,
+      icon: snapshot.btc ? (snapshot.btc.changePct24h >= 0 ? TrendingUp : TrendingDown) : TrendingDown,
     },
   ];
 }
@@ -117,7 +121,7 @@ const portfolioData = [
 ];
 
 const brief = {
-  date: "Hôm nay, 17/03/2026",
+  date: `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`,
   title: "Thị trường thận trọng — Vàng lập đỉnh",
   summary: "VN-Index giảm nhẹ 0.3% do áp lực chốt lời nhóm ngân hàng. Vàng SJC tiếp tục lập đỉnh mới 93.5tr. Fed giữ nguyên lãi suất. Khối ngoại bán ròng 200 tỷ.",
   takeaways: [
@@ -156,7 +160,7 @@ const stagger = {
 function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
   const positive = change >= 0;
   return (
-    <motion.div variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all cursor-default">
+    <motion.div variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all cursor-default" data-testid="market-card">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-mono uppercase tracking-wider text-white/30">{label}</span>
         <Icon className={`w-3.5 h-3.5 ${positive ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
@@ -321,6 +325,16 @@ function NewsFeed() {
   );
 }
 
+function MarketSkeletonCard() {
+  return (
+    <div data-testid="market-skeleton" className="glass-card p-4 animate-pulse">
+      <div className="h-4 bg-white/[0.1] rounded mb-3" />
+      <div className="h-8 bg-white/[0.1] rounded mb-2" />
+      <div className="h-3 bg-white/[0.1] rounded w-3/4" />
+    </div>
+  );
+}
+
 function VetVangFloat() {
   return (
     <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10">
@@ -479,8 +493,50 @@ function DailyQuestCard() {
 export default function DashboardOverview() {
   const [showSetup, setShowSetup] = useState(false);
   const [marketSnapshot, setMarketSnapshot] = useState<MarketSnapshot | null>(null);
+  const [prevMarketSnapshot, setPrevMarketSnapshot] = useState<MarketSnapshot | null>(null);
   const [marketLoading, setMarketLoading] = useState(false);
   const [marketError, setMarketError] = useState<string | null>(null);
+
+  const [netWorth, setNetWorth] = useState<number | null>(null);
+  const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
+  const [assetSummary, setAssetSummary] = useState<string>("Chưa có dữ liệu");
+
+  const safeParseArray = (key: string): unknown[] => {
+    if (typeof window === "undefined") return [];
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const fetchNetWorth = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const pots = safeParseArray("vietfi_pots");
+    const expenses = safeParseArray("vietfi_expenses");
+    const income = Number(localStorage.getItem("vietfi_income") ?? 0);
+
+    const potTotal = pots.reduce((sum: number, pot: unknown) => {
+      const alloc = typeof pot === "object" && pot !== null && "allocated" in pot ? Number((pot as any).allocated ?? 0) : 0;
+      return sum + (Number.isFinite(alloc) ? alloc : 0);
+    }, 0);
+    const spentTotal = expenses.reduce((sum: number, item: unknown) => {
+      const amt = typeof item === "object" && item !== null && "amount" in item ? Number((item as any).amount ?? 0) : 0;
+      return sum + (Number.isFinite(amt) ? amt : 0);
+    }, 0);
+    const net = potTotal - spentTotal;
+
+    const hasData = pots.length > 0 || expenses.length > 0;
+    const computedNetWorth = hasData ? net : income ? income * 2.5 : 0;
+
+    setNetWorth(computedNetWorth);
+    setMonthlyDeltaPct(income > 0 ? Math.round((net / income) * 100) : 0);
+    setAssetSummary(income > 0 ? `Đã lưu thu nhập: ${new Intl.NumberFormat("vi-VN").format(income)} ₫` : "Chưa có thu nhập");
+  }, []);
 
   const fetchMarketData = useCallback(async () => {
     setMarketLoading(true);
@@ -489,18 +545,29 @@ export default function DashboardOverview() {
       const resp = await fetch('/api/market-data');
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data: MarketSnapshot = await resp.json();
+      setPrevMarketSnapshot(marketSnapshot);
       setMarketSnapshot(data);
     } catch (err) {
       setMarketError(err instanceof Error ? err.message : 'Lỗi không xác định');
     } finally {
       setMarketLoading(false);
     }
-  }, []);
+  }, [marketSnapshot]);
 
   useEffect(() => {
     if (isFirstTimeUser()) setShowSetup(true);
     fetchMarketData();
-  }, [fetchMarketData]);
+    fetchNetWorth();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (["vietfi_pots", "vietfi_expenses", "vietfi_income"].includes(event.key ?? "")) {
+        fetchNetWorth();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [fetchMarketData, fetchNetWorth]);
 
   useEffect(() => {
     if (!marketSnapshot) return;
@@ -510,7 +577,7 @@ export default function DashboardOverview() {
     return () => clearInterval(timer);
   }, [marketSnapshot, fetchMarketData]);
 
-  const cards = buildMarketCards(marketSnapshot);
+  const cards = buildMarketCards(marketSnapshot, prevMarketSnapshot);
   const fgScore = calculateFgScore(marketSnapshot);
 
   return (
@@ -535,13 +602,19 @@ export default function DashboardOverview() {
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">TỔNG TÀI SẢN ƯỜC TÍNH</span>
                 <div className="flex items-baseline gap-3 mt-1">
-                  <span className="text-3xl md:text-4xl font-black text-white">156.2 <span className="text-lg text-white/40">triệu ₫</span></span>
-                  <span className="text-xs font-medium text-[#22C55E]">+2.3% tháng này</span>
+                  <span className="text-3xl md:text-4xl font-black text-white">
+                    {netWorth !== null ? `${(netWorth / 1_000_000).toFixed(1)} triệu` : "--"}
+                    <span className="text-lg text-white/40"> ₫</span>
+                  </span>
+                  <span className={`text-xs font-medium ${monthlyDeltaPct >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                    {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% tháng này
+                  </span>
                 </div>
+                <p className="text-[10px] text-white/40 mt-1">{assetSummary}</p>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-[10px] text-white/20 font-mono">
                 <Calendar className="w-3 h-3" />
-                17/03/2026
+                {new Date().toLocaleDateString("vi-VN")}
               </div>
             </div>
             {/* Quick Actions */}
@@ -569,9 +642,16 @@ export default function DashboardOverview() {
           Lỗi lấy dữ liệu thị trường: {marketError}
         </div>
       )}
-      <motion.div variants={stagger} className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        {cards.map((card) => <MarketCard key={card.label} {...card} />)}
-      </motion.div>
+
+      {marketLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          {Array.from({ length: 4 }).map((_, idx) => <MarketSkeletonCard key={idx} />)}
+        </div>
+      ) : (
+        <motion.div variants={stagger} className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          {cards.map((card) => <MarketCard key={card.label} {...card} />)}
+        </motion.div>
+      )}
 
       {/* Morning Brief — Full width */}
       <motion.div variants={stagger} className="mb-4">

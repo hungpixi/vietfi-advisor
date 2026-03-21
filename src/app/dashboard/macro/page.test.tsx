@@ -18,6 +18,12 @@ const successJson = {
   vnIndex: { price: 1647.81, change: -51.32, changePct: -3.02, volume: '961235269', source: 'cafef' },
   goldSjc: { goldUsd: 4574.9, goldVnd: 144114487, changePct: 0.5, source: 'yahoo' },
   usdVnd: { rate: 26127.87, source: 'open.er-api.com' },
+  macro: {
+    gdpYoY: [{ period: '2025', value: 8.02 }],
+    cpiYoY: [{ period: '2025', value: 3.31 }],
+    deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
+  },
+  aiSummary: 'Test summary',
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -51,6 +57,8 @@ describe('MacroPage', () => {
     })
 
     expect(screen.getByText('1,647.81')).toBeInTheDocument()
+    expect(screen.getByText('GDP YoY 2025')).toBeInTheDocument()
+    expect(screen.getByText('8.02%')).toBeInTheDocument()
   })
 
   it('displays Gold SJC price in VND', async () => {

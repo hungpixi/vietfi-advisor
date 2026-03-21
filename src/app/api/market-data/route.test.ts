@@ -19,6 +19,12 @@ describe('getMarketDataResponse', () => {
       },
       goldSjc: { goldUsd: 3000, goldVnd: 75000000, changePct: 0.5, source: 'test' },
       usdVnd: { rate: 25085, source: 'test' },
+      macro: {
+        gdpYoY: [{ period: '2025', value: 8.02 }],
+        cpiYoY: [{ period: '2025', value: 3.31 }],
+        deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
+      },
+      aiSummary: null,
     }
 
     const response = await getMarketDataResponse(() => Promise.resolve(snapshot))
@@ -44,6 +50,12 @@ describe('getMarketDataResponse', () => {
       vnIndex: { price: 1000, change: 5, changePct: 0.5, volume: '0', source: 'cached' },
       goldSjc: { goldUsd: 2000, goldVnd: 50000000, changePct: 0, source: 'cached' },
       usdVnd: { rate: 25000, source: 'cached' },
+      macro: {
+        gdpYoY: [{ period: '2025', value: 8.02 }],
+        cpiYoY: [{ period: '2025', value: 3.31 }],
+        deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
+      },
+      aiSummary: null,
     }
 
     // Seed cache
@@ -63,6 +75,12 @@ describe('getMarketDataResponse', () => {
       vnIndex: null,
       goldSjc: { goldUsd: 3000, goldVnd: 75000000, changePct: 0.5, source: 'test' },
       usdVnd: { rate: 25085, source: 'test' },
+      macro: {
+        gdpYoY: [{ period: '2025', value: 8.02 }],
+        cpiYoY: [{ period: '2025', value: 3.31 }],
+        deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
+      },
+      aiSummary: null,
     }
 
     const response = await getMarketDataResponse(() => Promise.resolve(snapshot))

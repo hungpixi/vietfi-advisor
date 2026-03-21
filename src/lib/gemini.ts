@@ -1,11 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+let genAI: GoogleGenerativeAI | null = null;
+if (GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+} else {
+  console.warn('GEMINI_API_KEY environment variable is not set; callGemini will throw at runtime')
 }
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 interface GeminiOptions {
   temperature?: number;
@@ -30,6 +31,10 @@ export async function callGemini(
   const requestOptions = process.env.GEMINI_BASE_URL
     ? { baseUrl: process.env.GEMINI_BASE_URL }
     : undefined;
+
+  if (!genAI) {
+    throw new Error('Gemini API key not configured')
+  }
 
   const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",

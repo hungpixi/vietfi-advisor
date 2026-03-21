@@ -58,14 +58,34 @@
   }
 
   .glass-card {
-    background: rgba(18, 18, 26, 0.7);
+    background: rgba(18, 18, 26, 0.8);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
+    color: rgba(240, 240, 245, 0.92);
+  }
+
+  .glass-card {
+    color: rgba(240, 240, 245, 0.92);
+  }
+
+  .glass-card p,
+  .glass-card span,
+  .glass-card a,
+  .glass-card h1,
+  .glass-card h2,
+  .glass-card h3,
+  .glass-card h4,
+  .glass-card h5,
+  .glass-card h6,
+  .glass-card button,
+  .glass-card label,
+  .glass-card li {
+    color: rgba(240, 240, 245, 0.92) !important;
   }
 
   .glass-card-hover:hover {
-    background: rgba(26, 26, 37, 0.8);
+    background: rgba(26, 26, 37, 0.9);
     border-color: rgba(255, 215, 0, 0.15);
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(255, 215, 0, 0.08);

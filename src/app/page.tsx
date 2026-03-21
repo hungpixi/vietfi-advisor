@@ -67,17 +67,17 @@ function Hero() {
         <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
           <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 mb-6">
             <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-            <span className="text-sm text-[#FFD700] font-medium">✨ Cố vấn Tài chính AI đầu tiên cho người Việt</span>
+            <span className="text-sm text-[#FFD700] font-medium">⚙️ Cố vấn tài chính thực tế, không hoa mĩ</span>
           </motion.div>
 
           <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl font-black mb-4 leading-[1.05] tracking-tight">
-            <span className="text-white">Tự do Tài chính</span><br />
-            <span className="text-gradient">bắt đầu từ hiểu mình</span>
+            <span className="text-white">Tự do tài chính</span><br />
+            <span className="text-gradient">bắt đầu từ kiểm soát thật</span>
           </motion.h1>
 
-          <motion.p variants={fadeInUp} className="text-lg text-[#8888AA] mb-6 max-w-lg leading-relaxed">
-            76% người Việt thiếu kiến thức tài chính. VietFi dùng 6 AI Agents chuyên biệt
-            để giúp bạn kiểm soát chi tiêu, thoát bẫy nợ, và đầu tư đúng thời điểm.
+          <motion.p variants={fadeInUp} className="text-lg text-[#D0D0E8] mb-6 max-w-lg leading-relaxed">
+            76% người Việt không biết tiền đang đi đâu. VietFi tạo lộ trình rõ ràng,
+            nhắc nhở đúng lúc, và ưu tiên trả nợ, tiết kiệm, đầu tư hợp lý.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-wrap gap-3 mb-8">
@@ -140,20 +140,20 @@ function Features() {
   const features = [
     {
       emoji: "💰", title: "Quỹ Chi tiêu", tag: "Bước 1: Kiểm soát",
-      desc: "Chia lương vào 6 \"lọ\" (ăn uống, nhà ở, giải trí...). Vượt lọ? Vẹt Vàng mổ liền. AI nhắc 4 lần/ngày — biến ghi chi tiêu thành thói quen.",
-      sub: "📈 Tích hợp Lạm phát cá nhân — lạm phát 3.31% là con số chung, VietFi tính lạm phát THỰC của riêng bạn",
+      desc: "Gọi là \"điều hành\" tiền - không phải khoe thành tích. Chia thu nhập vào quỹ thực tế, theo dõi chi tiêu theo ngày, tuần, tháng.",
+      sub: "📈 Cập nhật liên tục, không ảo. Biết ngay khoản nào cạn trước, khoản nào dư sâu.",
       color: "#22C55E",
     },
     {
-      emoji: "🏦", title: "Quỹ Nợ — Thoát bẫy Nợ", tag: "Bước 2: Thoát nợ",
-      desc: "Gom hết nợ SPayLater, thẻ tín dụng, vay MoMo vào 1 chỗ. Tính luôn lãi ẩn bạn không thấy. Vạch lộ trình: trả khoản nào trước?",
-      sub: "🧬 Tích hợp Tính cách đầu tư — 5 câu hỏi tình huống đo kiểu đầu tư, AI tư vấn chiến lược phù hợp",
+      emoji: "🏦", title: "Quỹ Nợ", tag: "Bước 2: Giảm gánh nặng",
+      desc: "Dồn nợ, chọn cách trả hiệu quả (Snowball/Avalanche), cộng lãi ẩn chớp kịp thời.",
+      sub: "🧠 Tư duy ngắn hạn + dài hạn: trả nợ không dừng cuộc sống, mà ưu tiên tương lai.",
       color: "#EF4444",
     },
     {
-      emoji: "🔍", title: "Phân Tích Thị Trường", tag: "Bước 3: Đầu tư",
-      desc: "\"Chứng khoán, Vàng, Crypto, BĐS — cái nào nên mua?\" AI phân tích sâu từng thị trường rồi nói thẳng: nên làm gì với số tiền của bạn.",
-      sub: "📊 Tích hợp Nhiệt kế thị trường + Bản tin Sáng AI (6h mỗi sáng)",
+      emoji: "🔍", title: "Phân Tích Thị Trường", tag: "Bước 3: Quyết định",
+      desc: "Tập trung vào dữ liệu thật, giả lập kịch bản rủi ro/thu lợi, chọn danh mục dựa trên bạn (không phải ID người khác).",
+      sub: "🔎 Tích hợp VN-Index, vàng, USD, CPI thực tế, và nhiệt kế tâm lý \"Fear & Greed\".",
       color: "#E6B84F",
     },
   ];

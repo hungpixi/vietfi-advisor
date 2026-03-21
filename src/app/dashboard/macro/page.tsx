@@ -18,6 +18,10 @@ function fmtVnIndex(price: number): string {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
 }
 
+function fmtPercent(value: number): string {
+  return `${value.toFixed(2)}%`;
+}
+
 function fmtGold(vnd: number): string {
   const tr = vnd / 1_000_000;
   return `${tr.toFixed(1)} tr`;
@@ -26,6 +30,11 @@ function fmtGold(vnd: number): string {
 function fmtChangePct(pct: number): string {
   const sign = pct >= 0 ? '+' : '';
   return `${sign}${pct.toFixed(2)}%`;
+}
+
+function fmtTrend(pct: number | null | undefined): string {
+  if (pct === null || pct === undefined || Number.isNaN(pct)) return 'N/A';
+  return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
 }
 
 // ── Skeleton ───────────────────────────────────────────────────────────────
@@ -56,6 +65,7 @@ function IndicatorCard({
   label,
   value,
   sub,
+  note,
   trend,
   delay = 0,
 }: {
@@ -63,6 +73,7 @@ function IndicatorCard({
   label: string;
   value: string;
   sub?: string;
+  note?: string;
   trend: 'up' | 'down' | 'neutral';
   delay?: number;
 }) {
@@ -89,6 +100,11 @@ function IndicatorCard({
           </span>
         )}
       </div>
+      {note ? (
+        <div className="text-[10px] text-white/50 mt-1">
+          {note}
+        </div>
+      ) : null}
     </motion.div>
   );
 }
@@ -162,32 +178,23 @@ export default function MacroPage() {
 
   const isLoading = fetchState === 'idle' || fetchState === 'loading';
 
-  // AI commentary derived from real data
-  const commentary = (() => {
+  // AI commentary derived from API/Ai data 
+  const commentary = snapshot?.aiSummary || (() => {
     if (!snapshot) return null;
-    const vn = snapshot.vnIndex;
-    const gold = snapshot.goldSjc;
-    const fx = snapshot.usdVnd;
     const lines: string[] = [];
-
-    if (vn) {
-      const dir = vn.changePct >= 0 ? 'tăng' : 'giảm';
-      lines.push(
-        `VN-Index hiện ${fmtVnIndex(vn.price)} — ${dir} ${fmtChangePct(vn.changePct)} ` +
-        `(${fmtChangePct(Math.abs(vn.changePct))}) so với phiên trước.`
-      );
+    if (snapshot.vnIndex) {
+      lines.push(`VN-Index ${fmtVnIndex(snapshot.vnIndex.price)} (${fmtTrend(snapshot.vnIndex.changePct)})`);
     }
-    if (gold) {
-      const dir = gold.changePct >= 0 ? 'tăng' : 'giảm';
-      lines.push(
-        `Vàng SJC ${fmtGold(gold.goldVnd)}/lượng — ${dir} ${fmtChangePct(Math.abs(gold.changePct))} ` +
-        `(${gold.source}).`
-      );
+    if (snapshot.goldSjc) {
+      lines.push(`Vàng SJC ${fmtGold(snapshot.goldSjc.goldVnd)}/lượng (${fmtTrend(snapshot.goldSjc.changePct)})`);
     }
-    if (fx) {
-      lines.push(`Tỷ giá USD/VND: ${fmtVnd(Math.round(fx.rate))} (${fx.source}).`);
+    if (snapshot.usdVnd) {
+      lines.push(`USD/VND ${fmtVnd(Math.round(snapshot.usdVnd.rate))}`);
     }
-
+    const gdp = snapshot.macro.gdpYoY.find((it) => it.period === '2025')?.value;
+    const cpi = snapshot.macro.cpiYoY.find((it) => it.period === '2025')?.value;
+    if (gdp !== undefined) lines.push(`GDP YoY 2025 ${fmtPercent(gdp)}`);
+    if (cpi !== undefined) lines.push(`CPI YoY 2025 ${fmtPercent(cpi)}`);
     return lines.join(' ');
   })();
 
@@ -253,7 +260,10 @@ export default function MacroPage() {
                 label="Vàng SJC"
                 value={`${fmtGold(snapshot.goldSjc.goldVnd)}/lượng`}
                 sub={fmtChangePct(snapshot.goldSjc.changePct)}
-                trend={snapshot.goldSjc.changePct > 0 ? 'up' : 'neutral'}
+                trend={
+                  snapshot.goldSjc.changePct > 0 ? 'up' :
+                  snapshot.goldSjc.changePct < 0 ? 'down' : 'neutral'
+                }
                 delay={0.05}
               />
             ) : (
@@ -270,6 +280,7 @@ export default function MacroPage() {
                 label="USD/VND"
                 value={fmtVnd(Math.round(snapshot.usdVnd.rate))}
                 trend="neutral"
+                note="Tỷ giá tham khảo; mỗi nơi mỗi khác"
                 delay={0.1}
               />
             ) : (
@@ -278,6 +289,41 @@ export default function MacroPage() {
                 <span className="text-sm text-white/40">USD/VND: không có dữ liệu</span>
               </div>
             )}
+          </div>
+
+          {/* Macro data cards (GDP, CPI, Lãi suất) */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+            <IndicatorCard
+              emoji="📈"
+              label="GDP YoY 2025"
+              value={snapshot.macro ? fmtPercent(snapshot.macro.gdpYoY[0]?.value ?? 0) : '--'}
+              trend="up"
+              delay={0}
+            />
+            <IndicatorCard
+              emoji="⚖️"
+              label="CPI YoY 2025"
+              value={snapshot.macro ? fmtPercent(snapshot.macro.cpiYoY[0]?.value ?? 0) : '--'}
+              trend="neutral"
+              delay={0.05}
+            />
+            <IndicatorCard
+              emoji="🏦"
+              label="Lãi suất 12T"
+              value={snapshot.macro ? `${snapshot.macro.deposit12m.min.toFixed(1)}% - ${snapshot.macro.deposit12m.max.toFixed(1)}%` : '--'}
+              trend="neutral"
+              delay={0.1}
+            />
+          </div>
+
+          {/* Trend summary current / biến động */}
+          <div className="glass-card p-4 mb-6">
+            <h3 className="text-xs text-white/70 uppercase tracking-widest mb-2">Biến động trend</h3>
+            <div className="flex flex-wrap gap-3 text-[12px] text-white/80">
+              <span>VN-Index: {snapshot.vnIndex ? fmtTrend(snapshot.vnIndex.changePct) : 'N/A'}</span>
+              <span>Vàng SJC: {snapshot.goldSjc ? fmtTrend(snapshot.goldSjc.changePct) : 'N/A'}</span>
+              <span>USD/VND: --</span>
+            </div>
           </div>
 
           {/* AI Commentary */}
