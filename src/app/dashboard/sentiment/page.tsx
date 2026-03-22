@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -9,11 +10,11 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 
-/* ─── Mock Data ─── */
-const fgScore = 29;
+/* ─── Fallback Data ─── */
+const fallbackFgScore = 29;
 
 /* Chart data — 30 ngày gần nhất */
-const chartData = [
+const fallbackChartData = [
   { date: "15/02", fg: 55, vnindex: 1280 }, { date: "17/02", fg: 52, vnindex: 1275 },
   { date: "19/02", fg: 48, vnindex: 1260 }, { date: "21/02", fg: 42, vnindex: 1248 },
   { date: "23/02", fg: 38, vnindex: 1235 }, { date: "25/02", fg: 35, vnindex: 1228 },
@@ -24,18 +25,18 @@ const chartData = [
   { date: "15/03", fg: 34, vnindex: 1215 }, { date: "17/03", fg: 29, vnindex: 1208 },
 ];
 
-const historicalValues = [
+const fallbackHistoricalValues = [
   { label: "Hôm qua", score: 34 },
   { label: "Tuần trước", score: 28 },
   { label: "Tháng trước", score: 11 },
 ];
 
-const yearlyExtremes = [
+const fallbackYearlyExtremes = [
   { label: "Cao hàng năm", date: "May 23, 2025", score: 76 },
   { label: "Thấp hàng năm", date: "Feb 06, 2026", score: 5 },
 ];
 
-const assetSentiments = [
+const fallbackAssetSentiments = [
   { asset: "Chứng khoán", score: 32, trend: "down" as const, news: "Khối ngoại bán ròng, VN-Index giảm nhẹ" },
   { asset: "Vàng", score: 72, trend: "up" as const, news: "Vàng lập đỉnh mới, nhu cầu trú ẩn tăng" },
   { asset: "Crypto", score: 48, trend: "neutral" as const, news: "BTC sideway, ETF dòng tiền vào ổn định" },
@@ -73,11 +74,102 @@ const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 export default function SentimentPage() {
-  const zone = getZone(fgScore);
-  const angle = -90 + (fgScore / 100) * 180;
+  const [fgScore, setFgScore] = useState(fallbackFgScore);
+  const [chartData, setChartData] = useState(fallbackChartData);
+  const [historicalValues, setHistoricalValues] = useState(fallbackHistoricalValues);
+  const [yearlyExtremes, setYearlyExtremes] = useState(fallbackYearlyExtremes);
+  const [assetSentiments, setAssetSentiments] = useState(fallbackAssetSentiments);
+
+  const zone = useMemo(() => getZone(fgScore), [fgScore]);
 
   // Duolingo XP: hoàn thành quest "check_market"
   useEffect(() => { addXP("check_market"); }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSentiment = async () => {
+      try {
+        const resp = await fetch("/api/news", { cache: "no-store" });
+        if (!resp.ok) throw new Error("Cannot load sentiment");
+
+        const payload = (await resp.json()) as {
+          metrics?: {
+            overallNewsScore: number;
+            history: Array<{ date: string; score: number }>;
+            assetSentiment: Array<{
+              asset: string;
+              score: number;
+              trend: "up" | "down" | "neutral";
+              news: string;
+            }>;
+          };
+        };
+
+        const metrics = payload.metrics;
+        if (!active || !metrics) return;
+
+        const safeScore = Math.max(0, Math.min(100, metrics.overallNewsScore ?? fallbackFgScore));
+        setFgScore(safeScore);
+
+        const history = metrics.history ?? [];
+        if (history.length > 0) {
+          const mergedChart = history.slice(-16).map((h, idx) => ({
+            date: new Date(h.date).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+            fg: h.score,
+            vnindex: fallbackChartData[idx % fallbackChartData.length]?.vnindex ?? 1200,
+          }));
+          setChartData(mergedChart);
+
+          const latest = history[history.length - 1];
+          const prev = history[history.length - 2] ?? latest;
+          const week = history[Math.max(0, history.length - 8)] ?? prev;
+          const month = history[0] ?? week;
+
+          setHistoricalValues([
+            { label: "Hôm qua", score: prev.score },
+            { label: "Tuần trước", score: week.score },
+            { label: "Tháng trước", score: month.score },
+          ]);
+
+          const maxItem = history.reduce((best, item) => (item.score > best.score ? item : best), history[0]);
+          const minItem = history.reduce((best, item) => (item.score < best.score ? item : best), history[0]);
+
+          setYearlyExtremes([
+            {
+              label: "Cao hàng năm",
+              date: new Date(maxItem.date).toLocaleDateString("vi-VN"),
+              score: maxItem.score,
+            },
+            {
+              label: "Thấp hàng năm",
+              date: new Date(minItem.date).toLocaleDateString("vi-VN"),
+              score: minItem.score,
+            },
+          ]);
+        }
+
+        if (metrics.assetSentiment?.length) {
+          setAssetSentiments(
+            metrics.assetSentiment.slice(0, 6).map((a) => ({
+              asset: a.asset,
+              score: a.score,
+              trend: a.trend,
+              news: a.news,
+            })),
+          );
+        }
+      } catch {
+        // Keep fallback values when API is unavailable.
+      }
+    };
+
+    loadSentiment();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>

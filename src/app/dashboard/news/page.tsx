@@ -1,11 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Newspaper, Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+type NewsSentiment = "bullish" | "bearish" | "neutral";
+
+interface NewsItem {
+  id: string | number;
+  title: string;
+  source: string;
+  time: string;
+  sentiment: NewsSentiment;
+  asset: string;
+  summary: string;
+  link?: string;
+}
 
 /* ─── Data ─── */
-const allNews = [
+const allNewsFallback: NewsItem[] = [
   { id: 1, title: "Vàng SJC lập đỉnh mới 93.5 triệu/lượng, chênh thế giới 18 triệu", source: "VnExpress", time: "2 giờ trước", sentiment: "bullish" as const, asset: "Vàng", summary: "Giá vàng SJC tiếp tục tăng mạnh do nhu cầu trú ẩn an toàn và chênh lệch giá thế giới thu hẹp chậm." },
   { id: 2, title: "Fed giữ nguyên lãi suất, Powell cảnh báo rủi ro lạm phát dai dẳng", source: "CafeF", time: "4 giờ trước", sentiment: "bearish" as const, asset: "Chứng khoán", summary: "Fed giữ lãi suất 5.25-5.5%, Powell phát biểu dovish nhưng cảnh báo lạm phát chưa về 2% mục tiêu." },
   { id: 3, title: "NHNN bơm 15.000 tỷ qua OMO, tỷ giá ổn định", source: "NHNN", time: "5 giờ trước", sentiment: "neutral" as const, asset: "Tiết kiệm", summary: "Ngân hàng Nhà nước tiếp tục bơm thanh khoản qua thị trường mở, hỗ trợ ổn định tỷ giá USD/VND." },
@@ -27,7 +40,69 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } }
 
 export default function NewsPage() {
   const [filter, setFilter] = useState("Tất cả");
-  const filtered = filter === "Tất cả" ? allNews : allNews.filter((n) => n.asset === filter);
+  const [items, setItems] = useState<NewsItem[]>(allNewsFallback);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadNews = async () => {
+      try {
+        const resp = await fetch("/api/news", { cache: "no-store" });
+        if (!resp.ok) throw new Error("Cannot load news");
+
+        const payload = (await resp.json()) as {
+          articles?: Array<{
+            id: string;
+            title: string;
+            source: string;
+            published: string;
+            sentiment: NewsSentiment;
+            asset: string;
+            summary: string;
+            link: string;
+          }>;
+        };
+
+        const mapped = (payload.articles ?? []).map((article) => ({
+          id: article.id,
+          title: article.title,
+          source: article.source,
+          time: new Date(article.published).toLocaleString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+          }),
+          sentiment: article.sentiment,
+          asset: article.asset,
+          summary: article.summary,
+          link: article.link,
+        }));
+
+        if (active && mapped.length > 0) {
+          setItems(mapped);
+        }
+      } catch {
+        if (active) {
+          setItems(allNewsFallback);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadNews();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filtered = useMemo(
+    () => (filter === "Tất cả" ? items : items.filter((n) => n.asset === filter)),
+    [filter, items],
+  );
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
@@ -36,9 +111,15 @@ export default function NewsPage() {
           Tin tức <span className="text-gradient">AI</span>
         </h1>
         <p className="text-[13px] text-white/40">
-          Tin tức tài chính + sentiment AI — cập nhật mỗi 6 giờ
+          Tin tức tài chính + sentiment AI — cập nhật từ RSS CafeF
         </p>
       </motion.div>
+
+      {loading && (
+        <motion.div variants={fadeIn} className="mb-4 text-[12px] text-white/40">
+          Đang tải tin tức mới...
+        </motion.div>
+      )}
 
       {/* Filters */}
       <motion.div variants={fadeIn} className="mb-6">
@@ -65,8 +146,19 @@ export default function NewsPage() {
         {filtered.map((news) => {
           const s = sentimentTag[news.sentiment];
           const SentIcon = s.icon;
+          const hasLink = Boolean(news.link);
           return (
-            <motion.div key={news.id} variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all cursor-pointer group">
+            <motion.div
+              key={news.id}
+              variants={fadeIn}
+              className="glass-card glass-card-hover p-4 transition-all cursor-pointer group block"
+              role={hasLink ? "link" : undefined}
+              onClick={() => {
+                if (hasLink) {
+                  window.open(news.link, "_blank", "noopener,noreferrer");
+                }
+              }}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
