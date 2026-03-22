@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus, Coffee, ShoppingBag, Car, Home, Gamepad2, Heart,
-  GraduationCap, TrendingUp, Trash2, X, Check, Edit3, Pencil, AlertTriangle,
+  GraduationCap, TrendingUp, Trash2, X, Check, Edit3, Pencil, AlertTriangle, Download,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
@@ -265,6 +265,18 @@ export default function BudgetPage() {
     setEditIncome(false);
   };
 
+  const exportCSV = () => {
+    const header = "Ngày,Lọ,Số tiền,Ghi chú\n";
+    const rows = expenses.map(e => {
+      const pot = pots.find(p => p.id === e.potId);
+      return `${new Date(e.date).toLocaleDateString("vi-VN")},${pot?.name || "Khác"},${e.amount},"${e.note}"`;
+    }).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `vietfi_chitieu_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   // Calculate
   const getSpent = (potId: string) => expenses.filter((e) => e.potId === potId).reduce((s, e) => s + e.amount, 0);
   const totalAllocated = pots.reduce((s, p) => s + p.allocated, 0);
@@ -283,10 +295,18 @@ export default function BudgetPage() {
             <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">Quỹ Chi tiêu</h1>
             <p className="text-[13px] text-white/40">Quản lý ngân sách theo &ldquo;lọ&rdquo; — click vào lọ để ghi chi tiêu</p>
           </div>
-          <button onClick={() => setShowAddPot(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
-            <Plus className="w-3.5 h-3.5" /> Thêm lọ
-          </button>
+          <div className="flex items-center gap-2">
+            {expenses.length > 0 && (
+              <button onClick={exportCSV}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] text-white/50 text-xs font-medium rounded-lg hover:bg-white/[0.08] transition-colors border border-white/[0.06]">
+                <Download className="w-3.5 h-3.5" /> Xuất CSV
+              </button>
+            )}
+            <button onClick={() => setShowAddPot(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
+              <Plus className="w-3.5 h-3.5" /> Thêm lọ
+            </button>
+          </div>
         </div>
       </motion.div>
 

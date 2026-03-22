@@ -597,17 +597,34 @@ export default function DashboardOverview() {
     setAssetSummary(income > 0 ? `Đã lưu thu nhập: ${new Intl.NumberFormat("vi-VN").format(income)} ₫` : "Chưa có thu nhập");
   }, []);
 
-  const fetchMarketData = useCallback(async () => {
+  const fetchMarketData = useCallback(async (isRetry = false) => {
     setMarketLoading(true);
     setMarketError(null);
     try {
-      const resp = await fetch('/api/market-data');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const resp = await fetch('/api/market-data', { signal: controller.signal });
+      clearTimeout(timeout);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data: MarketSnapshot = await resp.json();
       setPrevMarketSnapshot(marketSnapshot);
       setMarketSnapshot(data);
+      // Cache to localStorage for fallback
+      try { localStorage.setItem('vietfi_market_cache', JSON.stringify(data)); } catch {}
     } catch (err) {
+      // Try localStorage fallback
+      try {
+        const cached = localStorage.getItem('vietfi_market_cache');
+        if (cached) {
+          const data = JSON.parse(cached) as MarketSnapshot;
+          if (!marketSnapshot) setMarketSnapshot(data);
+        }
+      } catch {}
       setMarketError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      // Auto-retry after 30s if first attempt
+      if (!isRetry) {
+        setTimeout(() => fetchMarketData(true), 30000);
+      }
     } finally {
       setMarketLoading(false);
     }
@@ -652,6 +669,30 @@ export default function DashboardOverview() {
     }, 5 * 60 * 1000);
     return () => clearInterval(timer);
   }, [marketSnapshot, fetchMarketData]);
+
+  // Market volatility alert — check changePct thresholds
+  useEffect(() => {
+    if (!marketSnapshot || typeof window === "undefined") return;
+    if (Notification.permission !== "granted") return;
+    const alertedKey = `vietfi_alerted_${new Date().toDateString()}`;
+    if (sessionStorage.getItem(alertedKey)) return;
+
+    const alerts: string[] = [];
+    const vnPct = marketSnapshot.vnIndex?.changePct ?? 0;
+    const goldPct = marketSnapshot.goldSjc?.changePct ?? 0;
+
+    if (Math.abs(vnPct) >= 2) alerts.push(`VN-Index ${vnPct > 0 ? "+" : ""}${vnPct.toFixed(1)}%`);
+    if (Math.abs(goldPct) >= 3) alerts.push(`Vàng ${goldPct > 0 ? "+" : ""}${goldPct.toFixed(1)}%`);
+
+    if (alerts.length > 0) {
+      sessionStorage.setItem(alertedKey, "1");
+      new Notification("⚠️ VietFi — Biến động mạnh!", {
+        body: alerts.join(" | ") + "\nMở dashboard để xem chi tiết.",
+        icon: "/assets/icon-192.png",
+        tag: "market-volatility",
+      });
+    }
+  }, [marketSnapshot]);
 
   const cards = buildMarketCards(marketSnapshot, prevMarketSnapshot);
   const fgScore = calculateFgScore(marketSnapshot);

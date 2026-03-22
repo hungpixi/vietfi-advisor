@@ -16,6 +16,9 @@ const QUICK_ACTIONS = [
   { label: "🏦 Tư vấn nợ", key: "ask_debt" },
   { label: "📈 Tư vấn đầu tư", key: "ask_invest" },
   { label: "💪 Motivate tôi!", key: "motivate" },
+  { label: "🥇 Vàng vs CK?", key: "compare_gold_stock" },
+  { label: "💰 Lạm phát VN?", key: "ask_inflation" },
+  { label: "🏠 Nên mua nhà?", key: "ask_realestate" },
 ];
 
 interface VetVangChatProps {
@@ -252,6 +255,9 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       ask_debt: "tình hình nợ của tôi",
       ask_invest: "tư vấn đầu tư",
       motivate: "motivate tôi đi",
+      compare_gold_stock: "so sánh vàng và chứng khoán nên đầu tư cái nào",
+      ask_inflation: "lạm phát Việt Nam hiện tại bao nhiêu và ảnh hưởng gì",
+      ask_realestate: "với thu nhập của tôi có nên mua nhà không",
     };
     if (isLoading) return;
     const text = labels[key] || key;

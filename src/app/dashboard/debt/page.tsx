@@ -16,6 +16,7 @@ import {
   Trash2,
   Check,
   X,
+  Download,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { addXP } from "@/lib/gamification";
@@ -277,6 +278,18 @@ export default function DebtPage() {
     addXP("pay_debt"); // +50 XP
   };
 
+  const exportDebtCSV = () => {
+    const header = "Tên khoản nợ,Loại,Số tiền nợ (đ),Lãi suất (%/năm),Trả tối thiểu/tháng (đ)\n";
+    const rows = debts.map(d => {
+      const typeName = d.type === "credit_card" ? "Thẻ tín dụng" : d.type === "bnpl" ? "Trả sau" : d.type === "personal" ? "Vay người thân" : d.type === "mortgage" ? "Nhà/Phòng trọ" : d.type === "loan_shark" ? "Tín dụng đen" : "Khác";
+      return `"${d.name}",${typeName},${d.principal},${d.rate},${d.minPayment}`;
+    }).join("\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `vietfi_no_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
   const totalMonthlyMin = debts.reduce((s, d) => s + d.minPayment, 0);
   const dtiRatio = Math.round((totalMonthlyMin / monthlyIncome) * 100);
@@ -300,10 +313,18 @@ export default function DebtPage() {
             <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">Quỹ Nợ</h1>
             <p className="text-[13px] text-white/40">Hợp nhất tất cả khoản nợ — tìm lộ trình thoát nợ</p>
           </div>
-          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
-            <Plus className="w-3.5 h-3.5" />
-            Thêm nợ
-          </button>
+          <div className="flex items-center gap-2">
+            {debts.length > 0 && (
+              <button onClick={exportDebtCSV}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/[0.04] text-white/50 text-xs font-medium rounded-lg hover:bg-white/[0.08] transition-colors border border-white/[0.06]">
+                <Download className="w-3.5 h-3.5" /> Xuất CSV
+              </button>
+            )}
+            <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
+              <Plus className="w-3.5 h-3.5" />
+              Thêm nợ
+            </button>
+          </div>
         </div>
       </motion.div>
 

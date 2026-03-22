@@ -50,7 +50,7 @@
 | **STT** | Web Speech API (webkitSpeechRecognition) | Voice input tieng Viet |
 | **Auth** | Supabase Auth + `@supabase/ssr` | Email+Password, SSR cookie-based sessions |
 | **Database** | Supabase PostgreSQL | Auth users, RLS-ready |
-| **Testing** | Vitest (36 tests) | Parser, crawler, API, component |
+| **Testing** | Vitest (48+ tests) | Parser, crawler, API, component |
 | **Scraping** | Cheerio | Crawl VN-Index, Gold, USD/VND |
 | **Deploy** | Vercel | Production live |
 
@@ -179,7 +179,7 @@ vietfi-advisor/
 - Personality: xung tao-may, roast chi tieu, <50 chu per response
 - Voice Input: nhan dien giong noi tieng Viet (Web Speech API)
 - Voice Output: TTS tu dong doc cau tra loi (pitch 1.3 cho giong vet)
-- 4 Quick Actions: Phan tich chi tieu, Tu van no, Dau tu, Motivate
+- 7 Quick Actions: Chi tiêu, Nợ, Đầu tư, Motivate, Vàng vs CK, Lạm phát, Mua nhà
 - Mascot thay doi anh theo Level (5 levels)
 - 3-tier fallback: Regex parser → Scripted responses → Gemini
 
@@ -203,12 +203,31 @@ vietfi-advisor/
 - Bang xep hang (1 user + 14 bot AI)
 - Micro-learning: 12+ bai hoc 60s + quiz
 
+### 5. PWA + Push Notifications
+- **Service Worker** — offline cache trang chinh, stale-while-revalidate
+- **Manifest.json** — "Add to Home Screen" cho mobile
+- **Push Notifications** — canh bao khi VN-Index ±2%, Vang ±3%
+- **Permission banner** — UX moi khi lan dau vao dashboard
+
+### 6. Live News + Morning Brief AI
+- **Tin tuc AI** — crawl CafeF RSS, Gemini AI sentiment analysis (Tich cuc/Tieu cuc/Trung lap)
+- **Morning Brief** — tu sinh brief moi ngay tu live articles
+- **Auto-refresh** — cache 5 phut, fallback offline
+
+### 7. Supabase Sync + Google OAuth
+- **Google OAuth** — dang nhap nhanh 1-click
+- **Budget/Debt sync** — background sync localStorage ↔ Supabase
+- **RLS policies** — bao mat du lieu theo user
+
+### 8. Data Export
+- **CSV Export** — xuat chi tieu + khoan no ra CSV (BOM cho Excel Viet hoa)
+
 ---
 
 ## Ky thuat Test
 
 ```bash
-npm test       # Vitest — 36 tests, 4 files
+npm test       # Vitest — 48+ tests, 6+ files
 ```
 
 | File | Tests | Muc do |
@@ -230,7 +249,7 @@ npm test       # Vitest — 36 tests, 4 files
 | POST | `/api/cron/market-data` | Cron job (Vercel Cron, CRON_SECRET) | ✅ Hoat dong |
 | GET | `/auth/confirm` | Email OTP confirmation | ✅ Hoat dong |
 | POST | `/auth/signout` | Sign out user | ✅ Hoat dong |
-| GET | `/api/news` | Tin tuc AI tom tat | Chua implement |
+| GET | `/api/news` | Tin tuc AI + sentiment analysis | ✅ Hoat dong |
 
 ---
 
@@ -275,18 +294,57 @@ npm test       # Vitest — 36 tests, 4 files
 
 ---
 
+## Kien Truc He Thong
+
+```mermaid
+graph TD
+    A["User (Mobile/Desktop)"] --> B["Next.js 16 + React 19"]
+    B --> C["Vercel Edge Runtime"]
+    C --> D["Gemini 2.0 Flash"]
+    C --> E["Supabase Auth + DB"]
+    C --> F["Market Crawlers"]
+    F --> F1["CafeF API (VN-Index)"]
+    F --> F2["Yahoo Finance (Gold)"]
+    F --> F3["SBV (USD/VND)"]
+    F --> F4["CafeF RSS (News)"]
+    B --> G["Service Worker"]
+    G --> H["Offline Cache"]
+    G --> I["Push Notifications"]
+    E --> J["PostgreSQL + RLS"]
+    B --> K["localStorage (Guest)"]
+```
+
+## Quá Trình Tư Duy
+
+**Tại sao chọn Next.js 16 + Vercel?**
+- App Router cho SSR/SSG hybrid → SEO tốt, load nhanh
+- Edge Runtime → latency thấp cho Gemini streaming
+- Vercel Cron → free scheduled crawling
+
+**Tại sao Gamification?**
+- Gen Z Vietnam quen với Duolingo/game → áp dụng streak + XP vào tài chính
+- Leaderboard tạo social pressure → duy trì thói quen ghi chi tiêu
+
+**Tại sao local-first + Supabase hybrid?**
+- Guest users dùng localStorage → 0 friction, không cần đăng ký
+- Logged-in users sync lên Supabase → data an toàn, multi-device
+
+**Khác biệt so với app tài chính khác?**
+- **Vẹt Vàng AI** — chatbot xéo xắc, xưng tao-mày → gần gũi GenZ VN
+- **Live market data** — crawl real-time, không dùng API trả phí
+- **Push notifications** — cảnh báo biến động mạnh, không spam
+
 ## Huong Di Tuong Lai
 
-1. ~~**Supabase Auth**~~ ✅ Done — Email+Password, SSR sessions
-2. ~~**Live Market Data**~~ ✅ Done — VN-Index, Gold SJC, USD/VND
-3. **Supabase Database** — DB schema, migrate localStorage, RLS policies
-4. **News AI** — crawl + Gemini summarize tin tai chinh
-5. **Google OAuth** — them social login (Supabase Auth da ho tro)
-6. **Push Notifications** — nhac nho ghi chi tieu
-7. **Voice Clone** — giong Vet Vang clone tu ZinZin (VieNeu-TTS)
-8. **Mascot Animation** — Rive/Spine animation cho Vet Vang
-9. **Mobile App** — React Native hoac PWA
-10. **AI Insights** — phan tich chi tieu tu dong, du bao cashflow
+1. ✅ ~~Supabase Auth~~ + ~~Google OAuth~~
+2. ✅ ~~Live Market Data~~ + ~~News AI~~
+3. ✅ ~~PWA + Push Notifications~~
+4. ✅ ~~CSV Export~~
+5. **Voice Clone** — giong Vet Vang clone tu ZinZin (VieNeu-TTS)
+6. **Mascot Animation** — Rive animation cho Vet Vang
+7. **AI Insights** — phan tich chi tieu tu dong, du bao cashflow
+8. **Live Leaderboard** — connect Supabase gamification table
+9. **Playwright E2E Tests** — cover critical user flows
 
 ---
 
@@ -296,3 +354,34 @@ npm test       # Vitest — 36 tests, 4 files
 - **Hoang** — Data Crawling, Market APIs, News Scraping
 
 > Du an thi **WDA 2026** — De tai Tai chinh ca nhan
+
+---
+
+## 🤖 Bạn muốn ứng dụng AI tương tự?
+
+| Bạn cần | Chúng tôi đã làm ✅ |
+|---------|---------------------|
+| AI Chatbot cho app | Vẹt Vàng — Gemini streaming + TTS + STT |
+| Dashboard tài chính | 11 trang, real-time market data, gamification |
+| Crawl dữ liệu live | VN-Index, Gold, USD/VND, News RSS |
+| PWA + Push Notifications | Service Worker + Web Push |
+| Auth + Database | Supabase Auth + PostgreSQL + RLS |
+
+<p align="center">
+  <a href="https://comarai.com"><img src="https://img.shields.io/badge/🚀_Yêu_cầu_Demo-comarai.com-E6B84F?style=for-the-badge" alt="Demo"/></a>
+  <a href="https://zalo.me/0834422439"><img src="https://img.shields.io/badge/💬_Zalo-0834422439-0068FF?style=for-the-badge" alt="Zalo"/></a>
+  <a href="mailto:hungphamphunguyen@gmail.com"><img src="https://img.shields.io/badge/📧_Email-Contact-EA4335?style=for-the-badge" alt="Email"/></a>
+</p>
+
+<p align="center">
+  <b>Comarai</b> — Companion for Marketing & AI Automation Agency<br/>
+  4 nhân viên AI chạy 24/7: 🤝 Em Sale • ✍️ Em Content • 📊 Em Marketing • 📈 Em Trade<br/>
+  <i>"Bạn bận kiếm tiền, để AI lo phần còn lại."</i>
+</p>
+
+<p align="center">
+  <a href="https://github.com/hungpixi">GitHub</a> •
+  <a href="https://comarai.com">Website</a> •
+  <a href="https://zalo.me/0834422439">Zalo</a> •
+  <a href="mailto:hungphamphunguyen@gmail.com">Email</a>
+</p>
