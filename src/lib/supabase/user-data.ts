@@ -284,3 +284,41 @@ export async function saveIncome(income: number): Promise<void> {
     // silent
   }
 }
+
+// ── Debts ─────────────────────────────────────────────────────────────
+
+export interface DebtItem {
+  name: string;
+  type: string;
+  principal: number;
+  rate: number;
+  min_payment: number;
+  icon: string;
+  color: string;
+}
+
+export async function saveDebts(debts: DebtItem[]): Promise<void> {
+  const userId = await getAuthUserId();
+  if (!userId) return;
+
+  try {
+    const supabase = createClient();
+    await supabase.from("debts").delete().eq("user_id", userId);
+    if (debts.length > 0) {
+      await supabase.from("debts").insert(
+        debts.map((d) => ({
+          user_id: userId,
+          name: d.name,
+          type: d.type,
+          principal: d.principal,
+          rate: d.rate,
+          min_payment: d.min_payment,
+          icon: d.icon,
+          color: d.color,
+        }))
+      );
+    }
+  } catch {
+    // silent
+  }
+}

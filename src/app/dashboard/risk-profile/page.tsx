@@ -14,6 +14,23 @@ export default function RiskProfilePage() {
   const [step, setStep] = useState(0); // 0-4 quiz, 5 = result
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<RiskResult | null>(null);
+  const [shared, setShared] = useState(false);
+
+  const shareResult = async () => {
+    if (!result) return;
+    const text = `🦜 VietFi Advisor vừa phân tích tôi là "${result.label}" ${result.emoji}\nScore: ${result.score}/15\n\nBạn thuộc tuýp nhà đầu tư nào? Làm quiz tại:`;
+    const url = typeof window !== "undefined" ? window.location.origin + "/dashboard/risk-profile" : "";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Tính cách đầu tư của tôi — VietFi", text, url });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
 
   const handleAnswer = (value: number) => {
     const newAnswers = [...answers, value];
@@ -125,9 +142,9 @@ export default function RiskProfilePage() {
                 <button onClick={restart} className="px-4 py-2 text-xs font-medium text-white/50 bg-white/[0.04] rounded-lg hover:bg-white/[0.08] transition-colors">
                   Làm lại
                 </button>
-                <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-gradient-primary text-black rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
+                <button onClick={shareResult} className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-gradient-primary text-black rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
                   <Share2 className="w-3.5 h-3.5" />
-                  Chia sẻ
+                  {shared ? "✅ Đã copy!" : "Chia sẻ"}
                 </button>
               </div>
 

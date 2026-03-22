@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { addXP } from "@/lib/gamification";
+import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
 
 /* ─── Types ─── */
 interface Debt {
@@ -250,10 +251,17 @@ export default function DebtPage() {
     }
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage + Supabase sync
   const saveDebts = useCallback((newDebts: Debt[]) => {
     setDebts(newDebts);
     localStorage.setItem("vietfi_debts", JSON.stringify(newDebts));
+    // Background Supabase sync
+    if (getCachedUserId()) {
+      syncDebtsToSupabase(newDebts.map(d => ({
+        name: d.name, type: d.type, principal: d.principal,
+        rate: d.rate, min_payment: d.minPayment, icon: d.icon, color: d.color,
+      }))).catch(() => {});
+    }
   }, []);
 
   const addDebt = (d: Omit<Debt, "id">) => {

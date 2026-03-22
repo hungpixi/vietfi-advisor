@@ -8,6 +8,7 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
+import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
 
 /* ─── Types ─── */
 interface Expense {
@@ -221,11 +222,15 @@ export default function BudgetPage() {
     if (savedIncome) setIncome(parseInt(savedIncome));
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage + Supabase sync
   const save = useCallback((p: Pot[], e: Expense[], i: number) => {
     localStorage.setItem("vietfi_pots", JSON.stringify(p));
     localStorage.setItem("vietfi_expenses", JSON.stringify(e));
     localStorage.setItem("vietfi_income", i.toString());
+    // Background Supabase sync
+    if (getCachedUserId()) {
+      saveBudgetPots(p).catch(() => {});
+    }
   }, []);
 
   const addPot = (pot: Pot) => {
@@ -247,6 +252,11 @@ export default function BudgetPage() {
     setExpenses(newExpenses);
     save(pots, newExpenses, income);
     addXP("log_expense"); // +10 XP
+    // Supabase sync
+    if (getCachedUserId()) {
+      const pot = pots.find(p => p.id === expense.potId);
+      addExpense({ amount: expense.amount, category: pot?.name || "Khác", note: expense.note }).catch(() => {});
+    }
   };
 
   const updateIncome = (val: number) => {

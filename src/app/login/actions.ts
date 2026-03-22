@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export async function login(formData: FormData) {
@@ -38,4 +39,25 @@ export async function signup(formData: FormData) {
 
   revalidatePath("/", "layout");
   redirect("/login?message=" + encodeURIComponent("Kiểm tra email để xác nhận tài khoản!"));
+}
+
+export async function loginWithGoogle() {
+  const supabase = await createClient();
+  const headerList = await headers();
+  const origin = headerList.get("origin") || "http://localhost:3000";
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/confirm`,
+    },
+  });
+
+  if (error) {
+    redirect("/login?error=" + encodeURIComponent(error.message));
+  }
+
+  if (data.url) {
+    redirect(data.url);
+  }
 }
