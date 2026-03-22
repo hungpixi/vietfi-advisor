@@ -53,14 +53,47 @@ function formatVND(n: number) {
   return n.toString();
 }
 
+interface BudgetPot {
+  id: string;
+  name: string;
+  iconKey: string;
+  allocated: number;
+  color: string;
+}
+
+const FAST_STEP = 100000; // 0.1tr
+
+function buildPreset4Pots(income: number): BudgetPot[] {
+  const foodShopping = Math.round(income * 0.35);
+  const transportHousing = Math.round(income * 0.33);
+  const funHealth = Math.round(income * 0.15);
+  const studySaving = income - foodShopping - transportHousing - funHealth;
+  return [
+    { id: "g1", name: "Ăn + Shopping", iconKey: "Coffee", allocated: foodShopping, color: "#FF6B35" },
+    { id: "g2", name: "Đi lại + Nhà", iconKey: "Home", allocated: transportHousing, color: "#22C55E" },
+    { id: "g3", name: "Giải trí + Sức khỏe", iconKey: "Heart", allocated: funHealth, color: "#E6B84F" },
+    { id: "g4", name: "Học + Tiết kiệm", iconKey: "GraduationCap", allocated: studySaving, color: "#3ECF8E" },
+  ];
+}
+
 export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps) {
   const [step, setStep] = useState(0); // 0=income, 1=debt, 2=risk, 3=done
   const [income, setIncome] = useState(0);
   const [customIncome, setCustomIncome] = useState("");
+  const [pots, setPots] = useState<BudgetPot[]>(() => generateBudgetPots(12000000));
+  const [potMode, setPotMode] = useState<"8" | "4">("8");
+  const [activePotId, setActivePotId] = useState<string>("1");
+  const [stepIncrement, setStepIncrement] = useState<number>(FAST_STEP);
   const [hasDebt, setHasDebt] = useState<boolean | null>(null);
   const [riskAnswers, setRiskAnswers] = useState<number[]>([]);
 
   const totalSteps = 3;
+
+  const selectedIncome = income || Number(customIncome) || 0;
+  const totalAllocated = pots.reduce((s, p) => s + p.allocated, 0);
+  const remaining = selectedIncome - totalAllocated;
+  const allocationValid = selectedIncome > 0 && Math.abs(remaining) <= 1;
+  const activePot = pots.find((p) => p.id === activePotId) || pots[0];
 
   // Auto-redirect after celebration
   useEffect(() => {
@@ -70,8 +103,37 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     }
   }, [step, onComplete]);
 
+  const applyPotsByMode = (nextIncome: number, nextMode: "8" | "4") => {
+    if (!nextIncome) return;
+    const nextPots = nextMode === "8" ? generateBudgetPots(nextIncome) : buildPreset4Pots(nextIncome);
+    setPots(nextPots);
+    setActivePotId(nextPots[0]?.id ?? "");
+  };
+
+  const handleIncomeChip = (chipValue: number) => {
+    setIncome(chipValue);
+    setCustomIncome("");
+    applyPotsByMode(chipValue, potMode);
+  };
+
+  const handleCustomIncome = (raw: string) => {
+    setCustomIncome(raw);
+    setIncome(0);
+    const parsed = Number(raw);
+    if (parsed > 0) {
+      applyPotsByMode(parsed, potMode);
+    }
+  };
+
+  const handlePotModeChange = (mode: "8" | "4") => {
+    setPotMode(mode);
+    const nextIncome = selectedIncome || 12000000;
+    applyPotsByMode(nextIncome, mode);
+  };
+
   const handleIncomeNext = () => {
-    const finalIncome = income || Number(customIncome) || 12000000;
+    if (!selectedIncome) return;
+    const finalIncome = selectedIncome;
     setIncome(finalIncome);
     setStep(1);
   };
@@ -80,10 +142,70 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     setStep(2);
   };
 
+  const handlePotChange = (id: string, value: number) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed) || parsed < 0) return;
+    setPots((prev) => prev.map((pot) => (pot.id === id ? { ...pot, allocated: parsed } : pot)));
+  };
+
+  const adjustPot = (id: string, delta: number) => {
+    setPots((prev) =>
+      prev.map((pot) => {
+        if (pot.id !== id) return pot;
+        const next = Math.max(0, pot.allocated + delta);
+        return { ...pot, allocated: next };
+      })
+    );
+  };
+
+  const fillRemaining = () => {
+    if (!activePot) return;
+    setPots((prev) => {
+      const total = prev.reduce((sum, p) => sum + p.allocated, 0);
+      const rem = selectedIncome - total;
+      return prev.map((pot) => {
+        if (pot.id !== activePot.id) return pot;
+        return { ...pot, allocated: Math.max(0, pot.allocated + rem) };
+      });
+    });
+  };
+
+  const autoFitTotal = () => {
+    setPots((prev) => {
+      if (!prev.length) return prev;
+      const prioritizedIds = [activePot?.id, ...prev.map((p) => p.id)].filter((id): id is string => Boolean(id));
+      let rem = selectedIncome - prev.reduce((sum, p) => sum + p.allocated, 0);
+      if (rem === 0) return prev;
+
+      const next = [...prev];
+
+      // Reduce first when over budget; add to active first when under budget.
+      for (const id of prioritizedIds) {
+        if (rem === 0) break;
+        const idx = next.findIndex((p) => p.id === id);
+        if (idx < 0) continue;
+
+        if (rem > 0) {
+          next[idx] = { ...next[idx], allocated: next[idx].allocated + rem };
+          rem = 0;
+          break;
+        }
+
+        const canTake = Math.min(next[idx].allocated, Math.abs(rem));
+        if (canTake > 0) {
+          next[idx] = { ...next[idx], allocated: next[idx].allocated - canTake };
+          rem += canTake;
+        }
+      }
+
+      return next;
+    });
+  };
+
   const handleComplete = () => {
     const totalScore = riskAnswers.reduce((s, a) => s + a, 0);
     const riskProfile = totalScore <= 2 ? "conservative" : totalScore <= 4 ? "balanced" : "growth";
-    const finalIncome = income || 12000000;
+    const finalIncome = selectedIncome || 12000000;
 
     // Save onboarding data
     completeOnboarding({
@@ -92,9 +214,9 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
       riskProfile,
     });
 
-    // Generate budget pots from income
-    const pots = generateBudgetPots(finalIncome);
-    localStorage.setItem("vietfi_pots", JSON.stringify(pots));
+    // Use user-adjusted pots if available, otherwise fallback
+    const finalPots = pots.length && allocationValid ? pots : generateBudgetPots(finalIncome);
+    localStorage.setItem("vietfi_pots", JSON.stringify(finalPots));
     localStorage.setItem("vietfi_income", finalIncome.toString());
     localStorage.setItem("vietfi_expenses", JSON.stringify([]));
 
@@ -105,7 +227,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
 
     // Background sync to Supabase if logged in
     if (getCachedUserId()) {
-      saveBudgetPots(pots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => {});
+      saveBudgetPots(finalPots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => {});
       saveIncome(finalIncome).catch(() => {});
     }
 
@@ -123,7 +245,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-lg glass-card p-6 relative overflow-hidden"
+        className="w-full max-w-2xl glass-card p-8 relative overflow-hidden"
       >
         {/* Glow */}
         <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#E6B84F]/10 rounded-full blur-[100px] pointer-events-none" />
@@ -146,7 +268,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
               />
             </div>
           ))}
-          <span className="text-[10px] text-white/20 font-mono ml-2">{step + 1}/{totalSteps}</span>
+          <span className="text-[10px] text-white/20 font-mono ml-2">{Math.min(step + 1, totalSteps)}/{totalSteps}</span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -158,8 +280,8 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   <Wallet className="w-4 h-4 text-[#E6B84F]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white">Thu nhập hàng tháng</h2>
-                  <p className="text-[11px] text-white/30">Để tự động chia 6 hũ chi tiêu cho bạn</p>
+                  <h2 className="text-lg font-bold text-white">Thu nhập hàng tháng</h2>
+                  <p className="text-sm text-white/40">Setup nhanh: chọn 4 hũ hoặc 8 hũ, chỉnh từng hũ theo nhu cầu.</p>
                 </div>
               </div>
 
@@ -167,7 +289,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                 {INCOME_CHIPS.map((chip) => (
                   <button
                     key={chip.value}
-                    onClick={() => { setIncome(chip.value); setCustomIncome(""); }}
+                    onClick={() => handleIncomeChip(chip.value)}
                     className={`py-2.5 px-3 text-xs rounded-lg border transition-all ${
                       income === chip.value
                         ? "bg-[#E6B84F]/15 text-[#E6B84F] border-[#E6B84F]/30 shadow-[0_0_12px_rgba(230,184,79,0.1)]"
@@ -184,32 +306,135 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   type="number"
                   placeholder="Hoặc nhập số khác..."
                   value={customIncome}
-                  onChange={(e) => { setCustomIncome(e.target.value); setIncome(0); }}
+                  onChange={(e) => handleCustomIncome(e.target.value)}
                   className="w-full px-3 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/15 focus:outline-none focus:border-[#E6B84F]/30"
                 />
               </div>
 
-              {(income > 0 || Number(customIncome) > 0) && (
+              {selectedIncome > 0 && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="mb-4 p-3 bg-white/[0.02] rounded-lg"
+                  className="mb-4 p-4 bg-white/[0.03] rounded-lg border border-white/[0.08]"
                 >
-                  <p className="text-[11px] text-white/30 mb-2">VietFi sẽ tự chia cho bạn:</p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {generateBudgetPots(income || Number(customIncome)).slice(0, 4).map((pot) => (
-                      <div key={pot.id} className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: pot.color }} />
-                        <span className="text-[10px] text-white/40">{pot.name}: {formatVND(pot.allocated)}</span>
-                      </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm text-white/70">Preset hũ:</div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePotModeChange("8")}
+                        className={`px-2 py-1 rounded-md ${potMode === "8" ? "bg-[#E6B84F]/20 text-[#E6B84F]" : "bg-white/[0.08] text-white/70"}`}
+                      >
+                        8 hũ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePotModeChange("4")}
+                        className={`px-2 py-1 rounded-md ${potMode === "4" ? "bg-[#E6B84F]/20 text-[#E6B84F]" : "bg-white/[0.08] text-white/70"}`}
+                      >
+                        4 hũ
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-2 text-sm text-white/70">Chọn 1 hũ để chỉnh nhanh (không cần sửa cả danh sách):</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                    {pots.map((pot) => (
+                      <button
+                        key={pot.id}
+                        type="button"
+                        onClick={() => setActivePotId(pot.id)}
+                        className={`p-2 rounded-lg border text-left ${activePot?.id === pot.id ? "bg-[#E6B84F]/12 border-[#E6B84F]/35" : "bg-white/[0.02] border-white/[0.08]"}`}
+                      >
+                        <div className="text-xs text-white/80 truncate">{pot.name}</div>
+                        <div className="text-[11px] text-white/60">{formatVND(pot.allocated)}</div>
+                      </button>
                     ))}
                   </div>
+
+                  {activePot && (
+                    <div className="p-3 rounded-lg bg-black/20 border border-white/[0.08] mb-3">
+                      <div className="text-xs text-white/60 mb-2">Đang chỉnh: <span className="text-white/90 font-medium">{activePot.name}</span></div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <label className="text-xs text-white/50">Step:</label>
+                        {[100000, 500000, 1000000].map((step) => (
+                          <button
+                            key={step}
+                            type="button"
+                            onClick={() => setStepIncrement(step)}
+                            className={`px-2 py-1 rounded-md ${stepIncrement === step ? "bg-[#E6B84F]/25 text-[#E6B84F]" : "bg-white/[0.06] text-white/70 hover:bg-white/[0.12]"}`}
+                          >
+                            {step === 100000 ? "+0.1tr" : step === 500000 ? "+0.5tr" : "+1tr"}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => adjustPot(activePot.id, -stepIncrement)}
+                          className="px-3 py-1 rounded-md bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                        >
+                          -{stepIncrement / 100000}tr
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => adjustPot(activePot.id, stepIncrement)}
+                          className="px-3 py-1 rounded-md bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                        >
+                          +{stepIncrement / 100000}tr
+                        </button>
+                        <input
+                          type="number"
+                          className="ml-auto w-40 px-2 py-1 rounded-md bg-white/[0.04] text-white text-sm border border-white/[0.08]"
+                          value={activePot.allocated}
+                          min={0}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (raw === "") return;
+                            handlePotChange(activePot.id, Number(raw));
+                          }}
+                        />
+                      </div>
+                      <div className="text-[11px] text-white/50">{((activePot.allocated / selectedIncome) * 100).toFixed(1)}% của thu nhập</div>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-white/70">Tổng phân bổ: {formatVND(totalAllocated)}</span>
+                    <span className={allocationValid ? "text-emerald-200" : "text-rose-200"}>
+                      {allocationValid ? "Đã khớp" : "Chưa khớp"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-white/50">
+                    <span>Còn lại: {formatVND(remaining)}</span>
+                    {remaining !== 0 && (
+                      <button
+                        onClick={fillRemaining}
+                        type="button"
+                        className="px-2 py-1 rounded-md bg-[#E6B84F]/20 text-[#E6B84F] hover:bg-[#E6B84F]/30"
+                      >
+                        Dồn vào hũ đang chỉnh
+                      </button>
+                    )}
+                    {remaining !== 0 && (
+                      <button
+                        onClick={autoFitTotal}
+                        type="button"
+                        className="px-2 py-1 rounded-md bg-white/[0.10] text-white/80 hover:bg-white/[0.16]"
+                      >
+                        Auto khớp tổng
+                      </button>
+                    )}
+                  </div>
+                  {!allocationValid && (
+                    <p className="mt-1 text-xs text-rose-200">Vui lòng điều chỉnh để tổng phân bổ bằng thu nhập.</p>
+                  )}
                 </motion.div>
               )}
 
               <button
                 onClick={handleIncomeNext}
-                disabled={!income && !customIncome}
+                disabled={!allocationValid}
                 className="w-full py-2.5 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
                 Tiếp theo <ArrowRight className="w-3.5 h-3.5" />
