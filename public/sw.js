@@ -63,3 +63,36 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
+// Push notifications — market alerts
+self.addEventListener("push", (event) => {
+  const data = event.data
+    ? event.data.json()
+    : { title: "VietFi Alert", body: "Có biến động thị trường mới!", icon: "/assets/icon-192.png" };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "VietFi Advisor", {
+      body: data.body || "Xem ngay trên dashboard",
+      icon: data.icon || "/assets/icon-192.png",
+      badge: "/assets/icon-192.png",
+      tag: data.tag || "market-alert",
+      data: { url: data.url || "/dashboard" },
+      vibrate: [200, 100, 200],
+    })
+  );
+});
+
+// Click notification → open dashboard
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/dashboard";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window" }).then((clients) => {
+      const existing = clients.find((c) => c.url.includes("/dashboard"));
+      if (existing) {
+        return existing.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

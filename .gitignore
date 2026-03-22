@@ -68,3 +68,4 @@ context.md
 .brain/
 context.md
 .vercel
+.env*.local

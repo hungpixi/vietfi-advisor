@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import type { NewsArticle, NewsSentimentLabel } from "@/lib/news/crawler";
 import QuickSetupWizard from "@/components/onboarding/QuickSetupWizard";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
 import { getDailyQuests, type DailyQuest } from "@/lib/gamification";
@@ -23,6 +24,8 @@ import {
   Wallet,
   PencilLine,
   BarChart3,
+  Bell,
+  X as XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -120,23 +123,49 @@ const portfolioData = [
   { name: "BĐS (REIT)", value: 15, color: "#FF6B35" },
 ];
 
-const brief = {
-  date: `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`,
-  title: "Thị trường thận trọng — Vàng lập đỉnh",
-  summary: "VN-Index giảm nhẹ 0.3% do áp lực chốt lời nhóm ngân hàng. Vàng SJC tiếp tục lập đỉnh mới 93.5tr. Fed giữ nguyên lãi suất. Khối ngoại bán ròng 200 tỷ.",
-  takeaways: [
-    { emoji: "🟡", asset: "Vàng", text: "Tiếp tục tăng — giữ, chưa nên mua thêm" },
-    { emoji: "🔴", asset: "CK", text: "Áp lực chốt lời — cơ hội tích lũy nếu VN-Index test 1,250" },
-    { emoji: "🟢", asset: "TK", text: "Lãi suất 5.2%/năm — vẫn thấp hơn lạm phát" },
-    { emoji: "🟣", asset: "Crypto", text: "BTC sideway $83k — xem xét DCA" },
-  ],
-};
+interface BriefData {
+  date: string;
+  title: string;
+  summary: string;
+  takeaways: { emoji: string; asset: string; text: string }[];
+}
 
-const news = [
-  { title: "Vàng SJC lập đỉnh mới 93.5 triệu/lượng", source: "VnExpress", time: "2h", sentiment: "bullish" as const },
-  { title: "Fed giữ nguyên lãi suất, cảnh báo lạm phát", source: "CafeF", time: "4h", sentiment: "bearish" as const },
-  { title: "NHNN bơm 15.000 tỷ qua OMO", source: "NHNN", time: "5h", sentiment: "neutral" as const },
-  { title: "BTC sideway $83k, ETF dòng tiền vào 200M", source: "CoinDesk", time: "6h", sentiment: "bullish" as const },
+interface NewsItem {
+  title: string;
+  source: string;
+  time: string;
+  sentiment: NewsSentimentLabel;
+}
+
+function generateBriefFromArticles(articles: NewsArticle[]): BriefData {
+  const sentimentEmoji: Record<string, string> = { bullish: "🟢", bearish: "🔴", neutral: "🟡" };
+  const top4 = articles.slice(0, 4);
+  const bullish = articles.filter(a => a.sentiment === "bullish").length;
+  const bearish = articles.filter(a => a.sentiment === "bearish").length;
+  const mood = bullish > bearish ? "Tích cực nhẹ" : bearish > bullish ? "Thận trọng" : "Trung lập";
+
+  return {
+    date: `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`,
+    title: `Thị trường ${mood} — ${top4[0]?.title?.slice(0, 40) || "Đang cập nhật"}`,
+    summary: top4.map(a => a.title).join(". ") + ".",
+    takeaways: top4.map(a => ({
+      emoji: sentimentEmoji[a.sentiment] || "🟡",
+      asset: a.asset || a.category || "TT",
+      text: a.summary?.slice(0, 80) || a.title,
+    })),
+  };
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "vừa xong";
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+const FALLBACK_NEWS: NewsItem[] = [
+  { title: "Đang tải tin tức...", source: "VietFi", time: "", sentiment: "neutral" },
 ];
 
 const sentimentTag = {
@@ -264,10 +293,21 @@ function PortfolioMini() {
   );
 }
 
-function BriefCard() {
+function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boolean }) {
+  if (loading || !brief) {
+    return (
+      <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 col-span-full animate-pulse">
+        <div className="h-4 bg-white/[0.06] rounded w-32 mb-3" />
+        <div className="h-6 bg-white/[0.06] rounded w-3/4 mb-2" />
+        <div className="h-4 bg-white/[0.06] rounded w-full mb-4" />
+        <div className="grid sm:grid-cols-2 gap-2">
+          {[1,2,3,4].map(i => <div key={i} className="h-16 bg-white/[0.03] rounded-lg" />)}
+        </div>
+      </motion.div>
+    );
+  }
   return (
     <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 col-span-full relative overflow-hidden">
-      {/* Subtle gold glow */}
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-1">
@@ -280,7 +320,7 @@ function BriefCard() {
         <h2 className="text-lg font-bold text-white mb-2">{brief.title}</h2>
         <p className="text-[13px] text-white/50 leading-relaxed mb-4">{brief.summary}</p>
         <div className="grid sm:grid-cols-2 gap-2">
-          {brief.takeaways.map((t, i) => (
+          {brief.takeaways.map((t: { emoji: string; asset: string; text: string }, i: number) => (
             <div key={i} className="flex items-start gap-2 bg-white/[0.02] rounded-lg p-2.5">
               <span className="text-sm flex-shrink-0">{t.emoji}</span>
               <div>
@@ -295,7 +335,7 @@ function BriefCard() {
   );
 }
 
-function NewsFeed() {
+function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
   return (
     <motion.div variants={fadeIn} className="glass-card p-5">
       <div className="flex items-center justify-between mb-3">
@@ -305,21 +345,30 @@ function NewsFeed() {
         </Link>
       </div>
       <div className="space-y-2">
-        {news.map((n, i) => {
-          const s = sentimentTag[n.sentiment];
-          return (
-            <div key={i} className="p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
-              <p className="text-[13px] text-white/80 line-clamp-2 mb-1.5 group-hover:text-white transition-colors">{n.title}</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/25">{n.source}</span>
-                <span className="text-[10px] text-white/25 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{n.time}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full ml-auto" style={{ color: s.color, backgroundColor: `${s.color}12` }}>
-                  {s.label}
-                </span>
-              </div>
+        {loading ? (
+          [1,2,3].map(i => (
+            <div key={i} className="p-2.5 rounded-lg bg-white/[0.02] animate-pulse">
+              <div className="h-4 bg-white/[0.06] rounded w-full mb-2" />
+              <div className="h-3 bg-white/[0.06] rounded w-1/3" />
             </div>
-          );
-        })}
+          ))
+        ) : (
+          items.map((n: NewsItem, i: number) => {
+            const s = sentimentTag[n.sentiment];
+            return (
+              <div key={i} className="p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
+                <p className="text-[13px] text-white/80 line-clamp-2 mb-1.5 group-hover:text-white transition-colors">{n.title}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/25">{n.source}</span>
+                  <span className="text-[10px] text-white/25 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{n.time}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full ml-auto" style={{ color: s.color, backgroundColor: `${s.color}12` }}>
+                    {s.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </motion.div>
   );
@@ -496,6 +545,16 @@ export default function DashboardOverview() {
   const [prevMarketSnapshot, setPrevMarketSnapshot] = useState<MarketSnapshot | null>(null);
   const [marketLoading, setMarketLoading] = useState(false);
   const [marketError, setMarketError] = useState<string | null>(null);
+  const [liveArticles, setLiveArticles] = useState<NewsArticle[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ("Notification" in window && Notification.permission === "default" && !localStorage.getItem("vietfi_notif_dismissed")) {
+      setShowNotifBanner(true);
+    }
+  }, []);
 
   const [netWorth, setNetWorth] = useState<number | null>(null);
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
@@ -554,10 +613,27 @@ export default function DashboardOverview() {
     }
   }, [marketSnapshot]);
 
+  const fetchNews = useCallback(async () => {
+    setNewsLoading(true);
+    try {
+      const resp = await fetch('/api/news');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.articles && Array.isArray(data.articles)) {
+        setLiveArticles(data.articles);
+      }
+    } catch {
+      // keep existing articles or empty
+    } finally {
+      setNewsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isFirstTimeUser()) setShowSetup(true);
     fetchMarketData();
     fetchNetWorth();
+    fetchNews();
 
     const handleStorage = (event: StorageEvent) => {
       if (["vietfi_pots", "vietfi_expenses", "vietfi_income"].includes(event.key ?? "")) {
@@ -567,7 +643,7 @@ export default function DashboardOverview() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [fetchMarketData, fetchNetWorth]);
+  }, [fetchMarketData, fetchNetWorth, fetchNews]);
 
   useEffect(() => {
     if (!marketSnapshot) return;
@@ -579,6 +655,21 @@ export default function DashboardOverview() {
 
   const cards = buildMarketCards(marketSnapshot, prevMarketSnapshot);
   const fgScore = calculateFgScore(marketSnapshot);
+
+  const liveBrief = useMemo(() => {
+    if (liveArticles.length === 0) return null;
+    return generateBriefFromArticles(liveArticles);
+  }, [liveArticles]);
+
+  const liveNews: NewsItem[] = useMemo(() => {
+    if (liveArticles.length === 0) return FALLBACK_NEWS;
+    return liveArticles.slice(0, 6).map(a => ({
+      title: a.title,
+      source: a.source,
+      time: formatTimeAgo(a.published),
+      sentiment: a.sentiment,
+    }));
+  }, [liveArticles]);
 
   return (
     <>
@@ -636,6 +727,29 @@ export default function DashboardOverview() {
         </div>
       </motion.div>
 
+      {/* Notification Permission Banner */}
+      {showNotifBanner && (
+        <motion.div variants={fadeIn} className="glass-card p-3 mb-4 flex items-center gap-3 border-[#00E5FF]/10">
+          <Bell className="w-4 h-4 text-[#00E5FF] flex-shrink-0" />
+          <p className="text-[12px] text-white/60 flex-1">Bật thông báo để nhận cảnh báo khi thị trường biến động mạnh</p>
+          <button
+            onClick={async () => {
+              const perm = await Notification.requestPermission();
+              if (perm === "granted") setShowNotifBanner(false);
+            }}
+            className="text-[11px] px-3 py-1.5 bg-[#00E5FF]/10 text-[#00E5FF] rounded-lg hover:bg-[#00E5FF]/20 transition-colors font-medium flex-shrink-0"
+          >
+            Bật ngay
+          </button>
+          <button
+            onClick={() => { setShowNotifBanner(false); localStorage.setItem("vietfi_notif_dismissed", "1"); }}
+            className="text-white/20 hover:text-white/40 transition-colors flex-shrink-0"
+          >
+            <XIcon className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+      )}
+
       {/* Market Metrics Grid */}
       {marketError && (
         <div className="glass-card p-3 mb-4 text-sm text-red-300">
@@ -655,7 +769,7 @@ export default function DashboardOverview() {
 
       {/* Morning Brief — Full width */}
       <motion.div variants={stagger} className="mb-4">
-        <BriefCard />
+        <BriefCard brief={liveBrief} loading={newsLoading} />
       </motion.div>
 
       {/* Daily Quests — Duolingo style */}
@@ -679,7 +793,7 @@ export default function DashboardOverview() {
 
       {/* News */}
       <motion.div variants={stagger}>
-        <NewsFeed />
+        <NewsFeed items={liveNews} loading={newsLoading} />
       </motion.div>
     </motion.div>
     </>
