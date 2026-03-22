@@ -14,6 +14,7 @@
 
 ## Muc Luc
 
+- [🚨 BẢN PHÂN CÔNG CÔNG VIỆC WDA2026 (Hưng & Hoàng) 🚨](./WDA2026_PHAN_CONG.md)
 - [Tong Quan](#-tong-quan)
 - [Tech Stack](#-tech-stack)
 - [Cai Dat & Chay](#-cai-dat--chay)
