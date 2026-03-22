@@ -1,0 +1,3 @@
+﻿src/app/api/cron/morning-brief/route.test.ts(32,67): error TS2345: Argument of type '{ date: string; title: string; summary: string; raw: string; takeaways: never[]; }' is not assignable to parameter of type 'MorningBriefData'.
+  Property 'source' is missing in type '{ date: string; title: string; summary: string; raw: string; takeaways: never[]; }' but required in type 'MorningBriefData'.
+src/app/api/morning-brief/route.test.ts(28,66): error TS2741: Property 'source' is missing in type '{ date: string; title: string; summary: string; raw: string; takeaways: never[]; }' but required in type 'MorningBriefData'.

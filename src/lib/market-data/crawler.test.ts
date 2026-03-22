@@ -37,6 +37,8 @@ describe('MarketSnapshot type', () => {
       vnIndex: { price: 1200, change: 5, changePct: 0.42, volume: '5000000000', source: 'test' },
       goldSjc: { goldUsd: 3000, goldVnd: 75000000, changePct: 0.5, source: 'test' },
       usdVnd: { rate: 25085, source: 'test' },
+      btc: null,
+      macro: { gdpYoY: [], cpiYoY: [], deposit12m: { min: 0, max: 0, source: 'test' } },
     }
     expect(snap.vnIndex!.price).toBe(1200)
     expect(snap.goldSjc!.goldVnd).toBe(75000000)
@@ -49,6 +51,8 @@ describe('MarketSnapshot type', () => {
       vnIndex: { price: 1200, change: 0, changePct: 0, volume: '0', source: 'test' },
       goldSjc: { goldUsd: 3000, goldVnd: undefined as unknown as number, changePct: 0, source: 'test' },
       usdVnd: { rate: 25085, source: 'test' },
+      btc: null,
+      macro: { gdpYoY: [], cpiYoY: [], deposit12m: { min: 0, max: 0, source: 'test' } },
     }
     expect(snap.goldSjc!.goldUsd).toBe(3000)
   })

@@ -1,48 +1,48 @@
 # 🎯 KẾ HOẠCH NÂNG CẤP & PHÂN CÔNG (WDA2026)
-**Dành cho phiên làm việc hiện tại và ca đêm (10pm - 2am) của Hoàng**
+**Dành cho phiên làm việc hiện tại và ca đêm (10pm - ## 🧭 CHIẾN LƯỢC TRÁNH CONFLICT (Cập nhật mới)
+Để Hoàng và AI (Hưng) làm việc song song hiệu quả nhất, chúng ta áp dụng phân công sau:
 
----
-
-## 🧭 CHIẾN LƯỢC TRÁNH CONFLICT
-Để Hoàng và AI (Hưng) làm việc song song hiệu quả nhất, chúng ta áp dụng **Separation of Concerns (Tách biệt mối quan tâm)**:
-- **Hưng (AI - Ca Ngày/Chiều):** Tập trung vào **Giao diện (UI/UX)**, **Logic Client-side** (React Hooks, Recharts, Framer Motion), và **AI Prompts** (System Prompts, Context Builder). Làm việc trong thư mục `src/app/dashboard/...` và `src/components/...`.
-- **Hoàng (Dev - Ca Đêm 10pm - 2am):** Tập trung vào **Dữ liệu (Backend)**, **Database (Supabase)**, **APIs**, và **Cron Jobs**. Làm việc trong thư mục `src/app/api/...`, `src/lib/.../crawler`, và Supabase Dashboard.
+- **Hoàng (Dev - Ca Đêm 10pm - 2am):** Tập trung thuần vào **Crawl Data**, **Tinh chỉnh Bảo mật**, và chỉnh sửa/tối ưu **Giao diện (UI)**.
+- **Hưng (AI - Ca Ngày):** Đảm nhiệm việc **Phát triển Tính năng (Business Logic, Tính toán, Flow)** và **Kiểm tra code/đối chiếu** xem sản phẩm có đáp ứng sát với yêu cầu của Đề thi WDA2026 hay không.
 
 ---
 
 ## 🚨 VẤN ĐỀ 1: TRUNG TÂM QUẢN TRỊ NỢ TẬP TRUNG
 *Giải quyết nỗi đau: Chia nhỏ nợ (SPayLater, Thẻ tín dụng, Vay tiêu dùng) dẫn đến ảo tưởng khả năng chi trả, dính lãi ẩn/phí phạt cao, sụp đổ domino.*
 
-### 🧑‍💻 Hưng (AI) - Phần UI & Trải nghiệm (Không đụng API/DB backend)
-1. **Thiết kế "Bảng điều khiển Nợ" (`src/app/dashboard/debt/page.tsx`)**:
-   - Giao diện nhập liệu nhanh các khoản nợ: Chọn loại (Thẻ tín dụng, SPayLater, Vay nóng...), nhập số tiền, lãi suất danh nghĩa, số tháng.
-   - **Form Lãi ẩn/Phí dịch vụ**: Nơi user có thể nhập phí duy trì, phí chuyển đổi trả góp (để tính ra "Lãi suất thực tế" - APR/AER).
-2. **Biểu đồ "Hiệu ứng Domino Nợ"**:
-   - Dùng Recharts vẽ đường tiệm cận nợ so với thu nhập. Nếu nợ > 60% thu nhập thực tế, biểu đồ chuyển màu ĐỎ còi báo động.
-3. **Kịch bản Tối ưu Nợ (Client-side Math)**:
-   - Xây dựng file `src/lib/calculations/debt-optimizer.ts` (đã khởi tạo trước đó) để tính toán đường đi của nợ dựa trên Snowball (trả từ nhỏ đến lớn) hoặc Avalanche (Lãi cao trước). Trình bày lên UI: *"Nếu theo cách này, bạn sẽ thoát nợ vào T10/2026 và tiết kiệm được 15tr tiền lãi"*.
+### 🧑‍💻 Hưng (AI) - Logic Tính Năng & Đối chiếu Đề thi
+1. **Phát triển Logic Tối ưu Nợ (`lib/calculations/debt-optimizer.ts`)**:
+   - Viết các thuật toán tính "Lãi suất thực tế" (AER bao gồm phí ẩn).
+   - Xây dựng mô hình tính toán "Hiệu ứng Domino Nợ" (Nợ/Thu nhập thực tế > 60%).
+   - Hoàn thiện Logic Snowball & Avalanche Plan.
+2. **Kiểm tra Đề thi**: Liên tục rà soát xem các tính năng này có đúng với pain-point mà WDA2026 đặt ra hay không (Centralized Hub, Hiệu ứng Domino).
 
-### 🦉 Hoàng (Night Shift) - Phần Data & Cron (Không đụng UI Component)
-1. **Database Schema (Supabase)**:
-   - Tạo (nếu chưa có) hoặc chuẩn hóa bảng `debts`: `id`, `user_id`, `type` (bnpl, credit, loan), `balance`, `interest_rate`, `hidden_fees`, `due_date`.
-2. **API Endpoints (`/api/debts`)**:
-   - Viết CRUD GET/POST/PUT/DELETE chuẩn mực (tương tác với Supabase auth user).
-3. **🚨 Push Notification (Cron Job)**:
-   - Viết script chạy mỗi ngày (Cron): Quét qua các khoản nợ sắp đến hạn (`due_date` còn 3-5 ngày). Bắn thông báo cảnh báo qua Telegram báo hoặc Web Push (nếu có): *"⚠️ Khoản SPayLater 2tr520k sắp đến hạn vào T6! Bạn đã chuẩn bị tiền trong Hũ Nợ chưa?"*
+### 🦉 Hoàng (Night Shift) - Giao diện, Cào Dữ Liệu & Bảo mật
+1. **Tinh chỉnh UI Dashboard Nợ (`src/app/dashboard/debt/page.tsx`)**:
+   - Làm đẹp giao diện biểu đồ, form nhập liệu lãi ẩn cho SPayLater/Credit Card.
+2. **Bảo mật & Supabase**:
+   - Đảm bảo dữ liệu nợ của User được lưu an toàn (RLS Policies).
+3. **Crawl Data**: Cào thêm thông tin khung lãi suất phạt của các loại thẻ tín dụng phổ biến (nếu có thể).
 
 ---
 
 ## 📈 VẤN ĐỀ 2: CỐ VẤN ĐẦU TƯ ĐẢ THÔNG "TÊ LIỆT TÀI CHÍNH"
-*Giải quyết nỗi đau: Lạm phát làm tiền nằm yên "bốc hơi", nhưng phân bổ vốn giữa các kênh (Vàng, BĐS, Chứng) lại quá phức tạp. Trắc nghiệm truyền thống nhàm chán, bỏ qua ngữ cảnh sống của từng người.*
+*Giải quyết nỗi đau: Lạm phát làm tiền nằm yên "bốc hơi", nhưng phân bổ vốn giữa các kênh lại quá phức tạp.*
 
-### 🧑‍💻 Hưng (AI) - Cấu trúc Prompt & Trực quan dữ liệu (Client-side)
-1. **Tinh chỉnh "Risk DNA" (`src/app/dashboard/portfolio/page.tsx`)**:
-   - Ép người dùng kết hợp **3 biến số**: (1) Thu nhập trừ chi phí sinh hoạt (Dòng tiền dư thực sự), (2) Điểm Cảm xúc thị trường (Fear & Greed hiện tại), (3) Mục tiêu (vd: 5 năm nữa mua nhà hay sinh tồn hàng tháng).
-   - Render ra Portfolio Action Plan: *"Dòng tiền của bạn nhỏ (2tr/tháng), Vàng đang vùng rủi ro cao (🔴 Quá Nóng). Đừng FOMO vàng, ưu tiên gửi kỳ hạn 3 tháng hoặc chứng chỉ quỹ cổ phiếu an toàn"*.
-2. **Cập nhật Vẹt Vàng AI (`VetVangChat.tsx`)**:
-   - Viết các prompt cực gắt/thực dụng mang màu sắc của Vẹt Vàng (VD: *"Lương 10 củ, dư 1 củ thì đừng hỏi tui crypto, học kỹ năng mới đi ba"*).
+### 🧑‍💻 Hưng (AI) - Prompting & Phát triển Tính năng
+1. **Phát triển Flow "Risk DNA" & Action Cards**:
+   - Gắn kết (1) Dòng tiền dư, (2) Điểm F&G, (3) Mục tiêu sống vào logic của Portfolio.
+2. **Vẹt Vàng AI (`VetVangChat.tsx`)**: 
+   - Viết/Nâng cấp Prompt để AI tư vấn dựa trên dữ liệu vĩ mô crawl được, đúng với tinh thần "thực dụng".
+3. **Review WDA2026**: Đảm bảo app đóng vai trò "Cố vấn ảo" đúng nghĩa (không chỉ thống kê tĩnh).
 
-### 🦉 Hoàng (Night Shift) - API Cào Dữ Liệu Rộng Hơn & Real-time (Server-side)
+### 🦉 Hoàng (Night Shift) - Giao diện, Cào Dữ Liệu & Alert
+1. **Cào dữ liệu (Crawler) & Cron Jobs**:
+   - Viết script cào lãi suất Ngân hàng (VCB, BIDV...), CPI định kỳ.
+   - Viết Cron Jobs chạy background để chấm điểm Sentiment, bắn Alert.
+2. **Giao diện Market/Portfolio**:
+   - Tinh chỉnh UI cho các Action Cards, làm mượt animation của Vẹt Vàng.
+3. **Bảo mật API**: Đảm bảo các route `/api/market-data` hay `/api/morning-brief` không bị gọi lạm dụng. Liệu Rộng Hơn & Real-time (Server-side)
 1. **Nâng cấp API Market Data (`/api/market-data`)**:
    - Hiện tại đã có Gold, Crypto, VNIndex. Cần cào/tổng hợp thêm **Lãi suất huy động trung bình 12/6T của các Bank** (Vcb, Bidv, MB) để làm mỏ neo so sánh (VD: 4.8%).
    - Tìm cách cào **Lạm phát CPI định kỳ** hoặc dữ liệu giá cả để đối chiếu xem tiết kiệm đang thắng hay thua.

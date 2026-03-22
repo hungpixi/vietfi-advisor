@@ -39,28 +39,7 @@ vi.mock('@/lib/gemini-batch', () => ({
 
 import { buildMorningBrief, getMorningBriefCached, refreshMorningBriefCache, resetMorningBriefCache } from './morning-brief'
 
-vi.mock('@/lib/news/crawler', () => ({
-  crawlNews: vi.fn(async () => ({
-    fetchedAt: '2026-03-22T09:00:00.000Z',
-    articles: [
-      { id: '1', category: 'Chứng khoán', title: 'VN-Index bật tăng', link: '', published: '', summary: 'VN-Index dưới 1000', content: '', source: 'CafeF', sentiment: 'bullish', sentimentScore: 95, asset: 'Chứng khoán' },
-      { id: '2', category: 'Vàng', title: 'Vàng ổn định', link: '', published: '', summary: 'Giá vàng đi ngang', content: '', source: 'CafeF', sentiment: 'neutral', sentimentScore: 50, asset: 'Vàng' },
-    ],
-    metrics: {
-      fetchedAt: '2026-03-22T09:00:00.000Z',
-      totalArticles: 2,
-      sentimentCounts: { bullish: 1, bearish: 0, neutral: 1 },
-      overallNewsScore: 70,
-      overallZone: 'greed',
-      assetSentiment: [],
-      history: [],
-    },
-  } as unknown as NewsSnapshot))
-}))
 
-vi.mock('@/lib/gemini-batch', () => ({
-  generateMorningBrief: vi.fn(async () => 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.'),
-}))
 
 describe('morning-brief utils', () => {
   beforeEach(() => {

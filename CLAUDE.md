@@ -10,6 +10,13 @@ No existing CLAUDE.md, `.cursorrules`, or Copilot instructions found.
 
 ---
 
+## WDA2026 Task Delegation (Hưng vs Hoàng)
+
+- **Hoàng (Human Dev/Night Shift):** Responsible for Data Crawling, Security enhancements, and UI refinements.
+- **Hưng (AI Agent/Day Shift):** Responsible for Feature Development (Business Logic/Calculations), writing Prompts, and strictly validating all features against the WDA2026 Competition Rules (Problem 1: Centralized Debt Hub & Problem 2: AI Financial Advisor).
+
+---
+
 ## Commands
 
 ```bash
@@ -31,6 +38,12 @@ CRON_SECRET=
 ---
 
 ## Architecture
+
+### Strategic Guidelines (WDA2026 Core Philosophy)
+
+1. **Vercel Cron Limits & Client-Side First:** Vercel Hobby limits cron jobs to 1/day and 10s execution. Therefore, MAXIMIZE client-side processing (localStorage) and avoid heavy server-side background tasks.
+2. **Generative AI Usage:** Use `gemini-batch.ts` for bulk AI processing (e.g., Morning Briefs, News summaries) to save costs and avoid timeouts. Reserve the interactive streaming `api/chat` strictly for user conversations.
+3. **Mascot Persona (CRITICAL VIRAL FEATURE):** Vẹt Vàng (Golden Parrot) MUST BE the most sarcastic, street-smart, and brutally honest financial advisor in Vietnam. Do not write polite, generic AI responses. The chat is the core viral loop to build user habits.
 
 ### AI Chat Pipeline (3-tier fallback — always check tiers in order)
 

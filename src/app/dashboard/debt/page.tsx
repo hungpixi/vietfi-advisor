@@ -19,20 +19,18 @@ import {
   Download,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
+import { Debt, analyzeDTI, snowballPlan, avalanchePlan, PayoffStep } from "@/lib/calculations/debt-optimizer";
 
 /* ─── Types ─── */
-interface Debt {
-  id: string;
-  name: string;
-  type: string;
-  principal: number;
-  rate: number;
-  minPayment: number;
+// Extends the core Debt interface with UI-specific fields
+interface UIDebt extends Debt {
   icon: string;
   color: string;
 }
+// Local definitions removed in favor of UIDebt
 
 const ICON_MAP: Record<string, typeof CreditCard> = {
   credit_card: CreditCard,
@@ -45,12 +43,12 @@ const ICON_MAP: Record<string, typeof CreditCard> = {
 
 const COLOR_OPTIONS = ["#EF4444", "#AB47BC", "#00E5FF", "#22C55E", "#FF6B35", "#E6B84F"];
 
-const defaultDebts: Debt[] = [
-  { id: "1", name: "Thẻ tín dụng VIB", type: "credit_card", principal: 5000000, rate: 25, minPayment: 250000, icon: "credit_card", color: "#EF4444" },
-  { id: "2", name: "SPayLater", type: "bnpl", principal: 3200000, rate: 18, minPayment: 320000, icon: "bnpl", color: "#AB47BC" },
-  { id: "3", name: "Vay bạn", type: "personal", principal: 8000000, rate: 0, minPayment: 1000000, icon: "personal", color: "#00E5FF" },
-  { id: "4", name: "Vay nhà trọ", type: "mortgage", principal: 2000000, rate: 0, minPayment: 2000000, icon: "mortgage", color: "#22C55E" },
-  { id: "5", name: "Tín dụng đen", type: "loan_shark", principal: 1500000, rate: 60, minPayment: 200000, icon: "loan_shark", color: "#FF6B35" },
+const defaultDebts: UIDebt[] = [
+  { id: "1", name: "Thẻ tín dụng VIB", type: "credit_card", principal: 5000000, rate: 25, minPayment: 250000, icon: "credit_card", color: "#EF4444", hiddenFees: 99000 },
+  { id: "2", name: "SPayLater", type: "bnpl", principal: 3200000, rate: 18, minPayment: 320000, icon: "bnpl", color: "#AB47BC", hiddenFees: 30000 },
+  { id: "3", name: "Vay bạn", type: "personal", principal: 8000000, rate: 0, minPayment: 1000000, icon: "personal", color: "#00E5FF", hiddenFees: 0 },
+  { id: "4", name: "Vay nhà trọ", type: "mortgage", principal: 2000000, rate: 0, minPayment: 2000000, icon: "mortgage", color: "#22C55E", hiddenFees: 0 },
+  { id: "5", name: "Tín dụng đen", type: "loan_shark", principal: 1500000, rate: 60, minPayment: 200000, icon: "loan_shark", color: "#FF6B35", hiddenFees: 0 },
 ];
 
 const monthlyIncome = 12000000;
@@ -65,17 +63,18 @@ function formatVND(n: number) {
 }
 
 /* ═══════════════════ ADD DEBT MODAL ═══════════════════ */
-function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit<Debt, "id">) => void }) {
+function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit<UIDebt, "id">) => void }) {
   const [name, setName] = useState("");
   const [principal, setPrincipal] = useState(0);
   const [rate, setRate] = useState(0);
   const [minPayment, setMinPayment] = useState(0);
-  const [type, setType] = useState("other");
+  const [hiddenFees, setHiddenFees] = useState(0);
+  const [type, setType] = useState<UIDebt["type"]>("other" as any);
   const [color, setColor] = useState("#E6B84F");
 
   const handleSubmit = () => {
     if (!name || principal <= 0) return;
-    onAdd({ name, principal, rate, minPayment: minPayment || Math.round(principal * 0.05), type, icon: type, color });
+    onAdd({ name, principal, rate, minPayment: minPayment || Math.round(principal * 0.05), type, hiddenFees, icon: type, color });
     onClose();
   };
 
@@ -115,7 +114,7 @@ function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit
             <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Loại nợ</label>
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(ICON_MAP).map(([key]) => (
-                <button key={key} onClick={() => setType(key)}
+                <button key={key} onClick={() => setType(key as any)}
                   className={`px-2.5 py-1.5 text-[10px] rounded-lg border transition-all ${type === key ? "bg-[#E6B84F]/15 text-[#E6B84F] border-[#E6B84F]/20" : "bg-white/[0.03] text-white/40 border-white/[0.06]"}`}
                 >
                   {key === "credit_card" ? "Thẻ tín dụng" : key === "bnpl" ? "Trả sau" : key === "personal" ? "Vay người thân" : key === "mortgage" ? "Nhà/Phòng trọ" : key === "loan_shark" ? "Tín dụng đen" : "Khác"}
@@ -123,6 +122,15 @@ function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit
               ))}
             </div>
           </div>
+          {(type === "bnpl" || type === "credit_card") && (
+             <div>
+                <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">
+                  Phí ẩn / phí duy trì hàng tháng (₫) <span className="text-[#EF4444]">*</span>
+                </label>
+                <input type="number" value={hiddenFees || ""} onChange={(e) => setHiddenFees(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-[#EF4444]/30 rounded-lg text-sm text-white focus:outline-none focus:border-[#EF4444]" placeholder="Ví dụ: 30000 (phí SPayLater)" />
+                <p className="text-[9px] text-[#EF4444]/60 mt-1">Các khoản BNPL/Thẻ tín dụng thường có phí ẩn (bảo hiểm, phí quản lý...). Điền vào để thấy Lãi suất thực tế!</p>
+             </div>
+          )}
           <div>
             <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Màu sắc</label>
             <div className="flex gap-2">
@@ -142,7 +150,7 @@ function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit
 }
 
 /* ═══════════════════ PAY DEBT MODAL ═══════════════════ */
-function PayDebtModal({ debt, onClose, onPay }: { debt: Debt; onClose: () => void; onPay: (id: string, amount: number) => void }) {
+function PayDebtModal({ debt, onClose, onPay }: { debt: UIDebt; onClose: () => void; onPay: (id: string, amount: number) => void }) {
   const [amount, setAmount] = useState(debt.minPayment);
   const quickAmounts = [debt.minPayment, Math.round(debt.principal * 0.1), Math.round(debt.principal * 0.25), debt.principal];
 
@@ -173,7 +181,7 @@ function PayDebtModal({ debt, onClose, onPay }: { debt: Debt; onClose: () => voi
 }
 
 /* ═══════════════════ EXTRA PAYMENT SLIDER ═══════════════════ */
-function ExtraPaymentSlider({ totalDebt, totalMonthlyMin, debts }: { totalDebt: number; totalMonthlyMin: number; debts: Debt[] }) {
+function ExtraPaymentSlider({ totalDebt, totalMonthlyMin, debts }: { totalDebt: number; totalMonthlyMin: number; debts: UIDebt[] }) {
   const [extra, setExtra] = useState(0);
   const maxExtra = Math.min(3000000, totalDebt); // max 3tr/tháng
 
@@ -239,10 +247,10 @@ function ExtraPaymentSlider({ totalDebt, totalMonthlyMin, debts }: { totalDebt: 
 
 /* ═══════════════════ PAGE ═══════════════════ */
 export default function DebtPage() {
-  const [debts, setDebts] = useState<Debt[]>(defaultDebts);
+  const [debts, setDebts] = useState<UIDebt[]>(defaultDebts);
   const [strategy, setStrategy] = useState<"snowball" | "avalanche">("snowball");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [payingDebt, setPayingDebt] = useState<Debt | null>(null);
+  const [payingDebt, setPayingDebt] = useState<UIDebt | null>(null);
 
   // Load from localStorage
   useEffect(() => {
@@ -253,7 +261,7 @@ export default function DebtPage() {
   }, []);
 
   // Save to localStorage + Supabase sync
-  const saveDebts = useCallback((newDebts: Debt[]) => {
+  const saveDebts = useCallback((newDebts: UIDebt[]) => {
     setDebts(newDebts);
     localStorage.setItem("vietfi_debts", JSON.stringify(newDebts));
     // Background Supabase sync
@@ -265,7 +273,7 @@ export default function DebtPage() {
     }
   }, []);
 
-  const addDebt = (d: Omit<Debt, "id">) => {
+  const addDebt = (d: Omit<UIDebt, "id">) => {
     saveDebts([...debts, { ...d, id: Date.now().toString() }]);
   };
 
@@ -290,16 +298,25 @@ export default function DebtPage() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
-  const totalMonthlyMin = debts.reduce((s, d) => s + d.minPayment, 0);
-  const dtiRatio = Math.round((totalMonthlyMin / monthlyIncome) * 100);
-  const dtiColor = dtiRatio < 20 ? "#22C55E" : dtiRatio < 40 ? "#E6B84F" : "#EF4444";
-  const dtiLabel = dtiRatio < 20 ? "An toàn" : dtiRatio < 40 ? "Cảnh giác" : "Nguy hiểm";
-  const totalHiddenInterest = debts.reduce((s, d) => s + d.principal * (d.rate / 12 / 100) * 12, 0);
+  const analysis = analyzeDTI(debts, monthlyIncome);
+  const { totalDebt, dtiRatio, dtiLevel, dtiColor, totalMonthlyMin, totalHiddenInterest } = analysis;
+  const dtiLabel = dtiLevel === "safe" ? "An toàn" : dtiLevel === "warning" ? "Cảnh giác" : "Nguy hiểm";
 
   const sortedDebts = strategy === "snowball"
     ? [...debts].sort((a, b) => a.principal - b.principal)
-    : [...debts].sort((a, b) => b.rate - a.rate);
+    : [...debts].sort((a, b) => {
+        const rateB = analysis.realInterestRates.find(r => r.id === b.id)?.realRate || b.rate;
+        const rateA = analysis.realInterestRates.find(r => r.id === a.id)?.realRate || a.rate;
+        return rateB - rateA;
+      });
+
+  const currentPlan = strategy === "snowball" ? snowballPlan(debts) : avalanchePlan(debts);
+
+  // Domino Effect Chart Data
+  const chartData = currentPlan.map(p => ({
+    month: `T${p.month}`,
+    remaining: p.remaining
+  })).filter((_, i) => i % Math.max(1, Math.floor(currentPlan.length / 10)) === 0 || i === currentPlan.length - 1);
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
@@ -437,17 +454,17 @@ export default function DebtPage() {
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setStrategy("snowball")}
-                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${strategy === "snowball" ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20" : "bg-white/[0.03] text-white/40 border border-white/[0.06]"}`}
+                className={`flex-1 py-4 flex flex-col items-center justify-center text-xs font-medium rounded-lg transition-all ${strategy === "snowball" ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20" : "bg-white/[0.03] text-white/40 border border-white/[0.06]"}`}
               >
-                <ArrowDown className="w-3 h-3 inline mr-1" />
-                Trả nhỏ trước
+                <div className="flex items-center"><ArrowDown className="w-4 h-4 mr-1" /> Vết dầu loang</div>
+                <span className="text-[9px] opacity-70 mt-1 font-normal tracking-wide">TRẢ NHỎ TRƯỚC</span>
               </button>
               <button
                 onClick={() => setStrategy("avalanche")}
-                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${strategy === "avalanche" ? "bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/20" : "bg-white/[0.03] text-white/40 border border-white/[0.06]"}`}
+                className={`flex-1 py-4 flex flex-col items-center justify-center text-xs font-medium rounded-lg transition-all ${strategy === "avalanche" ? "bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/20" : "bg-white/[0.03] text-white/40 border border-white/[0.06]"}`}
               >
-                <ArrowUp className="w-3 h-3 inline mr-1" />
-                Trả lãi cao trước
+                <div className="flex items-center"><ArrowUp className="w-4 h-4 mr-1" /> Tuyệt lở</div>
+                <span className="text-[9px] opacity-70 mt-1 font-normal tracking-wide">TRẢ LÃI CAO TRƯỚC</span>
               </button>
             </div>
 
@@ -475,14 +492,39 @@ export default function DebtPage() {
               })}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/[0.04]">
-              <div className="flex items-center gap-2">
-                <Banknote className="w-4 h-4 text-[#22C55E]" />
+            <div className="mt-4 pt-4 border-t border-white/[0.04]">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingDown className="w-4 h-4 text-[#22C55E]" />
                 <div>
-                  <span className="text-xs text-white/60">Dự kiến thoát nợ</span>
-                  <p className="text-sm font-bold text-[#22C55E]">~{Math.max(1, Math.ceil(totalDebt / totalMonthlyMin))} tháng</p>
+                  <span className="text-xs text-white/60">Dự kiến thoát nợ — Tối ưu nhất</span>
+                  <p className="text-sm font-bold text-[#22C55E]">~{currentPlan.length > 0 ? currentPlan[currentPlan.length - 1].month : 0} tháng</p>
                 </div>
               </div>
+              
+              {/* Domino Effect Chart */}
+              {chartData.length > 0 && (
+                <div className="h-[120px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRemaining" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis dataKey="month" stroke="#ffffff40" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#ffffff40" fontSize={10} tickFormatter={(val) => `${(val/1000000).toFixed(0)}M`} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        formatter={(value: any) => [formatVND(value as number), "Dư nợ"]}
+                        labelStyle={{ color: 'black' }}
+                        contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: 'white' }}
+                      />
+                      <Area type="monotone" dataKey="remaining" stroke={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} fillOpacity={1} fill="url(#colorRemaining)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
 
             {/* ═══ Extra payment slider ═══ */}

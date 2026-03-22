@@ -34,6 +34,7 @@ describe('/api/cron/morning-brief', () => {
       title: 'Morning Brief AI',
       summary: 'Test summary',
       raw: 'Test summary',
+      source: 'gemini',
       takeaways: [],
     })
 

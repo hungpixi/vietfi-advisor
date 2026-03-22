@@ -9,6 +9,7 @@ export interface Debt {
   principal: number;     // Dư nợ gốc (VND)
   rate: number;          // Lãi suất năm (%)
   minPayment: number;    // Trả tối thiểu/tháng
+  hiddenFees?: number;   // Phí dịch vụ/ẩn hàng tháng (VND)
 }
 
 export interface PayoffStep {
@@ -26,6 +27,7 @@ export interface DebtAnalysis {
   dtiColor: string;
   totalMonthlyMin: number;
   totalHiddenInterest: number;  // Tổng lãi phí ẩn nếu chỉ trả min
+  realInterestRates: { id: string; name: string; realRate: number }[]; // Lãi suất thực tế đã tính phí ẩn
 }
 
 /* ─── DTI Calculation ─── */
@@ -40,14 +42,24 @@ export function analyzeDTI(debts: Debt[], monthlyIncome: number): DebtAnalysis {
   else if (dtiRatio < 40) { dtiLevel = "warning"; dtiColor = "#FFD700"; }
   else { dtiLevel = "danger"; dtiColor = "#FF5252"; }
 
-  // Tính lãi ẩn: nếu chỉ trả min credit card 2%/tháng
+  // Tính lãi ẩn và lãi suất thực tế từng khoản
+  const realInterestRates = debts.map(d => {
+    // Ước tính dư nợ trung bình trong năm đầu
+    const yearlyInterest = d.principal * (d.rate / 100);
+    const yearlyFees = (d.hiddenFees || 0) * 12;
+    const realRate = d.principal > 0 ? ((yearlyInterest + yearlyFees) / d.principal) * 100 : 0;
+    
+    return { id: d.id, name: d.name, realRate };
+  });
+
   const totalHiddenInterest = debts.reduce((sum, d) => {
     const monthlyRate = d.rate / 12 / 100;
-    // Ước tính tổng lãi nếu chỉ trả min trong 12 tháng
-    return sum + d.principal * monthlyRate * 12;
+    const fees = d.hiddenFees || 0;
+    // Ước tính tổng lãi + phí nếu chỉ trả min trong 12 tháng
+    return sum + (d.principal * monthlyRate + fees) * 12;
   }, 0);
 
-  return { totalDebt, dtiRatio, dtiLevel, dtiColor, totalMonthlyMin, totalHiddenInterest };
+  return { totalDebt, dtiRatio, dtiLevel, dtiColor, totalMonthlyMin, totalHiddenInterest, realInterestRates };
 }
 
 /* ─── Snowball: trả khoản NHỎ NHẤT trước (tâm lý) ─── */
@@ -58,7 +70,11 @@ export function snowballPlan(debts: Debt[], extraPayment: number = 0): PayoffSte
 
 /* ─── Avalanche: trả khoản LÃI CAO NHẤT trước (tối ưu) ─── */
 export function avalanchePlan(debts: Debt[], extraPayment: number = 0): PayoffStep[] {
-  const sorted = [...debts].sort((a, b) => b.rate - a.rate);
+  // Ưu tiên lãi thực tếcao nhất (đã tính hidden fees)
+  const analysis = analyzeDTI(debts, 1);
+  const getRate = (id: string) => analysis.realInterestRates.find(r => r.id === id)?.realRate || 0;
+  
+  const sorted = [...debts].sort((a, b) => getRate(b.id) - getRate(a.id));
   return simulatePayoff(sorted, extraPayment);
 }
 

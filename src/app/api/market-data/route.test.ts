@@ -24,6 +24,7 @@ describe('getMarketDataResponse', () => {
         cpiYoY: [{ period: '2025', value: 3.31 }],
         deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
       },
+      btc: null,
       aiSummary: null,
     }
 
@@ -55,6 +56,7 @@ describe('getMarketDataResponse', () => {
         cpiYoY: [{ period: '2025', value: 3.31 }],
         deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
       },
+      btc: null,
       aiSummary: null,
     }
 
@@ -84,6 +86,7 @@ describe('getMarketDataResponse', () => {
         cpiYoY: [{ period: '2025', value: 3.31 }],
         deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
       },
+      btc: null,
       aiSummary: null,
     }
 
@@ -111,6 +114,7 @@ describe('getMarketDataResponse', () => {
         cpiYoY: [{ period: '2025', value: 3.31 }],
         deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
       },
+      btc: null,
       aiSummary: null,
     }
 
