@@ -310,9 +310,15 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
     <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 col-span-full relative overflow-hidden">
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
       <div className="relative z-10">
+        {brief.source === 'heuristic' && (
+          <div className="text-xs text-[#FFB300] mb-2">Không lấy được Morning Brief Gemini, đang hiển thị dữ liệu dự phòng.</div>
+        )}
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="w-3.5 h-3.5 text-[#E6B84F]" />
           <span className="text-[10px] text-[#E6B84F] font-mono uppercase tracking-wider">Morning Brief AI</span>
+          <span className={`text-[10px] font-mono ml-2 ${brief.source === 'gemini' ? 'text-[#22C55E]' : 'text-[#FFB300]'}`}>
+            {brief.source === 'gemini' ? 'Gemini' : 'Fallback'}
+          </span>
           <span className="text-[10px] text-white/20 ml-auto flex items-center gap-1">
             <Calendar className="w-3 h-3" />{brief.date}
           </span>
@@ -547,7 +553,39 @@ export default function DashboardOverview() {
   const [marketError, setMarketError] = useState<string | null>(null);
   const [liveArticles, setLiveArticles] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [aiBrief, setAiBrief] = useState<BriefData | null>(null);
+  const [aiBriefLoading, setAiBriefLoading] = useState(true);
+  const [aiBriefError, setAiBriefError] = useState<string | null>(null);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
+
+  useEffect(() => {
+    const fetchMorningBrief = async () => {
+      setAiBriefLoading(true);
+      setAiBriefError(null);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch('/api/morning-brief', { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        if (!data || !data.summary) throw new Error('Invalid brief payload');
+        setAiBrief({
+          date: data.date || `Hôm nay, ${new Date().toLocaleDateString('vi-VN')}`,
+          title: data.title || 'Morning Brief AI',
+          summary: data.summary,
+          raw: data.raw ?? data.summary,
+          takeaways: Array.isArray(data.takeaways) ? data.takeaways : [],
+        });
+      } catch (err) {
+        setAiBriefError('Không thể tải Morning Brief');
+      } finally {
+        setAiBriefLoading(false);
+      }
+    };
+
+    fetchMorningBrief();
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -704,10 +742,13 @@ export default function DashboardOverview() {
   const cards = buildMarketCards(marketSnapshot, prevMarketSnapshot);
   const fgScore = calculateFgScore(marketSnapshot);
 
-  const liveBrief = useMemo(() => {
+  const generatedBrief = useMemo(() => {
     if (liveArticles.length === 0) return null;
     return generateBriefFromArticles(liveArticles);
   }, [liveArticles]);
+
+  const liveBrief = aiBrief ?? generatedBrief;
+  const briefLoading = newsLoading || aiBriefLoading;
 
   const liveNews: NewsItem[] = useMemo(() => {
     if (liveArticles.length === 0) return FALLBACK_NEWS;
@@ -817,7 +858,7 @@ export default function DashboardOverview() {
 
       {/* Morning Brief — Full width */}
       <motion.div variants={stagger} className="mb-4">
-        <BriefCard brief={liveBrief} loading={newsLoading} />
+        <BriefCard brief={liveBrief} loading={briefLoading} />
       </motion.div>
 
       {/* Daily Quests — Duolingo style */}
