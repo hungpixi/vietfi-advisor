@@ -607,8 +607,10 @@ export default function DashboardOverview() {
       clearTimeout(timeout);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data: MarketSnapshot = await resp.json();
-      setPrevMarketSnapshot(marketSnapshot);
-      setMarketSnapshot(data);
+      setMarketSnapshot(prev => {
+        setPrevMarketSnapshot(prev);
+        return data;
+      });
       // Cache to localStorage for fallback
       try { localStorage.setItem('vietfi_market_cache', JSON.stringify(data)); } catch {}
     } catch (err) {
@@ -617,7 +619,7 @@ export default function DashboardOverview() {
         const cached = localStorage.getItem('vietfi_market_cache');
         if (cached) {
           const data = JSON.parse(cached) as MarketSnapshot;
-          if (!marketSnapshot) setMarketSnapshot(data);
+          setMarketSnapshot(prev => prev || data);
         }
       } catch {}
       setMarketError(err instanceof Error ? err.message : 'Lỗi không xác định');
@@ -628,7 +630,8 @@ export default function DashboardOverview() {
     } finally {
       setMarketLoading(false);
     }
-  }, [marketSnapshot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchNews = useCallback(async () => {
     setNewsLoading(true);
@@ -646,6 +649,7 @@ export default function DashboardOverview() {
     }
   }, []);
 
+  // Init: run once on mount
   useEffect(() => {
     if (isFirstTimeUser()) setShowSetup(true);
     fetchMarketData();
@@ -660,15 +664,18 @@ export default function DashboardOverview() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [fetchMarketData, fetchNetWorth, fetchNews]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Auto-refresh market data every 5 min
   useEffect(() => {
     if (!marketSnapshot) return;
     const timer = setInterval(() => {
       fetchMarketData();
     }, 5 * 60 * 1000);
     return () => clearInterval(timer);
-  }, [marketSnapshot, fetchMarketData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!marketSnapshot]);
 
   // Market volatility alert — check changePct thresholds
   useEffect(() => {
