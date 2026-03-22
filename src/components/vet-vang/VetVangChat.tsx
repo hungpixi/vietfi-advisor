@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
+import { playPop, playDing, getSoundMuted, setSoundMuted } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
@@ -61,48 +62,40 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   }, [error, setMessages]);
   
   const [isListening, setIsListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [soundMuted, setSoundMutedState] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastSpokenIdRef = useRef<string>("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ── TTS: Pre-generated audio cho static, API cho dynamic/AI ──
-  const speak = useCallback(async (text: string, audioId?: string) => {
-    if (!voiceEnabled) return;
+  // Init sound muted state from localStorage
+  useEffect(() => { setSoundMutedState(getSoundMuted()); }, []);
 
+  // ── TTS: On-demand tap-to-speak ──
+  const speakMessage = useCallback(async (msgId: string, text: string) => {
     // Cancel audio đang phát
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+      if (speakingMsgId === msgId) {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+        return; // toggle off
+      }
     }
 
     try {
       setIsSpeaking(true);
+      setSpeakingMsgId(msgId);
 
-      // Thử pre-generated audio trước
-      if (audioId) {
-        const preGenUrl = `/audio/tts/${audioId}.mp3`;
-        const checkRes = await fetch(preGenUrl, { method: "HEAD" }).catch(() => null);
-        if (checkRes?.ok) {
-          const audio = new Audio(preGenUrl);
-          audioRef.current = audio;
-          audio.onended = () => { setIsSpeaking(false); audioRef.current = null; };
-          audio.onerror = () => { setIsSpeaking(false); audioRef.current = null; };
-          await audio.play();
-          return;
-        }
-      }
-
-      // Fallback: real-time Edge TTS API
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text.slice(0, 500) }),
       });
 
-      if (!res.ok) { setIsSpeaking(false); return; }
+      if (!res.ok) { setIsSpeaking(false); setSpeakingMsgId(null); return; }
 
       const audioBlob = await res.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -111,11 +104,13 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
       audio.onended = () => {
         setIsSpeaking(false);
+        setSpeakingMsgId(null);
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
       };
       audio.onerror = () => {
         setIsSpeaking(false);
+        setSpeakingMsgId(null);
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
       };
@@ -123,26 +118,18 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       await audio.play();
     } catch {
       setIsSpeaking(false);
+      setSpeakingMsgId(null);
     }
-  }, [voiceEnabled]);
+  }, [speakingMsgId]);
 
-  // Auto-speak ONLY AI streaming responses (local responses are spoken explicitly)
+  // Play ding when new assistant message arrives
   useEffect(() => {
-    if (!voiceEnabled || !isOpen || messages.length === 0) return;
+    if (messages.length < 2) return;
     const lastMsg = messages[messages.length - 1] as any;
-    if (
-      lastMsg?.role === "assistant" &&
-      lastMsg.id !== lastSpokenIdRef.current &&
-      !lastMsg.id.startsWith("bot-") && // skip local responses (spoken explicitly)
-      lastMsg.id !== "greet-1"           // skip initial greeting
-    ) {
-      const text = lastMsg.parts?.[0]?.text || lastMsg.content || "";
-      if (text && status !== "streaming") {
-        lastSpokenIdRef.current = lastMsg.id;
-        speak(text);
-      }
+    if (lastMsg?.role === "assistant" && lastMsg.id !== "greet-1" && status !== "streaming") {
+      playDing();
     }
-  }, [messages, status, voiceEnabled, speak, isOpen]);
+  }, [messages, status]);
 
   // Stop speaking when chat closes
   useEffect(() => {
@@ -233,14 +220,12 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     if (!input.trim() || isLoading) return;
     const text = input.trim();
     setInput("");
+    playPop();
 
     // Try local-first (0 API calls)
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      const botId = `bot-${Date.now() + 1}`;
-      lastSpokenIdRef.current = botId; // prevent useEffect double-speak
       addLocalMessage(text, localReply.text);
-      if (voiceEnabled && isOpen) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
@@ -261,14 +246,12 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     };
     if (isLoading) return;
     const text = labels[key] || key;
+    playPop();
 
     // Try local-first
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      const botId = `bot-${Date.now() + 1}`;
-      lastSpokenIdRef.current = botId;
       addLocalMessage(text, localReply.text);
-      if (voiceEnabled && isOpen) speak(localReply.ttsText, localReply.isDynamic ? undefined : localReply.id);
       return;
     }
 
@@ -308,13 +291,20 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
-                  setVoiceEnabled(v => !v);
-                  if (voiceEnabled) window.speechSynthesis?.cancel();
+                  const newMuted = !soundMuted;
+                  setSoundMutedState(newMuted);
+                  setSoundMuted(newMuted);
+                  if (newMuted && audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current = null;
+                    setIsSpeaking(false);
+                    setSpeakingMsgId(null);
+                  }
                 }}
-                className={`p-1.5 rounded-lg transition-colors ${voiceEnabled ? 'bg-[#E6B84F]/10 text-[#E6B84F] hover:bg-[#E6B84F]/20' : 'hover:bg-white/[0.05] text-white/30 hover:text-white/60'}`}
-                title={voiceEnabled ? "Tắt giọng nói" : "Bật giọng nói"}
+                className={`p-1.5 rounded-lg transition-colors ${!soundMuted ? 'bg-[#E6B84F]/10 text-[#E6B84F] hover:bg-[#E6B84F]/20' : 'hover:bg-white/[0.05] text-white/30 hover:text-white/60'}`}
+                title={soundMuted ? "Bật âm thanh" : "Tắt âm thanh"}
               >
-                {voiceEnabled ? (
+                {!soundMuted ? (
                   <Volume2 className={`w-3.5 h-3.5 ${isSpeaking ? 'animate-pulse' : ''}`} />
                 ) : (
                   <VolumeX className="w-3.5 h-3.5" />
@@ -357,14 +347,29 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {msg.role === "assistant" && <span className="text-lg mr-1.5 mt-1 flex-shrink-0">🦜</span>}
-                <div
-                  className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-[#E6B84F]/15 text-white/80 rounded-br-sm"
-                      : "bg-white/[0.04] text-white/70 rounded-bl-sm border border-white/[0.06]"
-                  }`}
-                >
-                  {msg.parts?.[0]?.text || msg.content}
+                <div className="relative group">
+                  <div
+                    className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-[#E6B84F]/15 text-white/80 rounded-br-sm"
+                        : "bg-white/[0.04] text-white/70 rounded-bl-sm border border-white/[0.06]"
+                    }`}
+                  >
+                    {msg.parts?.[0]?.text || msg.content}
+                  </div>
+                  {msg.role === "assistant" && msg.id !== "greet-1" && (
+                    <button
+                      onClick={() => speakMessage(msg.id, msg.parts?.[0]?.text || msg.content || "")}
+                      className={`absolute -bottom-1 right-0 p-1 rounded-full transition-all ${
+                        speakingMsgId === msg.id
+                          ? "bg-[#E6B84F]/20 text-[#E6B84F] opacity-100"
+                          : "bg-white/[0.06] text-white/25 opacity-0 group-hover:opacity-100 hover:text-[#E6B84F]"
+                      }`}
+                      title="Nghe tin nhắn này"
+                    >
+                      <Volume2 className={`w-3 h-3 ${speakingMsgId === msg.id && isSpeaking ? 'animate-pulse' : ''}`} />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}

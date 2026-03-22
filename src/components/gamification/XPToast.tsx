@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Star, Zap, Trophy } from "lucide-react";
+import { playCoin, playFanfare } from "@/lib/sounds";
 
 interface XPToast {
   id: number;
@@ -29,6 +30,7 @@ export function useXPToast() {
   const showToast = useCallback((xp: number, action: string, levelUp?: boolean) => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, xp, action, levelUp }]);
+    if (levelUp) playFanfare(); else playCoin();
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 2500);
