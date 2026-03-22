@@ -1,6 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
  * Gamification Engine — Duolingo-style XP / Streak / Level
+ * Hybrid: localStorage (instant) + Supabase (background sync)
  * ═══════════════════════════════════════════════════════════ */
+
+import { getCachedUserId, saveGamificationState } from "@/lib/supabase/user-data";
 
 export interface GamificationState {
   xp: number;
@@ -115,6 +118,10 @@ export function getGamification(): GamificationState {
 
 function save(state: GamificationState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // Background sync to Supabase (non-blocking)
+  if (getCachedUserId()) {
+    saveGamificationState(state).catch(() => {});
+  }
 }
 
 /* ─── Core: Add XP ─── */

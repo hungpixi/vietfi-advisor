@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
  * Onboarding State — Quick Setup data management
- * Lưu trữ dữ liệu từ Quick Setup Wizard vào localStorage
+ * Hybrid: localStorage (instant) + Supabase (background sync)
  * ═══════════════════════════════════════════════════════════ */
+
+import { getCachedUserId, saveUserProfile } from "@/lib/supabase/user-data";
 
 export interface OnboardingData {
   completed: boolean;
@@ -60,6 +62,10 @@ export function saveOnboardingData(data: Partial<OnboardingData>): OnboardingDat
   const current = getOnboardingData();
   const updated = { ...current, ...data };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  // Background sync to Supabase
+  if (getCachedUserId()) {
+    saveUserProfile(updated).catch(() => {});
+  }
   return updated;
 }
 

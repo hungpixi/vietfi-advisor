@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Check, Wallet, CreditCard, Brain, X, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { completeOnboarding, generateBudgetPots } from "@/lib/onboarding-state";
+import { getCachedUserId, saveBudgetPots, saveIncome } from "@/lib/supabase/user-data";
 
 interface QuickSetupProps {
   onComplete: () => void;
@@ -100,6 +101,12 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     // Clear demo debts if no debt
     if (!hasDebt) {
       localStorage.setItem("vietfi_debts", JSON.stringify([]));
+    }
+
+    // Background sync to Supabase if logged in
+    if (getCachedUserId()) {
+      saveBudgetPots(pots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => {});
+      saveIncome(finalIncome).catch(() => {});
     }
 
     setStep(3); // Show celebration

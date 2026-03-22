@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
 import { XPToastContainer, useXPToast } from "@/components/gamification/XPToast";
 import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
+import { getAuthUserId } from "@/lib/supabase/user-data";
+import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -284,6 +286,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Trigger one-time localStorage → Supabase migration if logged in
+  useEffect(() => {
+    getAuthUserId().then((userId) => {
+      if (userId) {
+        migrateLocalStorageToSupabase(userId);
+      }
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0A0B0F]">
