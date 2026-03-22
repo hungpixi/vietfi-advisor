@@ -535,12 +535,18 @@ export function getComparison(amount: number): string {
   return `${Math.round(amount / 5_000)} ổ bánh mì`;
 }
 
+// ── Data-dependent intents → always AI (need user's real data) ──
+const DATA_INTENTS: Intent[] = [
+  "ask_spending", "ask_debt", "ask_invest", "ask_save",
+  "ask_gold", "ask_stock", "ask_crypto", "ask_market",
+];
+
 // ── Should this message go to AI? ───────────────────────────────
 export function needsAI(intent: Intent, text: string): boolean {
   if (intent === "unknown") return true;
+  if (DATA_INTENTS.includes(intent)) return true; // always use AI for data questions
   if (text.length > 80) return true;
-  if (text.includes("?") && ["ask_invest", "ask_market", "ask_debt"].includes(intent)) {
-    return text.length > 40;
-  }
   return false;
 }
+
+export { DATA_INTENTS };
