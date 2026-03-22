@@ -1,33 +1,60 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, AlertTriangle, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import Link from "next/link";
 
-/* ─── Demo data ─── */
-const riskTypes = [
-  { value: "conservative", label: "🛡️ Bảo thủ", allocation: [
+/* ─── Types ─── */
+interface AllocationItem { asset: string; percent: number; color: string; }
+interface MarketData {
+  vnIndex?: { price: number; changePct: number };
+  goldSjc?: { goldVnd: number; changePct: number };
+  btc?: { priceUsd: number; changePct24h: number };
+  usdVnd?: { rate: number };
+  macro?: { cpiYoY?: { value: number }[]; deposit12m?: { min: number; max: number } };
+  sentimentScore?: number;
+}
+
+/* ─── Base allocations by risk type ─── */
+const BASE_ALLOCATIONS: Record<string, AllocationItem[]> = {
+  conservative: [
     { asset: "Tiết kiệm", percent: 50, color: "#00E5FF" },
     { asset: "Trái phiếu", percent: 20, color: "#AB47BC" },
     { asset: "Vàng", percent: 20, color: "#E6B84F" },
     { asset: "Chứng khoán", percent: 10, color: "#22C55E" },
-  ]},
-  { value: "balanced", label: "⚖️ Cân bằng", allocation: [
+  ],
+  balanced: [
     { asset: "Tiết kiệm", percent: 30, color: "#00E5FF" },
     { asset: "Vàng", percent: 20, color: "#E6B84F" },
     { asset: "Chứng khoán", percent: 30, color: "#22C55E" },
     { asset: "Crypto", percent: 10, color: "#AB47BC" },
     { asset: "BĐS (REIT)", percent: 10, color: "#FF6B35" },
-  ]},
-  { value: "growth", label: "🚀 Tăng trưởng", allocation: [
+  ],
+  growth: [
     { asset: "Tiết kiệm", percent: 15, color: "#00E5FF" },
     { asset: "Vàng", percent: 10, color: "#E6B84F" },
     { asset: "Chứng khoán", percent: 40, color: "#22C55E" },
     { asset: "Crypto", percent: 25, color: "#AB47BC" },
     { asset: "BĐS (REIT)", percent: 10, color: "#FF6B35" },
-  ]},
-];
+  ],
+};
+
+const riskLabels: Record<string, string> = { conservative: "🛡️ Bảo thủ", balanced: "⚖️ Cân bằng", growth: "🚀 Tăng trưởng" };
+
+/* ─── Dynamic allocation adjusted by market sentiment ─── */
+function adjustAllocation(base: AllocationItem[], fgScore: number): AllocationItem[] {
+  // F&G < 30 (Sợ hãi) → tăng tiết kiệm/vàng, giảm cổ phiếu/crypto
+  // F&G > 70 (Tham lam) → giảm vốn mới vào CK, tăng cash reserve
+  const shift = fgScore <= 30 ? -5 : fgScore >= 70 ? -3 : 0;
+  return base.map(item => {
+    let adj = item.percent;
+    if (item.asset === "Chứng khoán" || item.asset === "Crypto") adj += shift;
+    if (item.asset === "Tiết kiệm" || item.asset === "Vàng") adj -= shift;
+    return { ...item, percent: Math.max(5, Math.min(60, adj)) };
+  });
+}
 
 function generateProjection(capital: number, riskType: string) {
   const rates = { conservative: { base: 0.06, pess: 0.03, opt: 0.08 }, balanced: { base: 0.09, pess: 0.04, opt: 0.14 }, growth: { base: 0.13, pess: 0.02, opt: 0.22 } };
@@ -49,10 +76,74 @@ function formatVND(n: number) {
 }
 
 export default function PortfolioPage() {
-  const [capital, setCapital] = useState(100000000); // 100 triệu
+  const [capital, setCapital] = useState(100000000);
   const [riskType, setRiskType] = useState("balanced");
+  const [hasRiskDNA, setHasRiskDNA] = useState(false);
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [aiInsight, setAiInsight] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [userContext, setUserContext] = useState<string>("");
 
-  const currentRisk = riskTypes.find((r) => r.value === riskType)!;
+  // ── Pull Risk DNA from localStorage on mount ──
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const riskResult = localStorage.getItem("vietfi_risk_result");
+      if (riskResult) {
+        const parsed = JSON.parse(riskResult);
+        setHasRiskDNA(true);
+        // Map Risk DNA score to risk type
+        if (parsed.score <= 6) setRiskType("conservative");
+        else if (parsed.score <= 10) setRiskType("balanced");
+        else setRiskType("growth");
+      }
+
+      // Pull income for capital suggestion
+      const income = localStorage.getItem("vietfi_income");
+      if (income) {
+        const inc = JSON.parse(income);
+        if (typeof inc === "number" && inc > 0) {
+          setCapital(inc * 6); // Suggest 6 months income as starting capital
+        }
+      }
+
+      // Build user context for AI
+      const parts: string[] = [];
+      const potsRaw = localStorage.getItem("vietfi_pots");
+      if (potsRaw) {
+        const pots = JSON.parse(potsRaw);
+        const totalBudget = pots.reduce((s: number, p: { allocated: number }) => s + p.allocated, 0);
+        parts.push(`Ngân sách tháng: ${totalBudget.toLocaleString("vi-VN")}đ`);
+      }
+      const debtRaw = localStorage.getItem("vietfi_debts");
+      if (debtRaw) {
+        const debts = JSON.parse(debtRaw);
+        const totalDebt = debts.reduce((s: number, d: { principal: number }) => s + d.principal, 0);
+        parts.push(`Tổng nợ: ${totalDebt.toLocaleString("vi-VN")}đ`);
+      }
+      if (income) parts.push(`Thu nhập: ${JSON.parse(income).toLocaleString("vi-VN")}đ/tháng`);
+      if (riskResult) {
+        const r = JSON.parse(riskResult);
+        parts.push(`Risk DNA: ${r.label} (score ${r.score}/15)`);
+      }
+      setUserContext(parts.join(", "));
+    } catch { /* ignore */ }
+  }, []);
+
+  // ── Fetch live market data ──
+  useEffect(() => {
+    fetch("/api/market-data", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setMarketData(data); })
+      .catch(() => {});
+  }, []);
+
+  // ── Dynamic allocation based on market sentiment ──
+  const fgScore = marketData?.sentimentScore ?? 50;
+  const allocation = useMemo(() => {
+    const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
+    return adjustAllocation(base, fgScore);
+  }, [riskType, fgScore]);
   const projection = generateProjection(capital, riskType);
 
   return (
@@ -84,19 +175,19 @@ export default function PortfolioPage() {
             <p className="text-[10px] text-white/20 mt-1">= {(capital / 1000000).toFixed(0)} triệu VND</p>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1.5">Khẩu vị rủi ro</label>
+            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1.5">Khẩu vị rủi ro {hasRiskDNA && <span className="text-[#22C55E]">(từ Risk DNA)</span>}</label>
             <div className="flex gap-2">
-              {riskTypes.map((r) => (
+              {Object.entries(riskLabels).map(([val, label]) => (
                 <button
-                  key={r.value}
-                  onClick={() => setRiskType(r.value)}
+                  key={val}
+                  onClick={() => setRiskType(val)}
                   className={`flex-1 py-2.5 text-xs font-medium rounded-lg transition-all ${
-                    riskType === r.value
+                    riskType === val
                       ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20"
                       : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:border-white/10"
                   }`}
                 >
-                  {r.label}
+                  {label}
                 </button>
               ))}
             </div>
@@ -115,8 +206,8 @@ export default function PortfolioPage() {
             <div className="w-40 h-40 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={currentRisk.allocation} cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={3} dataKey="percent" stroke="none">
-                    {currentRisk.allocation.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  <Pie data={allocation} cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={3} dataKey="percent" stroke="none">
+                    {allocation.map((entry: AllocationItem, i: number) => <Cell key={i} fill={entry.color} />)}
                   </Pie>
                   <Tooltip
                     contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }}
@@ -126,7 +217,7 @@ export default function PortfolioPage() {
               </ResponsiveContainer>
             </div>
             <div className="flex-1 space-y-2">
-              {currentRisk.allocation.map((item) => (
+              {allocation.map((item: AllocationItem) => (
                 <div key={item.asset} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
@@ -142,18 +233,50 @@ export default function PortfolioPage() {
           </div>
         </motion.div>
 
-        {/* AI Insight */}
+        {/* AI Insight — LIVE, kéo market data + user context */}
         <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-[#E6B84F]" />
-              <h3 className="text-sm font-semibold text-white">AI Insight</h3>
+              <h3 className="text-sm font-semibold text-white">AI Insight — Cá nhân hóa</h3>
             </div>
+
+            {/* Market data pills */}
+            {marketData && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {marketData.vnIndex && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${marketData.vnIndex.changePct >= 0 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
+                    VN-Index: {marketData.vnIndex.price} ({marketData.vnIndex.changePct >= 0 ? '+' : ''}{marketData.vnIndex.changePct}%)
+                  </span>
+                )}
+                {marketData.goldSjc && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F]">
+                    Vàng: {(marketData.goldSjc.goldVnd / 1000000).toFixed(1)}tr
+                  </span>
+                )}
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${fgScore <= 30 ? 'bg-[#EF4444]/10 text-[#EF4444]' : fgScore >= 70 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-white/5 text-white/40'}`}>
+                  F&G: {fgScore} ({fgScore <= 20 ? 'Cực Sợ' : fgScore <= 40 ? 'Sợ hãi' : fgScore <= 60 ? 'Trung tính' : fgScore <= 80 ? 'Tham lam' : 'Cực Tham'})
+                </span>
+              </div>
+            )}
+
             <p className="text-[13px] text-white/50 leading-relaxed mb-3">
-              Với profile <strong className="text-white/70">{currentRisk.label}</strong> và vốn{" "}
-              <strong className="text-white/70">{(capital / 1000000).toFixed(0)} triệu</strong>, Nhiệt kế thị trường hiện ở vùng Sợ hãi (38) → nên tăng tỷ trọng tài sản an toàn. Vàng đang đắt (93.5tr) nên chỉ giữ, không mua thêm. Chứng khoán có cơ hội tích lũy nếu VN-Index test 1,250.
+              Với profile <strong className="text-white/70">{riskLabels[riskType]}</strong> và vốn{" "}
+              <strong className="text-white/70">{(capital / 1000000).toFixed(0)} triệu</strong>
+              {fgScore <= 30 && " — Nhiệt kế thị trường đang ở vùng Sợ hãi → tăng tỷ trọng tài sản an toàn (tiết kiệm, vàng). Chứng khoán có cơ hội tích lũy nếu VN-Index tiếp tục giảm."}
+              {fgScore > 30 && fgScore <= 60 && " — Thị trường trung tính → giữ phân bổ cân bằng theo khẩu vị rủi ro."}
+              {fgScore > 60 && " — Thị trường Tham lam → cẩn thận FOMO. Giảm dần vị thế rủi ro, tăng cash reserve."}
+              {userContext && <><br /><span className="text-[11px] text-white/30">📊 {userContext}</span></>}
             </p>
+
+            {!hasRiskDNA && (
+              <Link href="/dashboard/risk-profile" className="inline-flex items-center gap-1.5 text-[11px] text-[#E6B84F] hover:text-[#FFD700] transition-colors mb-3">
+                <Brain className="w-3.5 h-3.5" />
+                Làm quiz Tính cách Đầu tư để cá nhân hóa tốt hơn →
+              </Link>
+            )}
+
             <div className="flex items-center gap-3">
               <div className="text-center">
                 <TrendingUp className="w-5 h-5 text-[#22C55E] mx-auto mb-0.5" />
@@ -177,7 +300,7 @@ export default function PortfolioPage() {
           <h3 className="text-sm font-semibold text-white">Backtest — Nếu bạn đầu tư từ 2021</h3>
         </div>
         <p className="text-[11px] text-white/30 mb-3">
-          Giả lập nếu bạn đầu tư <strong className="text-white/60">{(capital / 1000000).toFixed(0)} triệu</strong> theo phân bổ <strong className="text-white/60">{currentRisk.label}</strong> từ đầu năm 2021:
+          Giả lập nếu bạn đầu tư <strong className="text-white/60">{(capital / 1000000).toFixed(0)} triệu</strong> theo phân bổ <strong className="text-white/60">{riskLabels[riskType]}</strong> từ đầu năm 2021:
         </p>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">

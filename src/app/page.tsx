@@ -194,7 +194,7 @@ function Features() {
 /* ═══════════════════ HOW IT WORKS ═══════════════════ */
 function HowItWorks() {
   const steps = [
-    { num: "01", emoji: "💰", title: "🟢 Quản lý Chi tiêu", desc: "\"Tiền đi đâu hết?\" — Chia lọ ngân sách, ghi chi tiêu với Vẹt Vàng AI, đo lạm phát cá nhân thực." },
+    { num: "01", emoji: "💰", title: "🟢 Quản lý Chi tiêu", desc: "\"Tiền đi đâu hết?\" — Chia hũ ngân sách, ghi chi tiêu với Vẹt Vàng AI, đo lạm phát cá nhân thực." },
     { num: "02", emoji: "🏦", title: "🔴 Thoát bẫy Nợ", desc: "\"Nợ SPayLater + thẻ tín dụng + MoMo chiếm 60% lương?\" — Hợp nhất nợ, tính lãi ẩn, lộ trình Trả nhỏ trước vs Trả lãi cao trước." },
     { num: "03", emoji: "🚀", title: "🔵 Đầu tư Thông minh", desc: "\"Đầu tư gì? Cơ hội ở đâu?\" — Nhiệt kế thị trường, Xu hướng kinh tế, Bản tin AI sáng sớm. Cá nhân hóa theo Tính cách đầu tư." },
   ];
@@ -233,13 +233,13 @@ function HowItWorks() {
 /* ═══════════════════ VẸT VÀNG SHOWCASE ═══════════════════ */
 function VetVangShowcase() {
   const modes = [
-    { badge: "🔥 Mổ Mode", color: "#EF4444", quote: "\"3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười 🦜\"", trigger: "Khi chi vượt lọ, bỏ app ≥2 ngày, quên trả nợ" },
+    { badge: "🔥 Mổ Mode", color: "#EF4444", quote: "\"3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười 🦜\"", trigger: "Khi chi vượt hũ, bỏ app ≥2 ngày, quên trả nợ" },
     { badge: "💛 Khen Mode", color: "#E6B84F", quote: "\"Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! +20 XP 🦜✨\"", trigger: "Khi tiết kiệm đạt target, ghi đúng giờ, streak dài" },
-    { badge: "🧠 Thâm Mode", color: "#AB47BC", quote: "\"Mua đi mua đi, tao đâu có cấm. Tao chỉ thầm tính: ly trà sữa này = 3 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc quan trọng hơn mà... phải không? 🦜\"", trigger: "Khi sắp vượt lọ, chi tiêu tăng dần" },
+    { badge: "🧠 Thâm Mode", color: "#AB47BC", quote: "\"Mua đi mua đi, tao đâu có cấm. Tao chỉ thầm tính: ly trà sữa này = 3 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc quan trọng hơn mà... phải không? 🦜\"", trigger: "Khi sắp vượt hũ, chi tiêu tăng dần" },
   ];
 
   const levels = [
-    { name: "🐣 Vẹt Con", xp: "0 XP", desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.", unlock: "🔓 Ghi chi tiêu cơ bản + chia lọ" },
+    { name: "🐣 Vẹt Con", xp: "0 XP", desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.", unlock: "🔓 Ghi chi tiêu cơ bản + chia hũ" },
     { name: "🦜 Vẹt Teen", xp: "500 XP", desc: "Mọc lông vàng, tập nói xéo. Biết quy đổi trà sữa ra ngày lãi tiết kiệm.", unlock: "🔓 Roast card + streak tracker" },
     { name: "🦜✨ Vẹt Phố", xp: "2,000 XP", desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.", unlock: "🔓 Market insight + outfit vẹt" },
     { name: "👑 Vẹt Nhà Giàu", xp: "5,000 XP", desc: "Lông vàng kim, đeo chain vàng. \"Tự do tài chính\" — ít nhất trong mắt vẹt.", unlock: "🔓 Full analysis + Vẹt Battle", final: true },
@@ -378,7 +378,7 @@ function FAQ() {
     { q: "Nhiệt kế thị trường lấy dữ liệu từ đâu?", a: "5 chỉ báo Việt hóa: VN-Index Momentum, Khối ngoại ròng, Sentiment NLP (VnExpress), Breadth (HoSE), Spread TPCP vs tiết kiệm (NHNN). Cập nhật daily." },
     { q: "Dữ liệu tài chính của tôi có an toàn không?", a: "Supabase PostgreSQL với Row Level Security — mỗi user chỉ thấy data của mình. Không chia sẻ data với bên thứ 3." },
     { q: "VietFi có phải lời khuyên đầu tư không?", a: "Không. VietFi cung cấp phân tích và gợi ý dựa trên dữ liệu, KHÔNG phải lời khuyên đầu tư." },
-    { q: "Vẹt Vàng AI hoạt động như thế nào?", a: "Mascot AI có 3 chế độ: Mổ (roast khi vượt lọ), Khen (hype khi tiết kiệm tốt), Thâm (passive-aggressive khi sắp vượt). Ghi chi tiêu = \"cho vẹt ăn\" → tích XP → level up." },
+    { q: "Vẹt Vàng AI hoạt động như thế nào?", a: "Mascot AI có 3 chế độ: Mổ (roast khi vượt hũ), Khen (hype khi tiết kiệm tốt), Thâm (passive-aggressive khi sắp vượt). Ghi chi tiêu = \"cho vẹt ăn\" → tích XP → level up." },
   ];
 
   const [openIdx, setOpenIdx] = useState<number | null>(null);

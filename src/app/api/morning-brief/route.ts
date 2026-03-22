@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getMorningBriefCached, resetMorningBriefCache } from '@/lib/morning-brief'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function getMorningBriefResponse() {
   try {

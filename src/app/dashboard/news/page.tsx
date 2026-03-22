@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 type NewsSentiment = "bullish" | "bearish" | "neutral";
 
@@ -33,7 +33,15 @@ const sentimentTag = {
   neutral: { color: "#8B8D96", label: "Trung lập", icon: Minus },
 };
 
-const assetFilters = ["Tất cả", "Vàng", "Chứng khoán", "Crypto", "Tiết kiệm", "Vĩ mô"];
+const assetFilters = ["Tất cả", "📌 Đã lưu", "Vàng", "Chứng khoán", "Crypto", "Tiết kiệm", "Vĩ mô"];
+
+const BOOKMARK_KEY = "vietfi_news_bookmarks";
+function getBookmarks(): Set<string | number> {
+  try { return new Set(JSON.parse(localStorage.getItem(BOOKMARK_KEY) || "[]")); } catch { return new Set(); }
+}
+function saveBookmarks(bm: Set<string | number>) {
+  localStorage.setItem(BOOKMARK_KEY, JSON.stringify([...bm]));
+}
 
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
@@ -43,6 +51,19 @@ export default function NewsPage() {
   const [items, setItems] = useState<NewsItem[]>(allNewsFallback);
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Set<string | number>>(new Set());
+
+  useEffect(() => { setBookmarks(getBookmarks()); }, []);
+
+  const toggleBookmark = useCallback((id: string | number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      saveBookmarks(next);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -105,8 +126,12 @@ export default function NewsPage() {
   }, []);
 
   const filtered = useMemo(
-    () => (filter === "Tất cả" ? items : items.filter((n) => n.asset === filter)),
-    [filter, items],
+    () => {
+      if (filter === "Tất cả") return items;
+      if (filter === "📌 Đã lưu") return items.filter(n => bookmarks.has(n.id));
+      return items.filter((n) => n.asset === filter);
+    },
+    [filter, items, bookmarks],
   );
 
   return (
@@ -185,7 +210,19 @@ export default function NewsPage() {
                     <span className="text-[10px] text-white/20 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{news.time}</span>
                   </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-white/10 group-hover:text-[#E6B84F] transition-colors flex-shrink-0 mt-1" />
+                <div className="flex flex-col items-center gap-2 flex-shrink-0 mt-1">
+                  <button
+                    onClick={(e) => toggleBookmark(news.id, e)}
+                    className="p-1 rounded-md hover:bg-white/[0.06] transition-colors"
+                    title={bookmarks.has(news.id) ? "Bỏ lưu" : "Lưu tin"}
+                  >
+                    {bookmarks.has(news.id)
+                      ? <BookmarkCheck className="w-4 h-4 text-[#E6B84F]" />
+                      : <Bookmark className="w-4 h-4 text-white/15 hover:text-white/40" />
+                    }
+                  </button>
+                  <ExternalLink className="w-3.5 h-3.5 text-white/10 group-hover:text-[#E6B84F] transition-colors" />
+                </div>
               </div>
             </motion.div>
           );

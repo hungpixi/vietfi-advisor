@@ -23,6 +23,9 @@ import {
   Flame,
   Zap,
   Trophy,
+  LineChart,
+  Home,
+  Search,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -32,6 +35,7 @@ import { XPToastContainer, useXPToast } from "@/components/gamification/XPToast"
 import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
 import { getAuthUserId } from "@/lib/supabase/user-data";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
+import { checkMarketAlerts } from "@/lib/market-alert";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -54,8 +58,11 @@ const navGroups = [
     label: "THỊ TRƯỜNG",
     items: [
       { href: "/dashboard/sentiment", label: "Nhiệt kế thị trường", icon: Activity },
+      { href: "/dashboard/market", label: "Phân tích sâu", icon: LineChart },
+      { href: "/dashboard/screener", label: "Lọc Cổ Phiếu", icon: Search },
       { href: "/dashboard/news", label: "Tin tức AI", icon: Newspaper },
       { href: "/dashboard/macro", label: "Xu hướng kinh tế", icon: BarChart3 },
+      { href: "/dashboard/housing", label: "Thông tin nhà ở", icon: Home },
     ],
   },
   {
@@ -177,6 +184,11 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     check();
     window.addEventListener("storage", check);
     return () => window.removeEventListener("storage", check);
+  }, []);
+
+  // ── Market volatility alerts (client-side, no cron needed) ──
+  useEffect(() => {
+    checkMarketAlerts().catch(() => {});
   }, []);
 
   return (

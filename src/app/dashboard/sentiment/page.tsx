@@ -339,7 +339,7 @@ export default function SentimentPage() {
         </div>
       </motion.div>
 
-      {/* ═══ Tâm lý theo kênh đầu tư ═══ */}
+      {/* ═══ Tâm lý theo kênh đầu tư + HÀNH ĐỘNG ═══ */}
       <motion.div variants={fadeIn}>
         <h2 className="text-sm font-bold text-white mb-3">Tâm lý theo kênh đầu tư</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -347,8 +347,14 @@ export default function SentimentPage() {
             const z = getZone(a.score);
             const TrendIcon = a.trend === "up" ? TrendingUp : a.trend === "down" ? TrendingDown : Minus;
             const trendColor = a.trend === "up" ? "#16c784" : a.trend === "down" ? "#ea3943" : "#8B8D96";
+            // Action badge based on score
+            const action = a.score <= 25 ? { label: "🟢 CƠ HỘI MUA", color: "#22C55E", tip: "Giá rẻ — cân nhắc tích lũy dần" }
+              : a.score <= 40 ? { label: "🟡 THEO DÕI", color: "#f3d42f", tip: "Chưa quá rẻ — đợi thêm hoặc mua nhỏ" }
+              : a.score <= 60 ? { label: "⚪ GIỮ", color: "#8B8D96", tip: "Trung lập — giữ vị thế hiện tại" }
+              : a.score <= 80 ? { label: "🟠 CẨN THẬN", color: "#FF6B35", tip: "Đang nóng — cân nhắc chốt lãi 1 phần" }
+              : { label: "🔴 QUÁ NÓNG", color: "#EF4444", tip: "Tránh mua đuổi — chốt lãi nếu có" };
             return (
-              <motion.div key={a.asset} variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all cursor-pointer">
+              <motion.div key={a.asset} variants={fadeIn} className="glass-card glass-card-hover p-4 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-white">{a.asset}</span>
                   <TrendIcon className="w-4 h-4" style={{ color: trendColor }} />
@@ -357,10 +363,60 @@ export default function SentimentPage() {
                   <span className="text-2xl font-bold" style={{ color: z.color }}>{a.score}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: z.color, backgroundColor: `${z.color}15` }}>{z.label}</span>
                 </div>
+                {/* Action badge */}
+                <div className="mb-2">
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-md" style={{ color: action.color, backgroundColor: `${action.color}15` }}>
+                    {action.label}
+                  </span>
+                  <p className="text-[10px] text-white/30 mt-1">{action.tip}</p>
+                </div>
                 <p className="text-[11px] text-white/30">{a.news}</p>
               </motion.div>
             );
           })}
+        </div>
+      </motion.div>
+
+      {/* 🎯 RADAR CƠ HỘI */}
+      <motion.div variants={fadeIn} className="mt-6 glass-card p-5 border-[#22C55E]/10 relative overflow-hidden">
+        <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#22C55E]/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🎯</span>
+            <h3 className="text-sm font-bold text-[#22C55E]">Radar Cơ Hội</h3>
+          </div>
+          <div className="space-y-2">
+            {/* Opportunities */}
+            {assetSentiments.filter(a => a.score <= 30).length > 0 && (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-[#22C55E]/15 text-[#22C55E] px-1.5 py-0.5 rounded font-bold shrink-0">MUA</span>
+                <p className="text-[13px] text-white/60">
+                  {assetSentiments.filter(a => a.score <= 30).map(a => <strong key={a.asset} className="text-white/80">{a.asset}</strong>).reduce((prev, curr, i) => i === 0 ? [curr] : [...prev, <span key={`sep-${i}`}>, </span>, curr], [] as React.ReactNode[])}
+                  {" "}đang ở vùng Sợ hãi — cơ hội tích lũy nếu bạn có vốn dư
+                </p>
+              </div>
+            )}
+            {/* Risks */}
+            {assetSentiments.filter(a => a.score >= 70).length > 0 && (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-[#EF4444]/15 text-[#EF4444] px-1.5 py-0.5 rounded font-bold shrink-0">CẨN THẬN</span>
+                <p className="text-[13px] text-white/60">
+                  {assetSentiments.filter(a => a.score >= 70).map(a => <strong key={a.asset} className="text-white/80">{a.asset}</strong>).reduce((prev, curr, i) => i === 0 ? [curr] : [...prev, <span key={`sep-${i}`}>, </span>, curr], [] as React.ReactNode[])}
+                  {" "}đang quá nóng — tránh mua đuổi, chốt lãi nếu có
+                </p>
+              </div>
+            )}
+            {/* Neutral */}
+            {assetSentiments.every(a => a.score > 30 && a.score < 70) && (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-white/10 text-white/50 px-1.5 py-0.5 rounded font-bold shrink-0">TRUNG TÍNH</span>
+                <p className="text-[13px] text-white/60">Không có kênh nào ở vùng cực đoan — giữ vị thế hiện tại, theo dõi tin tức</p>
+              </div>
+            )}
+          </div>
+          <a href="/dashboard/portfolio" className="inline-flex items-center gap-1.5 text-[11px] text-[#22C55E] hover:text-[#16c784] transition-colors mt-3 font-medium">
+            Xem phân bổ vốn phù hợp → 
+          </a>
         </div>
       </motion.div>
     </motion.div>

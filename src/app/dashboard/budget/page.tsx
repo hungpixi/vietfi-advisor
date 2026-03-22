@@ -95,12 +95,12 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         className="glass-card p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-white">Thêm lọ mới</h3>
+          <h3 className="text-base font-bold text-white">Thêm hũ mới</h3>
           <button onClick={onClose} className="p-1 text-white/30 hover:text-white/60"><X className="w-4 h-4" /></button>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1">Tên lọ</label>
+            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1">Tên hũ</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Quỹ du lịch"
               className="w-full px-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E6B84F]/30" />
           </div>
@@ -132,7 +132,7 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
           </div>
           <button onClick={handleSubmit} disabled={!name.trim() || !allocated}
             className="w-full py-2.5 bg-gradient-to-r from-[#E6B84F] to-[#D4A43F] text-black text-sm font-semibold rounded-lg disabled:opacity-30 hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
-            <Check className="w-4 h-4 inline mr-1" /> Tạo lọ
+            <Check className="w-4 h-4 inline mr-1" /> Tạo hũ
           </button>
         </div>
       </motion.div>
@@ -266,7 +266,7 @@ export default function BudgetPage() {
   };
 
   const exportCSV = () => {
-    const header = "Ngày,Lọ,Số tiền,Ghi chú\n";
+    const header = "Ngày,Hũ,Số tiền,Ghi chú\n";
     const rows = expenses.map(e => {
       const pot = pots.find(p => p.id === e.potId);
       return `${new Date(e.date).toLocaleDateString("vi-VN")},${pot?.name || "Khác"},${e.amount},"${e.note}"`;
@@ -293,7 +293,7 @@ export default function BudgetPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">Quỹ Chi tiêu</h1>
-            <p className="text-[13px] text-white/40">Quản lý ngân sách theo &ldquo;lọ&rdquo; — click vào lọ để ghi chi tiêu</p>
+            <p className="text-[13px] text-white/40">Quản lý ngân sách theo &ldquo;hũ&rdquo; — click vào hũ để ghi chi tiêu</p>
           </div>
           <div className="flex items-center gap-2">
             {expenses.length > 0 && (
@@ -304,7 +304,7 @@ export default function BudgetPage() {
             )}
             <button onClick={() => setShowAddPot(true)}
               className="flex items-center gap-1.5 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
-              <Plus className="w-3.5 h-3.5" /> Thêm lọ
+              <Plus className="w-3.5 h-3.5" /> Thêm hũ
             </button>
           </div>
         </div>
@@ -455,11 +455,11 @@ export default function BudgetPage() {
           {pots.length === 0 && (
             <motion.div variants={fadeIn} className="sm:col-span-2 glass-card p-8 text-center">
               <span className="text-4xl">🦜</span>
-              <h3 className="text-sm font-semibold text-white mt-3">Chưa có lọ nào!</h3>
-              <p className="text-xs text-white/30 mt-1">Tạo lọ đầu tiên để bắt đầu quản lý chi tiêu</p>
+              <h3 className="text-sm font-semibold text-white mt-3">Chưa có hũ nào!</h3>
+              <p className="text-xs text-white/30 mt-1">Tạo hũ đầu tiên để bắt đầu quản lý chi tiêu</p>
               <button onClick={() => setShowAddPot(true)}
                 className="mt-3 px-4 py-2 bg-gradient-primary text-black text-xs font-semibold rounded-lg">
-                <Plus className="w-3 h-3 inline mr-1" /> Tạo lọ
+                <Plus className="w-3 h-3 inline mr-1" /> Tạo hũ
               </button>
             </motion.div>
           )}

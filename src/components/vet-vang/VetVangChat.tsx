@@ -273,6 +273,32 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     setMessages((prev: any) => [...prev, userMsg, botMsg]);
   };
 
+  // ── Market-related intents that need live data ──
+  const MARKET_INTENTS = ["ask_gold", "ask_stock", "ask_crypto", "ask_market", "compare_gold_stock", "ask_inflation", "ask_realestate"];
+
+  const fetchMarketContext = useCallback(async (): Promise<string> => {
+    try {
+      const resp = await fetch("/api/market-data", { cache: "no-store" });
+      if (!resp.ok) return "";
+      const data = await resp.json();
+      const parts: string[] = ["[DỮ LIỆU THỊ TRƯỜNG REALTIME]"];
+      if (data.vnIndex) parts.push(`VN-Index: ${data.vnIndex.price} (${data.vnIndex.changePct >= 0 ? "+" : ""}${data.vnIndex.changePct}%)`);
+      if (data.goldSjc) parts.push(`Vàng SJC: ${data.goldSjc.goldVnd?.toLocaleString("vi-VN")}đ/lượng (${data.goldSjc.changePct >= 0 ? "+" : ""}${data.goldSjc.changePct}%)`);
+      if (data.usdVnd) parts.push(`USD/VND: ${data.usdVnd.rate?.toLocaleString("vi-VN")}`);
+      if (data.btc) parts.push(`BTC: $${data.btc.priceUsd?.toLocaleString("en-US")} (${data.btc.changePct24h >= 0 ? "+" : ""}${data.btc.changePct24h}%)`);
+      if (data.macro) {
+        const gdp = data.macro.gdpYoY?.[0];
+        const cpi = data.macro.cpiYoY?.[0];
+        if (gdp) parts.push(`GDP: ${gdp.value}% (${gdp.period})`);
+        if (cpi) parts.push(`CPI: ${cpi.value}% (${cpi.period})`);
+        if (data.macro.deposit12m) parts.push(`Lãi suất tiết kiệm 12T: ${data.macro.deposit12m.min}-${data.macro.deposit12m.max}%`);
+      }
+      return parts.join("\n");
+    } catch {
+      return "";
+    }
+  }, []);
+
   const submitForm = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -291,7 +317,14 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
       const ctx = getUserDataContext();
-      sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}` });
+      // Market intents → also fetch live data
+      if (MARKET_INTENTS.includes(intent)) {
+        fetchMarketContext().then(mkt => {
+          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+        });
+      } else {
+        sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+      }
     } else {
       sendMessage({ text });
     }
@@ -301,12 +334,12 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Labels chứa keyword khớp intent patterns
     const labels: Record<string, string> = {
       ask_spending: "phân tích chi tiêu của tôi",
-      ask_debt: "tình hình nợ của tôi",
-      ask_invest: "tư vấn đầu tư",
+      ask_debt: "tình hình nợ của tôi và cách trả nợ tối ưu",
+      ask_invest: "tư vấn đầu tư dựa trên tình hình tài chính của tôi",
       motivate: "motivate tôi đi",
-      compare_gold_stock: "so sánh vàng và chứng khoán nên đầu tư cái nào",
-      ask_inflation: "lạm phát Việt Nam hiện tại bao nhiêu và ảnh hưởng gì",
-      ask_realestate: "với thu nhập của tôi có nên mua nhà không",
+      compare_gold_stock: "so sánh vàng và chứng khoán, với giá hiện tại nên đầu tư cái nào",
+      ask_inflation: "lạm phát VN hiện tại bao nhiêu, ảnh hưởng gì đến tiền tiết kiệm và chi tiêu của tôi",
+      ask_realestate: "với thu nhập và chi tiêu hiện tại của tôi, có nên mua nhà không, mua hay thuê",
     };
     if (isLoading) return;
     const text = labels[key] || key;
@@ -319,11 +352,17 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       return;
     }
 
-    // Inject user data context for data-dependent questions
+    // Inject user data context + market data for data-dependent questions
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
       const ctx = getUserDataContext();
-      sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}` });
+      if (MARKET_INTENTS.includes(intent) || MARKET_INTENTS.includes(key)) {
+        fetchMarketContext().then(mkt => {
+          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực.` });
+        });
+      } else {
+        sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+      }
     } else {
       sendMessage({ text });
     }

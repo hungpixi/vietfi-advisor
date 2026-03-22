@@ -126,6 +126,65 @@ export default function PersonalCPIPage() {
         </motion.div>
       )}
 
+      {/* 🦜 ACTION CARD — Phải Làm Gì? */}
+      <motion.div variants={fadeIn} className="glass-card p-5 mb-6 border-[#E6B84F]/10 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🦜</span>
+            <h3 className="text-sm font-bold text-[#E6B84F]">Vẹt Vàng khuyên:</h3>
+          </div>
+          <div className="space-y-2.5">
+            {/* Rule 1: Lãi suất vs lạm phát */}
+            {result.personalRate > 5.2 ? (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-[#EF4444]/15 text-[#EF4444] px-1.5 py-0.5 rounded font-bold shrink-0">1</span>
+                <p className="text-[13px] text-white/60">
+                  Lãi suất tiết kiệm <strong className="text-white/80">5.2%/năm</strong> &lt; lạm phát của bạn <strong className="text-[#EF4444]">{result.personalRate}%</strong> → 
+                  Tiền mặt đang <strong className="text-[#EF4444]">MẤT GIÁ</strong> ≈ {((result.personalRate - 5.2) * 1000000 / 100).toLocaleString("vi-VN")}đ/năm cho mỗi 1 triệu gửi tiết kiệm
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-[#22C55E]/15 text-[#22C55E] px-1.5 py-0.5 rounded font-bold shrink-0">1</span>
+                <p className="text-[13px] text-white/60">
+                  Lãi suất tiết kiệm <strong className="text-[#22C55E]">5.2%</strong> &gt; lạm phát của bạn <strong className="text-white/80">{result.personalRate}%</strong> → 
+                  Tiền tiết kiệm vẫn <strong className="text-[#22C55E]">tăng giá trị thực</strong> 👍
+                </p>
+              </div>
+            )}
+
+            {/* Rule 2: Gợi ý hedge */}
+            {result.personalRate > 5.2 && (
+              <div className="flex items-start gap-2">
+                <span className="text-xs bg-[#E6B84F]/15 text-[#E6B84F] px-1.5 py-0.5 rounded font-bold shrink-0">2</span>
+                <p className="text-[13px] text-white/60">
+                  Tăng tỷ trọng tài sản <strong className="text-white/80">hedge lạm phát</strong> (vàng, chứng khoán, BĐS) → 
+                  <a href="/dashboard/portfolio" className="text-[#E6B84F] hover:underline ml-1">Xem Cố vấn Danh mục →</a>
+                </p>
+              </div>
+            )}
+
+            {/* Rule 3: Gợi ý cắt category lớn nhất */}
+            {(() => {
+              const sorted = [...result.categories].sort((a, b) => b.contribution - a.contribution);
+              const top = sorted[0];
+              if (!top || top.contribution < result.personalRate * 0.3) return null;
+              const pct = ((top.contribution / result.personalRate) * 100).toFixed(0);
+              return (
+                <div className="flex items-start gap-2">
+                  <span className="text-xs bg-[#AB47BC]/15 text-[#AB47BC] px-1.5 py-0.5 rounded font-bold shrink-0">{result.personalRate > 5.2 ? "3" : "2"}</span>
+                  <p className="text-[13px] text-white/60">
+                    <strong className="text-white/80">{top.emoji} {top.name}</strong> chiếm <strong className="text-[#AB47BC]">{pct}%</strong> lạm phát cá nhân — 
+                    cân nhắc cắt giảm hoặc tìm nguồn thay thế rẻ hơn
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </motion.div>
+
       {/* Sliders */}
       <motion.div variants={fadeIn} className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">

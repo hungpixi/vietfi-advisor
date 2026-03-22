@@ -12,6 +12,7 @@ export type Intent =
   | "expense_logged" | "expense_high" | "expense_low"
   | "ask_spending" | "ask_debt" | "ask_invest" | "ask_save"
   | "ask_gold" | "ask_stock" | "ask_crypto" | "ask_market"
+  | "compare_gold_stock" | "ask_inflation" | "ask_realestate"
   | "motivate" | "complain" | "curse" | "sad" | "bored"
   | "who_are_you" | "help" | "joke"
   | "morning" | "afternoon" | "evening" | "night"
@@ -42,6 +43,9 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "ask_stock", patterns: ["vnindex", "vn-index", "chứng khoán", "cổ phiếu", "stock", "hose", "hnx"] },
   { intent: "ask_crypto", patterns: ["crypto", "bitcoin", "btc", "eth", "coin"] },
   { intent: "ask_market", patterns: ["thị trường", "market", "kinh tế", "lãi suất", "tỷ giá", "usd"] },
+  { intent: "compare_gold_stock", patterns: ["vàng vs", "ck vs", "vàng hay cổ phiếu", "so sánh vàng", "vàng với chứng khoán", "gold vs stock"] },
+  { intent: "ask_inflation", patterns: ["lạm phát", "inflation", "cpi", "giá tăng", "mất giá"] },
+  { intent: "ask_realestate", patterns: ["mua nhà", "bđs", "bất động sản", "thuê nhà", "nhà ở", "real estate"] },
   { intent: "motivate", patterns: ["motivate", "động viên", "khích lệ", "mệt"] },
   { intent: "complain", patterns: ["app tệ", "tệ quá", "dở", "ghét", "khó dùng", "bug"] },
   { intent: "curse", patterns: ["đm", "vcl", "vl", "cc", "đ mẹ", "ngu", "khùng"] },
@@ -539,6 +543,7 @@ export function getComparison(amount: number): string {
 const DATA_INTENTS: Intent[] = [
   "ask_spending", "ask_debt", "ask_invest", "ask_save",
   "ask_gold", "ask_stock", "ask_crypto", "ask_market",
+  "compare_gold_stock", "ask_inflation", "ask_realestate",
 ];
 
 // ── Should this message go to AI? ───────────────────────────────

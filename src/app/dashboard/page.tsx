@@ -127,7 +127,10 @@ interface BriefData {
   date: string;
   title: string;
   summary: string;
+  raw?: string;
   takeaways: { emoji: string; asset: string; text: string }[];
+  source?: 'gemini' | 'heuristic';
+  stale?: boolean;
 }
 
 interface NewsItem {
@@ -144,10 +147,27 @@ function generateBriefFromArticles(articles: NewsArticle[]): BriefData {
   const bearish = articles.filter(a => a.sentiment === "bearish").length;
   const mood = bullish > bearish ? "Tích cực nhẹ" : bearish > bullish ? "Thận trọng" : "Trung lập";
 
+  // Cắt title tại ranh giới từ (không cắt giữa chữ)
+  const rawTitle = top4[0]?.title || "Đang cập nhật";
+  const titleWords = rawTitle.split(" ");
+  let briefTitle = "";
+  for (const w of titleWords) {
+    if ((briefTitle + " " + w).length > 50) break;
+    briefTitle = briefTitle ? briefTitle + " " + w : w;
+  }
+  if (briefTitle.length < rawTitle.length) briefTitle += "...";
+
+  // Summary: lấy 2 tin đầu, cắt gọn
+  const summaryParts = top4.slice(0, 2).map(a => {
+    const s = a.summary || a.title;
+    return s.length > 100 ? s.slice(0, 100).replace(/\s+\S*$/, "") + "..." : s;
+  });
+  const summary = summaryParts.join(" | ");
+
   return {
     date: `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`,
-    title: `Thị trường ${mood} — ${top4[0]?.title?.slice(0, 40) || "Đang cập nhật"}`,
-    summary: top4.map(a => a.title).join(". ") + ".",
+    title: `Thị trường ${mood} — ${briefTitle}`,
+    summary,
     takeaways: top4.map(a => ({
       emoji: sentimentEmoji[a.sentiment] || "🟡",
       asset: a.asset || a.category || "TT",
@@ -576,6 +596,7 @@ export default function DashboardOverview() {
           summary: data.summary,
           raw: data.raw ?? data.summary,
           takeaways: Array.isArray(data.takeaways) ? data.takeaways : [],
+          source: data.source ?? 'heuristic',
         });
       } catch (err) {
         setAiBriefError('Không thể tải Morning Brief');

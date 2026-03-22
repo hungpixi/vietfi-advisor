@@ -201,7 +201,7 @@ export function getDailyQuests(): DailyQuest[] {
     quests.push({
       id: "review_budget",
       title: "Review ngân sách tuần mới",
-      description: "Kiểm tra các lọ chi tiêu đầu tuần",
+      description: "Kiểm tra các hũ chi tiêu đầu tuần",
       xp: 15,
       actionKey: "setup_budget",
       completed: state.actions.includes("setup_budget"),

@@ -26,12 +26,15 @@ interface BatchResult {
   error?: string;
 }
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+let _genAI: GoogleGenerativeAI | null = null;
+function getGenAI(): GoogleGenerativeAI {
+  if (!_genAI) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("GEMINI_API_KEY environment variable is required");
+    _genAI = new GoogleGenerativeAI(key);
+  }
+  return _genAI;
 }
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 /**
  * Process multiple prompts - simulated batch via sequential calls
@@ -63,7 +66,7 @@ export async function batchProcess(
     ? { baseUrl: process.env.GEMINI_BASE_URL }
     : undefined;
 
-  const geminiModel = genAI.getGenerativeModel(
+  const geminiModel = getGenAI().getGenerativeModel(
     { model, generationConfig: { temperature, maxOutputTokens: maxTokens } },
     requestOptions
   );
@@ -161,7 +164,7 @@ Format: Tiêu đề bold + 3-4 câu tóm tắt. Ngắn gọn, dễ hiểu.
     ? { baseUrl: process.env.GEMINI_BASE_URL }
     : undefined;
 
-  const model = genAI.getGenerativeModel(
+  const model = getGenAI().getGenerativeModel(
     { model: "gemini-2.0-flash", generationConfig: { temperature: 0.5, maxOutputTokens: 500 } },
     requestOptions
   );

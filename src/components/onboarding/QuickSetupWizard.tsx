@@ -159,7 +159,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-white">Thu nhập hàng tháng</h2>
-                  <p className="text-[11px] text-white/30">Để tự động chia 6 lọ chi tiêu cho bạn</p>
+                  <p className="text-[11px] text-white/30">Để tự động chia 6 hũ chi tiêu cho bạn</p>
                 </div>
               </div>
 

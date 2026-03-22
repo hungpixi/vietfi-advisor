@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { refreshMorningBriefCache } from '@/lib/morning-brief'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET
