@@ -3,7 +3,7 @@ import { crawlNews, type NewsSnapshot } from '@/lib/news/crawler'
 
 export const runtime = 'nodejs'
 
-const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_TTL_MS = 10 * 60 * 1000
 
 interface CacheEntry {
   snapshot: NewsSnapshot
@@ -23,8 +23,20 @@ function isCacheFresh(): boolean {
 
 export async function getNewsResponse(crawl: () => Promise<NewsSnapshot>) {
   try {
-    if (isCacheFresh() && cache) {
-      return NextResponse.json({ ...cache.snapshot, stale: false }, { status: 200 })
+    if (cache) {
+      if (isCacheFresh()) {
+        return NextResponse.json({ ...cache.snapshot, stale: false }, { status: 200 })
+      }
+
+      void crawl()
+        .then((snapshot) => {
+          cache = { snapshot, fetchedAt: Date.now() }
+        })
+        .catch(() => {
+          // ignore failed background refresh
+        })
+
+      return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
     }
 
     const snapshot = await crawl()
@@ -40,5 +52,7 @@ export async function getNewsResponse(crawl: () => Promise<NewsSnapshot>) {
 }
 
 export async function GET() {
-  return getNewsResponse(() => crawlNews({ includeContent: false }))
+  return getNewsResponse(() =>
+    crawlNews({ includeContent: false, enableAiReview: false }),
+  )
 }

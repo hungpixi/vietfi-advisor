@@ -458,7 +458,7 @@ export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSna
     includeContent = true,
     rateLimitPerSec = 4,
     feeds = RSS_CAFEF,
-    enableAiReview = true,
+    enableAiReview = process.env.ENABLE_NEWS_AI_REVIEW === '1',
     aiReviewLimit = 6,
   } = options
 

@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 // ── In-memory cache ──────────────────────────────────────────────────────────
 // Persists across requests within the same serverless function instance.
 // On Vercel/serverless: cleared on cold start. On Node: persists indefinitely.
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes (higher to reduce frequent slow crawls)
 
 interface CacheEntry {
   snapshot: MarketSnapshot
@@ -33,22 +33,32 @@ export async function getMarketDataResponse(
   crawl: () => Promise<MarketSnapshot>,
 ) {
   try {
-    // Serve from cache if fresh
-    if (isCacheFresh() && cache) {
-      return NextResponse.json(cache.snapshot, { status: 200 })
+    if (cache) {
+      // Fresh cache is fast; stale cache is still better than blocking on a network crawl.
+      if (isCacheFresh()) {
+        return NextResponse.json({ ...cache.snapshot, stale: false }, { status: 200 })
+      }
+
+      // Stale cache: return current snapshot immediately and revalidate in background.
+      void crawl()
+        .then((snapshot) => {
+          cache = { snapshot, fetchedAt: Date.now() }
+        })
+        .catch(() => {
+          // ignore background refresh failures
+        })
+
+      return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
     }
 
-    // Crawl fresh data
+    // No cache yet: fetch first time.
     const snapshot = await crawl()
-
-    // Store in cache
     cache = { snapshot, fetchedAt: Date.now() }
-
-    return NextResponse.json(snapshot, { status: 200 })
+    return NextResponse.json({ ...snapshot, stale: false }, { status: 200 })
   } catch {
-    // On crawl failure, try to serve stale cache (better than nothing)
     if (cache) {
-      return NextResponse.json(cache.snapshot, { status: 200 })
+      // no fresh data, but return stale cache if exists
+      return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
     }
     return NextResponse.json({ error: 'Failed to fetch market data' }, { status: 500 })
   }

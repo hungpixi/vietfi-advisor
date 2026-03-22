@@ -149,6 +149,7 @@ export default function MacroPage() {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [fetchState, setFetchState] = useState<FetchState>('idle');
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [stale, setStale] = useState(false);
 
   const fetchData = async () => {
     setFetchState('loading');
@@ -158,6 +159,7 @@ export default function MacroPage() {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
       const data: MarketSnapshot = await resp.json()
       setSnapshot(data)
+      setStale(Boolean((data as MarketSnapshot & { stale?: boolean }).stale))
       setFetchState('success')
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : 'Unknown error')
@@ -212,6 +214,11 @@ export default function MacroPage() {
               ? `Cập nhật: ${new Date(snapshot.fetchedAt).toLocaleTimeString('vi-VN')}`
               : 'Đang tải dữ liệu...'}
           </p>
+          {stale && (
+            <span className="text-[12px] px-2 py-0.5 rounded bg-yellow-400/10 text-yellow-300 border border-yellow-300/20">
+              Dữ liệu cũ
+            </span>
+          )}
           {snapshot && (
             <SourceBadge label={snapshot.vnIndex?.source ?? snapshot.goldSjc?.source ?? 'live'} />
           )}

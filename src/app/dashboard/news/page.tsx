@@ -39,9 +39,10 @@ const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 export default function NewsPage() {
-  const [filter, setFilter] = useState("Tất cả");
+    const [filter, setFilter] = useState("Tất cả");
   const [items, setItems] = useState<NewsItem[]>(allNewsFallback);
   const [loading, setLoading] = useState(true);
+  const [stale, setStale] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -83,6 +84,10 @@ export default function NewsPage() {
         if (active && mapped.length > 0) {
           setItems(mapped);
         }
+
+        if (active) {
+          setStale(Boolean((payload as { stale?: boolean }).stale));
+        }
       } catch {
         if (active) {
           setItems(allNewsFallback);
@@ -114,6 +119,12 @@ export default function NewsPage() {
           Tin tức tài chính + sentiment AI — cập nhật từ RSS CafeF
         </p>
       </motion.div>
+
+      {stale && (
+        <motion.div variants={fadeIn} className="mb-4 text-[12px] text-yellow-300">
+          Dữ liệu tin tức cũ (đang cập nhật nền), bạn có thể refresh lại để lấy bản mới nhất.
+        </motion.div>
+      )}
 
       {loading && (
         <motion.div variants={fadeIn} className="mb-4 text-[12px] text-white/40">

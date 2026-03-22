@@ -59,8 +59,8 @@ describe('getNewsResponse', () => {
 
     await getNewsResponse(() => Promise.resolve(snapshot))
 
-    // Make existing cache stale (TTL is 5 minutes) so code path re-crawls.
-    nowSpy.mockReturnValue(1_000_000 + 6 * 60 * 1000)
+    // Make existing cache stale (TTL is 10 minutes) so code path re-crawls.
+    nowSpy.mockReturnValue(1_000_000 + 11 * 60 * 1000)
 
     const response = await getNewsResponse(() => Promise.reject(new Error('network error')))
     const body = await response.json()

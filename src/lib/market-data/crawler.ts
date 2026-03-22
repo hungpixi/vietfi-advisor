@@ -399,6 +399,10 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
 // ── Main crawler ──────────────────────────────────────────────────────────────
 
 async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | null> {
+  if (process.env.DISABLE_GEMINI_SUMMARY === '1' || !process.env.GEMINI_API_KEY) {
+    return null
+  }
+
   const dataBlock = [
     snapshot.vnIndex
       ? `- VN-Index: ${snapshot.vnIndex.price.toFixed(2)} điểm (${snapshot.vnIndex.changePct >= 0 ? '+' : ''}${snapshot.vnIndex.changePct.toFixed(2)}%)`
@@ -422,7 +426,13 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
     `Câu 3 – Gợi ý: một hành động cụ thể, thực tế cho nhà đầu tư cá nhân.`
 
   try {
-    const aiText = await callGemini(prompt, { temperature: 0.3, maxTokens: 180 })
+    const aiText = await Promise.race([
+      callGemini(prompt, { temperature: 0.3, maxTokens: 180 }),
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('AI summary timeout')), 3000),
+      ),
+    ])
+
     return aiText.replace(/\*\*/g, '').trim().replace(/[\r\n]+/g, ' ')
   } catch (error) {
     console.warn('AI summary unavailable, using fallback text', error)
@@ -454,7 +464,16 @@ export async function crawlMarketData(): Promise<MarketSnapshot> {
     aiSummary: null,
   }
 
-  snapshot.aiSummary = await generateAiSummary(snapshot)
+  // Generate AI summary in non-blocking mode (fallback to null immediately) to keep first response fast.
+  if (process.env.DISABLE_GEMINI_SUMMARY !== '1' && process.env.GEMINI_API_KEY) {
+    void generateAiSummary(snapshot).then((aiText) => {
+      if (aiText) {
+        snapshot.aiSummary = aiText
+      }
+    }).catch(() => {
+      // ignore AI failure for primary response path
+    })
+  }
 
   return snapshot
 }
