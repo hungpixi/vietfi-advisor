@@ -96,7 +96,7 @@ function IndicatorCard({
         <span className="text-xs font-medium text-white/60">{label}</span>
         {trend !== 'neutral' && (
           <span className="text-[10px] font-medium" style={{ color }}>
-            {trend === 'up' ? '+' : ''}{sub ?? ''}
+            {sub ?? ''}
           </span>
         )}
       </div>

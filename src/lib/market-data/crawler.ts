@@ -174,7 +174,7 @@ export async function fetchBtc(): Promise<CryptoData | null> {
 }
 // ── Gold SJC ─────────────────────────────────────────────────────────────────
 
-const GIAVANG_SJC_URL = 'https://giavang.com.vn/wp-json/giavang/v1/chart/vn?tf=1d&type=sjc&price=sell_price'
+const GIAVANG_ALL_URL = 'https://giavang.com.vn/wp-json/giavang/v1/all'
 
 function normalizeGoldSeries(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -314,25 +314,38 @@ function parseGiavangGoldPrice(body: unknown): { goldVnd: number; changePct: num
 }
 
 export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null> {
-  // Only use giaVang.com.vn source for SJC gold price
   try {
-    const resp = await fetch(GIAVANG_SJC_URL, {
+    const resp = await fetch(GIAVANG_ALL_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
     } as RequestInit)
 
     if (!resp.ok) return null
 
-    const body = await resp.json()
-    const parsed = parseGiavangGoldPrice(body)
-    if (!parsed) return null
+    const body = await resp.json() as Record<string, unknown>
 
-    const goldUsd = Math.round((parsed.goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
+    const sjc = body?.sjc as Record<string, unknown> | undefined
+    const prices = Array.isArray(sjc?.prices) ? sjc.prices as Array<Record<string, unknown>> : []
+    if (prices.length === 0) return null
+
+    const candidate = prices.find((item) =>
+      typeof item.name === 'string' && item.name.toLowerCase().includes('vàng sjc'),
+    ) || prices[0]
+
+    const sell = candidate?.sell
+    if (typeof sell !== 'number' || !Number.isFinite(sell) || sell <= 0) return null
+
+    const goldVnd = Math.round(sell)
+    const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
+
+    const world = body?.world as Record<string, unknown> | undefined
+    const worldPct = typeof world?.change_pct === 'number' ? Number(world.change_pct) : null
+    const changePct = worldPct !== null && Number.isFinite(worldPct) ? Math.round(worldPct * 10000) / 10000 : 0
 
     return {
       goldUsd,
-      goldVnd: parsed.goldVnd,
-      changePct: parsed.changePct,
-      source: 'giaVang API',
+      goldVnd,
+      changePct,
+      source: 'giaVang /wp-json/giavang/v1/all',
     }
   } catch {
     return null

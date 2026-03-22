@@ -131,36 +131,34 @@ describe('Gold SJC fetch', () => {
     expect(result).toBe(0)
   })
 
-  it('uses giaVang API as primary SJC source and uses close in latest time', async () => {
+  it('uses giaVang /all API as primary SJC source and reads sell price', async () => {
     const { fetchGoldSjc } = await import('./crawler')
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => ({
-        source: 'gv_vn_history',
-        tf: '1d',
-        type: 'sjc',
-        count: 9,
-        data: [
-          { time: '2026-03-16 11:00:00', close: '183116666.6667' },
-          { time: '2026-03-16 15:00:00', close: '159766666.6667' },
-          { time: '2026-03-17 07:00:00', close: '175722222.2222' },
-          { time: '2026-03-17 11:00:00', close: '161733333.3333' },
-          { time: '2026-03-19 07:00:00', close: '178416666.6667' },
-          { time: '2026-03-19 11:00:00', close: '177016666.6667' },
-          { time: '2026-03-19 15:00:00', close: '175516666.6667' },
-          { time: '2026-03-20 07:00:00', close: '175116666.6667' },
-          { time: '2026-03-21 07:00:00', close: '171016666.6667' },
-        ],
+        world: {
+          xau_usd: 4574.9,
+          change_pct: 0.0985,
+        },
+        sjc: {
+          prices: [
+            { name: 'Vàng SJC 1L, 10L, 1KG', buy: 168000000, sell: 171000000 },
+            { name: 'Vàng SJC 5 chỉ', buy: 168000000, sell: 171020000 },
+          ],
+          is_live: true,
+          updated_at: '2026-03-22 16:55:10',
+          source: 'sjc_official',
+        },
       }),
     } as unknown as Response)
 
     const result = await fetchGoldSjc(25000)
     expect(result).not.toBeNull()
-    expect(result?.source).toContain('giaVang')
-    expect(result?.goldVnd).toBe(171016667)
-    expect(result?.changePct).toBeCloseTo(-2.30, 1)
+    expect(result?.source).toContain('giaVang /wp-json/giavang/v1/all')
+    expect(result?.goldVnd).toBe(171000000)
+    expect(result?.changePct).toBe(0.0985)
   })
 })
 
