@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Calculator, AlertTriangle, ArrowUpRight, Info, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
+import { getBudgetPots, getExpenses } from "@/lib/storage";
 
 /* ─── Budget → CPI mapping ─── */
 const BUDGET_TO_CPI: Record<string, string> = {
@@ -29,11 +30,9 @@ export default function PersonalCPIPage() {
 
   const importFromBudget = () => {
     try {
-      const savedPots = localStorage.getItem("vietfi_pots");
-      const savedExpenses = localStorage.getItem("vietfi_expenses");
-      if (!savedPots) return;
-      const pots: { id: string; name: string; allocated: number }[] = JSON.parse(savedPots);
-      const expenses: { potId: string; amount: number }[] = savedExpenses ? JSON.parse(savedExpenses) : [];
+      const pots = getBudgetPots();
+      const expenses = getExpenses();
+      if (pots.length === 0) return;
 
       // Tính tổng chi/allocated cho mỗi pot
       const potSpend: Record<string, number> = {};
