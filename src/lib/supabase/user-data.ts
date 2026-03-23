@@ -8,25 +8,20 @@
 import { createClient } from "./client";
 import type { OnboardingData } from "@/lib/onboarding-state";
 import type { GamificationState } from "@/lib/gamification";
+import type { BudgetPot, Expense } from "@/lib/types/budget";
+
+// ── Re-export shared types ────────────────────────────────────────────
+
+export type { GamificationState } from "@/lib/gamification";
+export type { RiskResult } from "@/lib/calculations/risk-scoring";
+export { type BudgetPot, type Expense } from "@/lib/types/budget";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
-export interface BudgetPot {
-  id: string;
-  name: string;
-  iconKey: string;
-  allocated: number;
-  color: string;
-  sort_order?: number;
-}
-
-export interface Expense {
-  id: string;
-  pot_id?: string | null;
-  amount: number;
-  note?: string;
-  category?: string;
-  created_at?: string;
+export interface BudgetData {
+  pots: BudgetPot[];
+  expenses: Expense[];
+  income: number;
 }
 
 // ── Auth helper ────────────────────────────────────────────────────────
@@ -185,13 +180,14 @@ export async function getExpenses(): Promise<Expense[]> {
       note: row.note ?? "",
       category: row.category ?? "",
       created_at: row.created_at,
+      date: row.created_at ?? "",
     }));
   } catch {
     return [];
   }
 }
 
-export async function addExpense(expense: Omit<Expense, "id">): Promise<void> {
+export async function addExpense(expense: Omit<Expense, "id" | "date"> & { date?: string }): Promise<void> {
   const userId = await getAuthUserId();
   if (!userId) return;
 
@@ -203,6 +199,7 @@ export async function addExpense(expense: Omit<Expense, "id">): Promise<void> {
       amount: expense.amount,
       note: expense.note ?? "",
       category: expense.category ?? "",
+      created_at: expense.date ?? new Date().toISOString(),
     });
   } catch {
     // silent
@@ -297,7 +294,15 @@ export interface DebtItem {
   color: string;
 }
 
+export async function getDebts(): Promise<DebtItem[]> {
+  const { getDebts } = await import("@/lib/storage");
+  return getDebts();
+}
+
 export async function saveDebts(debts: DebtItem[]): Promise<void> {
+  const { setDebts } = await import("@/lib/storage");
+  setDebts(debts);
+
   const userId = await getAuthUserId();
   if (!userId) return;
 
@@ -321,4 +326,74 @@ export async function saveDebts(debts: DebtItem[]): Promise<void> {
   } catch {
     // silent
   }
+}
+
+// ── Budget (full read/write) ─────────────────────────────────────────
+
+export async function getBudget(): Promise<BudgetData> {
+  const userId = await getAuthUserId();
+  if (userId) {
+    // TODO: read from Supabase once tables are wired up
+  }
+
+  const { getBudgetPots, getExpenses, getIncome } = await import("@/lib/storage");
+  return {
+    pots: getBudgetPots(),
+    expenses: getExpenses(),
+    income: getIncome(),
+  };
+}
+
+export async function setBudget(data: BudgetData): Promise<void> {
+  const { setBudgetPots, setExpenses, setIncome } = await import("@/lib/storage");
+  setBudgetPots(data.pots);
+  setExpenses(data.expenses);
+  setIncome(data.income);
+
+  const userId = await getAuthUserId();
+  if (!userId) return;
+
+  // TODO: write to Supabase — sync pots + expenses + income atomically
+}
+
+// ── Gamification (localStorage-backed) ────────────────────────────────
+
+export async function getGamificationData(): Promise<GamificationState | null> {
+  const { getGamificationState } = await import("@/lib/storage");
+  return getGamificationState();
+}
+
+export async function setGamificationData(state: GamificationState): Promise<void> {
+  const { setGamificationState } = await import("@/lib/storage");
+  setGamificationState(state);
+
+  // Background sync to Supabase (non-blocking)
+  const userId = await getCachedUserId();
+  if (userId) {
+    saveGamificationState(state).catch(() => {});
+  }
+}
+
+// ── Lessons Done ───────────────────────────────────────────────────────
+
+export async function getLessonsDoneData(): Promise<string[]> {
+  const { getLessonsDone } = await import("@/lib/storage");
+  return getLessonsDone();
+}
+
+export async function setLessonsDoneData(lessons: string[]): Promise<void> {
+  const { setLessonsDone } = await import("@/lib/storage");
+  setLessonsDone(lessons);
+}
+
+// ── Risk Result ────────────────────────────────────────────────────────
+
+export async function getRiskResultData(): Promise<import("@/lib/calculations/risk-scoring").RiskResult | null> {
+  const { getRiskResult } = await import("@/lib/storage");
+  return getRiskResult();
+}
+
+export async function setRiskResultData(result: import("@/lib/calculations/risk-scoring").RiskResult): Promise<void> {
+  const { setRiskResult } = await import("@/lib/storage");
+  setRiskResult(result);
 }
