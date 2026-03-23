@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { BudgetData } from "./user-data"
+import type {
+  BudgetData,
+  DebtItem,
+} from "@/lib/supabase/user-data"
 import type { GamificationState } from "@/lib/gamification"
-import type { RiskResult } from "@/lib/calculations/risk-scoring"
-import type { DebtItem } from "./user-data"
 
-export function useUserBudget(initialData?: BudgetData) {
+/* ─── Budget ───────────────────────────────────────────── */
+
+export function useUserBudget(initialData?: BudgetData | null) {
   const [data, setData] = useState<BudgetData | null>(initialData ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -14,23 +17,19 @@ export function useUserBudget(initialData?: BudgetData) {
   useEffect(() => {
     if (data !== null) return
     setLoading(true)
-    import("./user-data")
-      .then(({ getBudget }) => getBudget())
-      .then((d) => {
-        setData(d)
-        setLoading(false)
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e : new Error(String(e)))
-        setLoading(false)
-      })
+    import("@/lib/supabase/user-data")
+      .then(({ getBudget }) =>
+        getBudget()
+          .then(d => { setData(d); setLoading(false) })
+          .catch(e => { setError(e instanceof Error ? e : new Error(String(e))); setLoading(false) })
+      )
   }, [data])
 
   const save = useCallback(async (newData: BudgetData) => {
     setLoading(true)
     setError(null)
     try {
-      const { setBudget } = await import("./user-data")
+      const { setBudget } = await import("@/lib/supabase/user-data")
       await setBudget(newData)
       setData(newData)
     } catch (e) {
@@ -43,7 +42,9 @@ export function useUserBudget(initialData?: BudgetData) {
   return { data, loading, error, save }
 }
 
-export function useUserDebts(initialData?: DebtItem[]) {
+/* ─── Debts ────────────────────────────────────────────── */
+
+export function useUserDebts(initialData?: DebtItem[] | null) {
   const [data, setData] = useState<DebtItem[] | null>(initialData ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -51,23 +52,19 @@ export function useUserDebts(initialData?: DebtItem[]) {
   useEffect(() => {
     if (data !== null) return
     setLoading(true)
-    import("./user-data")
-      .then(({ getDebts }) => getDebts())
-      .then((d) => {
-        setData(d)
-        setLoading(false)
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e : new Error(String(e)))
-        setLoading(false)
-      })
+    import("@/lib/supabase/user-data")
+      .then(({ getDebts }) =>
+        getDebts()
+          .then(d => { setData(d); setLoading(false) })
+          .catch(e => { setError(e instanceof Error ? e : new Error(String(e))); setLoading(false) })
+      )
   }, [data])
 
   const save = useCallback(async (newData: DebtItem[]) => {
     setLoading(true)
     setError(null)
     try {
-      const { saveDebts } = await import("./user-data")
+      const { saveDebts } = await import("@/lib/supabase/user-data")
       await saveDebts(newData)
       setData(newData)
     } catch (e) {
@@ -80,7 +77,9 @@ export function useUserDebts(initialData?: DebtItem[]) {
   return { data, loading, error, save }
 }
 
-export function useUserGamification(initialData?: GamificationState) {
+/* ─── Gamification ─────────────────────────────────────── */
+
+export function useUserGamification(initialData?: GamificationState | null) {
   const [data, setData] = useState<GamificationState | null>(initialData ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -88,61 +87,20 @@ export function useUserGamification(initialData?: GamificationState) {
   useEffect(() => {
     if (data !== null) return
     setLoading(true)
-    import("./user-data")
-      .then(({ getGamificationState }) => getGamificationState())
-      .then((d) => {
-        setData(d)
-        setLoading(false)
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e : new Error(String(e)))
-        setLoading(false)
-      })
+    import("@/lib/supabase/user-data")
+      .then(({ getGamificationState }) =>
+        getGamificationState()
+          .then(d => { setData(d); setLoading(false) })
+          .catch(e => { setError(e instanceof Error ? e : new Error(String(e))); setLoading(false) })
+      )
   }, [data])
 
   const save = useCallback(async (newData: GamificationState) => {
     setLoading(true)
     setError(null)
     try {
-      const { saveGamificationState } = await import("./user-data")
+      const { saveGamificationState } = await import("@/lib/supabase/user-data")
       await saveGamificationState(newData)
-      setData(newData)
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error(String(e)))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return { data, loading, error, save }
-}
-
-export function useUserRiskResult(initialData?: RiskResult) {
-  const [data, setData] = useState<RiskResult | null>(initialData ?? null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-
-  useEffect(() => {
-    if (data !== null) return
-    setLoading(true)
-    import("@/lib/storage")
-      .then(({ getRiskResult }) => getRiskResult())
-      .then((d) => {
-        setData(d)
-        setLoading(false)
-      })
-      .catch((e) => {
-        setError(e instanceof Error ? e : new Error(String(e)))
-        setLoading(false)
-      })
-  }, [data])
-
-  const save = useCallback(async (newData: RiskResult) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { setRiskResult } = await import("@/lib/storage")
-      setRiskResult(newData)
       setData(newData)
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)))
