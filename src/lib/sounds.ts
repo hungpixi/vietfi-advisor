@@ -7,6 +7,8 @@
  * Usage: import { playPop, playDing, playCoin } from "@/lib/sounds";
  */
 
+import { getSoundMuted as storageIsMuted, setSoundMuted } from "@/lib/storage";
+
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext | null {
@@ -19,16 +21,10 @@ function getCtx(): AudioContext | null {
 
 function isMuted(): boolean {
   if (typeof window === "undefined") return true;
-  return localStorage.getItem("vietfi_sound_muted") === "1";
+  return storageIsMuted();
 }
 
-export function setSoundMuted(muted: boolean) {
-  localStorage.setItem("vietfi_sound_muted", muted ? "1" : "0");
-}
-
-export function getSoundMuted(): boolean {
-  return isMuted();
-}
+export { setSoundMuted, getSoundMuted } from "@/lib/storage";
 
 // ── Pop — send message ──
 export function playPop() {

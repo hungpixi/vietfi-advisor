@@ -164,6 +164,23 @@ export function setSoundMuted(muted: boolean): void {
   }
 }
 
+/* ─── Market Alert Cache ─── */
+
+const MARKET_ALERT_KEY = "vietfi_market_alert";
+
+export interface MarketAlertCache {
+  lastAlertTime: number;
+  lastAlertMessage: string;
+}
+
+export function getMarketAlert(): MarketAlertCache | null {
+  return getItem<MarketAlertCache | null>(MARKET_ALERT_KEY, null);
+}
+
+export function setMarketAlert(cache: MarketAlertCache): void {
+  setItem(MARKET_ALERT_KEY, cache);
+}
+
 /* ─── Notification Dismissed ─── */
 
 const NOTIF_DISMISSED_KEY = "vietfi_notif_dismissed";
