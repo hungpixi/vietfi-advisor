@@ -6,6 +6,7 @@ import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { playPop, playDing, getSoundMuted, setSoundMuted } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
+import { getBudgetPots, getExpenses, getDebts, getIncome } from "@/lib/storage";
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
   getComparison, needsAI, DATA_INTENTS,
@@ -19,50 +20,49 @@ function getUserDataContext(): string {
 
   try {
     // Budget pots
-    const potsRaw = localStorage.getItem("vietfi_pots");
-    if (potsRaw) {
-      const pots = JSON.parse(potsRaw) as { name: string; budget: number; spent: number }[];
-      if (pots.length > 0) {
-        const potSummary = pots.map(p => `${p.name}: ${p.spent.toLocaleString("vi-VN")}đ/${p.budget.toLocaleString("vi-VN")}đ`).join(", ");
-        parts.push(`Ngân sách: ${potSummary}`);
-      }
+    const pots = getBudgetPots();
+    const expenses = getExpenses();
+    if (pots.length > 0) {
+      // Compute spent per pot from expenses
+      const spentByPot: Record<string, number> = {};
+      expenses.forEach(e => {
+        const potId = e.pot_id ?? e.potId ?? "";
+        spentByPot[potId] = (spentByPot[potId] ?? 0) + e.amount;
+      });
+      const potSummary = pots.map(p => {
+        const spent = spentByPot[p.id] ?? 0;
+        return `${p.name}: ${spent.toLocaleString("vi-VN")}đ/${p.allocated.toLocaleString("vi-VN")}đ`;
+      }).join(", ");
+      parts.push(`Ngân sách: ${potSummary}`);
     }
 
     // Expenses (recent 30)
-    const expRaw = localStorage.getItem("vietfi_expenses");
-    if (expRaw) {
-      const expenses = JSON.parse(expRaw) as { item: string; amount: number; category: string; date?: string }[];
+    if (expenses.length > 0) {
       const total = expenses.reduce((s, e) => s + e.amount, 0);
       parts.push(`Tổng chi tiêu: ${total.toLocaleString("vi-VN")}đ, ${expenses.length} khoản`);
       // Top categories
       const catMap = new Map<string, number>();
-      expenses.forEach(e => catMap.set(e.category, (catMap.get(e.category) || 0) + e.amount));
+      expenses.forEach(e => catMap.set(e.category ?? "", (catMap.get(e.category ?? "") ?? 0) + e.amount));
       const topCats = [...catMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
       if (topCats.length > 0) {
-        parts.push(`Top chi: ${topCats.map(([c, v]) => `${c} ${v.toLocaleString("vi-VN")}đ`).join(", ")}`);
+        parts.push(`Top chi: ${topCats.filter(([c]) => c).map(([c, v]) => `${c} ${v.toLocaleString("vi-VN")}đ`).join(", ")}`);
       }
     }
 
     // Debts
-    const debtRaw = localStorage.getItem("vietfi_debts");
-    if (debtRaw) {
-      const debts = JSON.parse(debtRaw) as { name: string; type: string; principal: number; interestRate: number; minPayment: number }[];
-      if (debts.length > 0) {
-        const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
-        const debtList = debts.map(d => `${d.name}(${d.type}): ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.interestRate}%`).join("; ");
-        parts.push(`Nợ tổng: ${totalDebt.toLocaleString("vi-VN")}đ — ${debtList}`);
-      } else {
-        parts.push("Không có khoản nợ");
-      }
+    const debts = getDebts();
+    if (debts.length > 0) {
+      const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
+      const debtList = debts.map(d => `${d.name}(${d.type}): ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.rate}%`).join("; ");
+      parts.push(`Nợ tổng: ${totalDebt.toLocaleString("vi-VN")}đ — ${debtList}`);
+    } else {
+      parts.push("Không có khoản nợ");
     }
 
     // Income
-    const incRaw = localStorage.getItem("vietfi_income");
-    if (incRaw) {
-      const income = JSON.parse(incRaw);
-      if (typeof income === "number" && income > 0) {
-        parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
-      }
+    const income = getIncome();
+    if (income > 0) {
+      parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
     }
   } catch { /* ignore parse errors */ }
 
