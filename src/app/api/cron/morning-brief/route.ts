@@ -15,7 +15,6 @@ export async function POST(request: Request) {
 
   try {
     const brief = await refreshMorningBriefCache()
-    console.log('[cron/morning-brief] Generated at', new Date().toISOString())
     return NextResponse.json({ status: 'ok', brief }, { status: 200 })
   } catch (err) {
     console.error('[cron/morning-brief] Error:', err)

@@ -24,7 +24,6 @@ export async function POST(request: Request) {
 
     // TODO: Persist to Supabase or localStorage cache
     // For now, just return the snapshot
-    console.log('[cron/market-data] Fetched at', snapshot.fetchedAt)
 
     return NextResponse.json(
       {

@@ -125,6 +125,7 @@ const stagger = {
 /* ═══════════════════ INLINE COMPONENTS ═══════════════════ */
 
 function PortfolioMini() {
+  const pctFormatter = (value: unknown) => `${value}%`;
   return (
     <motion.div variants={fadeIn} className="glass-card p-5">
       <div className="flex items-center justify-between mb-3">
@@ -154,7 +155,6 @@ function PortfolioMini() {
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Tooltip
                 contentStyle={{
                   background: "#111318",
@@ -163,7 +163,7 @@ function PortfolioMini() {
                   color: "#F5F3EE",
                   fontSize: 11,
                 }}
-                formatter={(value: unknown) => `${value}%`}
+                formatter={pctFormatter}
               />
             </PieChart>
           </ResponsiveContainer>

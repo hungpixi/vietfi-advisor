@@ -96,7 +96,6 @@ export async function migrateLocalStorageToSupabase(
 
     // Mark migration as done
     localStorage.setItem(MIGRATION_FLAG, "true");
-    console.log("[VietFi] localStorage → Supabase migration complete");
   } catch (err) {
     console.warn("[VietFi] Migration failed (will retry on next login):", err);
     // Don't set flag — will retry next time
