@@ -9,23 +9,10 @@ import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
+import type { BudgetPot, Expense } from "@/lib/types/budget";
 
-/* ─── Types ─── */
-interface Expense {
-  id: string;
-  potId: string;
-  amount: number;
-  note: string;
-  date: string;
-}
-
-interface Pot {
-  id: string;
-  name: string;
-  iconKey: string;
-  allocated: number;
-  color: string;
-}
+/* ─── Local alias — budget page uses "Pot" internally ─── */
+type Pot = BudgetPot;
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; color?: string }>> = {
   Coffee, ShoppingBag, Car, Home, Gamepad2, Heart, GraduationCap, TrendingUp, Wallet, Pencil,
