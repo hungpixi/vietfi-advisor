@@ -330,7 +330,7 @@ export function MarketSection({
   // Market volatility alert — check changePct thresholds
   useEffect(() => {
     if (!snapshot || typeof window === "undefined") return;
-    if (Notification.permission !== "granted") return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     const alertedKey = `vietfi_alerted_${new Date().toDateString()}`;
     if (sessionStorage.getItem(alertedKey)) return;
 

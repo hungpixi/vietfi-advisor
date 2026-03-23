@@ -16,6 +16,7 @@ const sampleBrief = {
   summary: 'Test summary',
   raw: 'Test summary',
   takeaways: [],
+  source: 'gemini' as const,
 }
 
 describe('/api/morning-brief', () => {
