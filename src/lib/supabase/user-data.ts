@@ -8,6 +8,14 @@
 import { createClient } from "./client";
 import type { OnboardingData } from "@/lib/onboarding-state";
 import type { GamificationState } from "@/lib/gamification";
+import {
+  getBudgetPots as localGetBudgetPots,
+  setBudgetPots as localSetBudgetPots,
+  getExpenses as localGetExpenses,
+  setExpenses as localSetExpenses,
+  getDebts as localGetDebts,
+  setDebts as localSetDebts,
+} from "@/lib/storage";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -27,6 +35,14 @@ export interface Expense {
   note?: string;
   category?: string;
   created_at?: string;
+  /** Required by budget types — ISO date string */
+  date: string;
+}
+
+/** Bundled budget state — pots + expenses for the current month. */
+export interface BudgetData {
+  pots: BudgetPot[];
+  expenses: Expense[];
 }
 
 // ── Auth helper ────────────────────────────────────────────────────────
@@ -185,6 +201,7 @@ export async function getExpenses(): Promise<Expense[]> {
       note: row.note ?? "",
       category: row.category ?? "",
       created_at: row.created_at,
+      date: row.created_at ?? new Date().toISOString(),
     }));
   } catch {
     return [];
@@ -203,7 +220,32 @@ export async function addExpense(expense: Omit<Expense, "id">): Promise<void> {
       amount: expense.amount,
       note: expense.note ?? "",
       category: expense.category ?? "",
+      created_at: expense.created_at ?? expense.date ?? new Date().toISOString(),
     });
+  } catch {
+    // silent
+  }
+}
+
+export async function saveExpenses(expenses: Expense[]): Promise<void> {
+  const userId = await getAuthUserId();
+  if (!userId) return;
+
+  try {
+    const supabase = createClient();
+    await supabase.from("expenses").delete().eq("user_id", userId);
+    if (expenses.length > 0) {
+      await supabase.from("expenses").insert(
+        expenses.map((e) => ({
+          user_id: userId,
+          pot_id: e.pot_id || null,
+          amount: e.amount,
+          note: e.note ?? "",
+          category: e.category ?? "",
+          created_at: e.created_at ?? e.date ?? new Date().toISOString(),
+        }))
+      );
+    }
   } catch {
     // silent
   }
@@ -322,3 +364,58 @@ export async function saveDebts(debts: DebtItem[]): Promise<void> {
     // silent
   }
 }
+
+export async function getDebts(): Promise<DebtItem[]> {
+  const userId = await getAuthUserId();
+  if (!userId) return [];
+
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("debts")
+      .select("name, type, principal, rate, min_payment, icon, color")
+      .eq("user_id", userId);
+
+    if (error || !data) return [];
+
+    return data.map((row) => ({
+      name: row.name,
+      type: row.type,
+      principal: row.principal,
+      rate: row.rate,
+      min_payment: row.min_payment,
+      icon: row.icon ?? "CreditCard",
+      color: row.color ?? "#E6B84F",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ── Budget (bundled pots + expenses) ─────────────────────────────────
+
+/** Reads budget state from Supabase (logged-in) or localStorage (guest). */
+export async function getBudget(): Promise<BudgetData> {
+  const userId = await getAuthUserId();
+  if (userId) {
+    const [pots, expenses] = await Promise.all([getBudgetPots(), getExpenses()]);
+    return { pots, expenses };
+  }
+  // Guest — fall back to localStorage
+  return {
+    pots: localGetBudgetPots(),
+    expenses: localGetExpenses(),
+  };
+}
+
+/** Persists budget state to Supabase (logged-in) or localStorage (guest). */
+export async function setBudget(budget: BudgetData): Promise<void> {
+  const userId = await getAuthUserId();
+  if (userId) {
+    await Promise.all([saveBudgetPots(budget.pots), saveExpenses(budget.expenses)]);
+    return;
+  }
+  localSetBudgetPots(budget.pots);
+  localSetExpenses(budget.expenses);
+}
+
