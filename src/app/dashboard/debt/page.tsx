@@ -23,6 +23,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
 import { Debt, analyzeDTI, snowballPlan, avalanchePlan, PayoffStep } from "@/lib/calculations/debt-optimizer";
+import { getDebts, setDebts } from "@/lib/storage";
 
 /* ─── Types ─── */
 // Extends the core Debt interface with UI-specific fields
@@ -254,16 +255,12 @@ export default function DebtPage() {
 
   // Load from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("vietfi_debts");
-    if (saved) {
-      try { setDebts(JSON.parse(saved)); } catch { /* ignore */ }
-    }
+    setDebts(getDebts() as unknown as UIDebt[]);
   }, []);
 
   // Save to localStorage + Supabase sync
   const saveDebts = useCallback((newDebts: UIDebt[]) => {
     setDebts(newDebts);
-    localStorage.setItem("vietfi_debts", JSON.stringify(newDebts));
     // Background Supabase sync
     if (getCachedUserId()) {
       syncDebtsToSupabase(newDebts.map(d => ({

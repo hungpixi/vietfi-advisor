@@ -251,6 +251,23 @@ export function setLeaderboardOffsets(offsets: Record<string, number>): void {
   setItem(LEADERBOARD_OFFSETS_KEY, offsets);
 }
 
+/* ─── Leaderboard Bot Offsets (weekly) ─── */
+export function getLeaderboardBots(weekId: string): number[] {
+  return getItem<number[]>(`vietfi_leaderboard_bots_${weekId}`, []);
+}
+
+export function setLeaderboardBots(weekId: string, offsets: number[]): void {
+  setItem(`vietfi_leaderboard_bots_${weekId}`, offsets);
+}
+
+export function getLeaderboardBaseline(weekId: string): number {
+  return getItem<number>(`vietfi_leaderboard_baseline_${weekId}`, 0);
+}
+
+export function setLeaderboardBaseline(weekId: string, baseline: number): void {
+  setItem(`vietfi_leaderboard_baseline_${weekId}`, baseline);
+}
+
 /* ─── News Bookmarks ─── */
 
 const NEWS_BOOKMARKS_KEY = "vietfi_news_bookmarks";

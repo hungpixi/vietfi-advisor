@@ -7,6 +7,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { addXP } from "@/lib/gamification";
 import { ConfettiCannon } from "@/components/gamification/Celebration";
+import { getLessonsDone, setLessonsDone } from "@/lib/storage";
 
 /* ─── Lesson Data ─── */
 interface Lesson {
@@ -172,7 +173,7 @@ export default function LearnPage() {
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const done = JSON.parse(localStorage.getItem("vietfi_lessons_done") || "[]");
+    const done = getLessonsDone();
     setCompletedIds(done);
     setMounted(true);
   }, []);
@@ -191,11 +192,11 @@ export default function LearnPage() {
     setAnswered(true);
     if (idx === activeLesson.quiz.correct) {
       addXP("learn_lesson");
-      const done = JSON.parse(localStorage.getItem("vietfi_lessons_done") || "[]");
+      const done = getLessonsDone();
       if (!done.includes(activeLesson.id)) {
-        done.push(activeLesson.id);
-        localStorage.setItem("vietfi_lessons_done", JSON.stringify(done));
-        setCompletedIds(done);
+        const next = [...done, activeLesson.id];
+        setLessonsDone(next);
+        setCompletedIds(next);
       }
       setShowConfetti(true);
     }

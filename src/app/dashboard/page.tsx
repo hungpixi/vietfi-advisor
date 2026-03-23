@@ -9,6 +9,7 @@ import type { MarketSnapshot } from '@/lib/market-data/crawler';
 import { cn } from "@/lib/utils";
 import { ConfettiCannon, QuestCompleteToast } from "@/components/gamification/Celebration";
 import { BadgeGrid } from "@/components/gamification/Badges";
+import { getNotifDismissed, setNotifDismissed, getMarketCache, setMarketCache, getBudgetPots, getExpenses, getIncome } from "@/lib/storage";
 
 import { motion } from "framer-motion";
 import {
@@ -610,7 +611,7 @@ export default function DashboardOverview() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if ("Notification" in window && Notification.permission === "default" && !localStorage.getItem("vietfi_notif_dismissed")) {
+    if ("Notification" in window && Notification.permission === "default" && !getNotifDismissed()) {
       setShowNotifBanner(true);
     }
   }, []);
@@ -619,33 +620,15 @@ export default function DashboardOverview() {
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
   const [assetSummary, setAssetSummary] = useState<string>("Chưa có dữ liệu");
 
-  const safeParseArray = (key: string): unknown[] => {
-    if (typeof window === "undefined") return [];
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
-
   const fetchNetWorth = useCallback(() => {
     if (typeof window === "undefined") return;
 
-    const pots = safeParseArray("vietfi_pots");
-    const expenses = safeParseArray("vietfi_expenses");
-    const income = Number(localStorage.getItem("vietfi_income") ?? 0);
+    const pots = getBudgetPots();
+    const expenses = getExpenses();
+    const income = getIncome();
 
-    const potTotal = pots.reduce((sum: number, pot: unknown) => {
-      const alloc = typeof pot === "object" && pot !== null && "allocated" in pot ? Number((pot as any).allocated ?? 0) : 0;
-      return sum + (Number.isFinite(alloc) ? alloc : 0);
-    }, 0);
-    const spentTotal = expenses.reduce((sum: number, item: unknown) => {
-      const amt = typeof item === "object" && item !== null && "amount" in item ? Number((item as any).amount ?? 0) : 0;
-      return sum + (Number.isFinite(amt) ? amt : 0);
-    }, 0);
+    const potTotal = pots.reduce((sum, pot) => sum + pot.allocated, 0);
+    const spentTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const net = potTotal - spentTotal;
 
     const hasData = pots.length > 0 || expenses.length > 0;
@@ -671,16 +654,13 @@ export default function DashboardOverview() {
         return data;
       });
       // Cache to localStorage for fallback
-      try { localStorage.setItem('vietfi_market_cache', JSON.stringify(data)); } catch {}
+      try { setMarketCache(data); } catch {}
     } catch (err) {
       // Try localStorage fallback
-      try {
-        const cached = localStorage.getItem('vietfi_market_cache');
-        if (cached) {
-          const data = JSON.parse(cached) as MarketSnapshot;
-          setMarketSnapshot(prev => prev || data);
-        }
-      } catch {}
+      const cached = getMarketCache();
+      if (cached) {
+        setMarketSnapshot(prev => prev || cached);
+      }
       setMarketError(err instanceof Error ? err.message : 'Lỗi không xác định');
       // Auto-retry after 30s if first attempt
       if (!isRetry) {
@@ -852,7 +832,7 @@ export default function DashboardOverview() {
             Bật ngay
           </button>
           <button
-            onClick={() => { setShowNotifBanner(false); localStorage.setItem("vietfi_notif_dismissed", "1"); }}
+            onClick={() => { setShowNotifBanner(false); setNotifDismissed(true); }}
             className="text-white/20 hover:text-white/40 transition-colors flex-shrink-0"
           >
             <XIcon className="w-3.5 h-3.5" />

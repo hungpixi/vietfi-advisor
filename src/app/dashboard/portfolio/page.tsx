@@ -5,6 +5,7 @@ import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
+import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
 
 /* ─── Types ─── */
 interface AllocationItem { asset: string; percent: number; color: string; }
@@ -87,47 +88,38 @@ export default function PortfolioPage() {
   // ── Pull Risk DNA from localStorage on mount ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const riskResult = localStorage.getItem("vietfi_risk_result");
-      if (riskResult) {
-        const parsed = JSON.parse(riskResult);
-        setHasRiskDNA(true);
-        // Map Risk DNA score to risk type
-        if (parsed.score <= 6) setRiskType("conservative");
-        else if (parsed.score <= 10) setRiskType("balanced");
-        else setRiskType("growth");
-      }
+    const riskResult = getRiskResult();
+    if (riskResult) {
+      setHasRiskDNA(true);
+      // Map Risk DNA score to risk type
+      if (riskResult.score <= 6) setRiskType("conservative");
+      else if (riskResult.score <= 10) setRiskType("balanced");
+      else setRiskType("growth");
+    }
 
-      // Pull income for capital suggestion
-      const income = localStorage.getItem("vietfi_income");
-      if (income) {
-        const inc = JSON.parse(income);
-        if (typeof inc === "number" && inc > 0) {
-          setCapital(inc * 6); // Suggest 6 months income as starting capital
-        }
-      }
+    // Pull income for capital suggestion
+    const income = getIncome();
+    if (income > 0) {
+      setCapital(income * 6); // Suggest 6 months income as starting capital
+    }
 
-      // Build user context for AI
-      const parts: string[] = [];
-      const potsRaw = localStorage.getItem("vietfi_pots");
-      if (potsRaw) {
-        const pots = JSON.parse(potsRaw);
-        const totalBudget = pots.reduce((s: number, p: { allocated: number }) => s + p.allocated, 0);
-        parts.push(`Ngân sách tháng: ${totalBudget.toLocaleString("vi-VN")}đ`);
-      }
-      const debtRaw = localStorage.getItem("vietfi_debts");
-      if (debtRaw) {
-        const debts = JSON.parse(debtRaw);
-        const totalDebt = debts.reduce((s: number, d: { principal: number }) => s + d.principal, 0);
-        parts.push(`Tổng nợ: ${totalDebt.toLocaleString("vi-VN")}đ`);
-      }
-      if (income) parts.push(`Thu nhập: ${JSON.parse(income).toLocaleString("vi-VN")}đ/tháng`);
-      if (riskResult) {
-        const r = JSON.parse(riskResult);
-        parts.push(`Risk DNA: ${r.label} (score ${r.score}/15)`);
-      }
-      setUserContext(parts.join(", "));
-    } catch { /* ignore */ }
+    // Build user context for AI
+    const parts: string[] = [];
+    const pots = getBudgetPots();
+    if (pots.length > 0) {
+      const totalBudget = pots.reduce((s, p) => s + p.allocated, 0);
+      parts.push(`Ngân sách tháng: ${totalBudget.toLocaleString("vi-VN")}đ`);
+    }
+    const debts = getDebts();
+    if (debts.length > 0) {
+      const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
+      parts.push(`Tổng nợ: ${totalDebt.toLocaleString("vi-VN")}đ`);
+    }
+    if (income > 0) parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
+    if (riskResult) {
+      parts.push(`Risk DNA: ${riskResult.label} (score ${riskResult.score}/15)`);
+    }
+    setUserContext(parts.join(", "));
   }, []);
 
   // ── Fetch live market data ──
