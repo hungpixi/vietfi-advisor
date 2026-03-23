@@ -104,6 +104,10 @@ export function setGamificationState(state: GamificationState): void {
   setItem(GAMIFICATION_KEY, state);
 }
 
+export function clearGamificationState(): void {
+  removeItem(GAMIFICATION_KEY);
+}
+
 /* ─── Onboarding ─── */
 
 const ONBOARDING_KEY = "vietfi_onboarding";

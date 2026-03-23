@@ -4,6 +4,7 @@
  * ═══════════════════════════════════════════════════════════ */
 
 import { getCachedUserId, saveGamificationState } from "@/lib/supabase/user-data";
+import { getGamificationState, setGamificationState, clearGamificationState } from "@/lib/storage";
 
 export interface GamificationState {
   xp: number;
@@ -14,8 +15,6 @@ export interface GamificationState {
   actions: string[];       // Hôm nay đã làm gì
   questCompleted: boolean; // Daily quest done?
 }
-
-const STORAGE_KEY = "vietfi_gamification";
 
 /* ─── XP cho mỗi action ─── */
 export const XP_TABLE: Record<string, number> = {
@@ -96,10 +95,9 @@ function validateGamification(raw: unknown): Partial<GamificationState> | null {
 export function getGamification(): GamificationState {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = getGamificationState();
     if (saved) {
-      const parsed = JSON.parse(saved);
-      const valid  = validateGamification(parsed);
+      const valid = validateGamification(saved);
       if (valid) {
         const state = { ...DEFAULT_STATE, ...valid };
         // Reset actions nếu ngày mới
@@ -110,14 +108,14 @@ export function getGamification(): GamificationState {
         return state;
       }
       // Invalid data — discard and start fresh
-      localStorage.removeItem(STORAGE_KEY);
+      clearGamificationState();
     }
   } catch { /* ignore */ }
   return DEFAULT_STATE;
 }
 
 function save(state: GamificationState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  setGamificationState(state);
   // Background sync to Supabase (non-blocking)
   if (getCachedUserId()) {
     saveGamificationState(state).catch(() => {});
