@@ -7,6 +7,10 @@
 
 import { createClient } from "./client";
 import type { BudgetPot } from "./user-data";
+import {
+  getBudgetPots, getExpenses, getIncome, getOnboardingState,
+  getGamificationState, getLessonsDone, getStreakFreeze,
+} from "@/lib/storage";
 
 const MIGRATION_FLAG = "vietfi_migrated";
 
@@ -20,11 +24,10 @@ export async function migrateLocalStorageToSupabase(
 
   try {
     // 1. Migrate profile/onboarding
-    const onboardingRaw = localStorage.getItem("vietfi_onboarding");
-    const income = Number(localStorage.getItem("vietfi_income") ?? 0);
+    const income = getIncome();
+    const onboarding = getOnboardingState();
 
-    if (onboardingRaw) {
-      const onboarding = JSON.parse(onboardingRaw);
+    if (onboarding) {
       await supabase.from("profiles").upsert({
         id: userId,
         income: income || onboarding.income || 0,
@@ -41,51 +44,40 @@ export async function migrateLocalStorageToSupabase(
     }
 
     // 2. Migrate budget pots
-    const potsRaw = localStorage.getItem("vietfi_pots");
-    if (potsRaw) {
-      const pots: BudgetPot[] = JSON.parse(potsRaw);
-      if (Array.isArray(pots) && pots.length > 0) {
-        // Clear existing pots first
-        await supabase.from("budget_pots").delete().eq("user_id", userId);
-        await supabase.from("budget_pots").insert(
-          pots.map((pot, i) => ({
-            user_id: userId,
-            name: pot.name ?? `Pot ${i + 1}`,
-            icon_key: pot.iconKey ?? "Wallet",
-            allocated: pot.allocated ?? 0,
-            color: pot.color ?? "#E6B84F",
-            sort_order: i,
-          }))
-        );
-      }
+    const pots = getBudgetPots();
+    if (pots.length > 0) {
+      // Clear existing pots first
+      await supabase.from("budget_pots").delete().eq("user_id", userId);
+      await supabase.from("budget_pots").insert(
+        pots.map((pot, i) => ({
+          user_id: userId,
+          name: pot.name ?? `Pot ${i + 1}`,
+          icon_key: pot.iconKey ?? "Wallet",
+          allocated: pot.allocated ?? 0,
+          color: pot.color ?? "#E6B84F",
+          sort_order: i,
+        }))
+      );
     }
 
     // 3. Migrate expenses
-    const expensesRaw = localStorage.getItem("vietfi_expenses");
-    if (expensesRaw) {
-      const expenses = JSON.parse(expensesRaw);
-      if (Array.isArray(expenses) && expenses.length > 0) {
-        await supabase.from("expenses").insert(
-          expenses.slice(0, 500).map((exp: Record<string, unknown>) => ({
-            user_id: userId,
-            amount: Number(exp.amount) || 0,
-            note: String(exp.note ?? ""),
-            category: String(exp.category ?? ""),
-          }))
-        );
-      }
+    const expenses = getExpenses();
+    if (expenses.length > 0) {
+      await supabase.from("expenses").insert(
+        expenses.slice(0, 500).map((exp) => ({
+          user_id: userId,
+          amount: Number(exp.amount) || 0,
+          note: String(exp.note ?? ""),
+          category: String(exp.category ?? ""),
+        }))
+      );
     }
 
     // 4. Migrate gamification
-    const gamRaw = localStorage.getItem("vietfi_gamification");
-    if (gamRaw) {
-      const gam = JSON.parse(gamRaw);
-      const lessonsDone = JSON.parse(
-        localStorage.getItem("vietfi_lessons_done") ?? "[]"
-      );
-      const streakFreeze = JSON.parse(
-        localStorage.getItem("vietfi_streak_freeze") ?? "{}"
-      );
+    const gam = getGamificationState();
+    if (gam) {
+      const lessonsDone = getLessonsDone();
+      const streakFreeze = getStreakFreeze();
 
       await supabase.from("gamification").upsert({
         id: userId,
@@ -96,7 +88,7 @@ export async function migrateLocalStorageToSupabase(
         last_active_date: String(gam.lastActiveDate || ""),
         actions: Array.isArray(gam.actions) ? gam.actions : [],
         quest_completed: Boolean(gam.questCompleted),
-        lessons_done: Array.isArray(lessonsDone) ? lessonsDone : [],
+        lessons_done: lessonsDone,
         streak_freeze: streakFreeze ?? {},
         updated_at: new Date().toISOString(),
       });
