@@ -256,6 +256,7 @@ const ALL_USER_KEYS = [
   STREAK_FREEZE_KEY,
   RISK_RESULT_KEY,
   NEWS_BOOKMARKS_KEY,
+  SOUND_MUTED_KEY,
 ];
 
 export function clearAllUserData(): void {
