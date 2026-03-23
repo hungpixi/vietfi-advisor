@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, Flame, TrendingUp, ShieldAlert, ArrowUp, ArrowDown, Info } from "lucide-react";
 import { getGamification } from "@/lib/gamification";
+import { getLeaderboardBots, setLeaderboardBots, getLeaderboardBaseline, setLeaderboardBaseline } from "@/lib/storage";
 
 /* ─── Mock Data Generators ─── */
 const BOT_NAMES = [
@@ -43,18 +44,14 @@ export default function LeaderboardPage() {
     const gam = getGamification();
     setUserXP(gam.xp);
     
-    // We want the bots to have XP relative to the user's CURRENT xp, 
+    // We want the bots to have XP relative to the user's CURRENT xp,
     // but we don't want them jumping around every time user earns 5 XP.
     // Solution: Save bot offsets to localStorage once per week.
     const currentWeekInfo = getWeekIdentifier();
-    const storageKey = `vietfi_leaderboard_bots_${currentWeekInfo}`;
-    
-    let botOffsets: number[] = [];
-    const saved = localStorage.getItem(storageKey);
-    
-    if (saved) {
-      botOffsets = JSON.parse(saved);
-    } else {
+
+    let botOffsets: number[] = getLeaderboardBots(currentWeekInfo);
+
+    if (botOffsets.length === 0) {
       // Generate offsets: some above, some below
       botOffsets = Array.from({ length: 14 }).map((_, i) => {
         // Create a spread from +200 to -100 XP relative to user's starting point
@@ -63,16 +60,15 @@ export default function LeaderboardPage() {
       });
       // Sort them so they are nicely distributed
       botOffsets.sort((a, b) => b - a);
-      localStorage.setItem(storageKey, JSON.stringify(botOffsets));
+      setLeaderboardBots(currentWeekInfo, botOffsets);
     }
 
     // Now construct the full leaderboard
     // The user's baseline XP when they first opened the leaderboard this week
-    const baselineKey = `vietfi_leaderboard_baseline_${currentWeekInfo}`;
-    let baselineXP = parseInt(localStorage.getItem(baselineKey) || "0", 10);
+    let baselineXP = getLeaderboardBaseline(currentWeekInfo);
     if (!baselineXP) {
       baselineXP = Math.max(0, gam.xp - 20); // assume user just started climbing
-      localStorage.setItem(baselineKey, baselineXP.toString());
+      setLeaderboardBaseline(currentWeekInfo, baselineXP);
     }
 
     const bots: LeaderboardEntry[] = botOffsets.map((offset, i) => {
