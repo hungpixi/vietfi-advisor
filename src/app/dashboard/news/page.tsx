@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { getNewsBookmarks, setNewsBookmarks } from "@/lib/storage";
 
 type NewsSentiment = "bullish" | "bearish" | "neutral";
 
@@ -35,12 +36,11 @@ const sentimentTag = {
 
 const assetFilters = ["Tất cả", "📌 Đã lưu", "Vàng", "Chứng khoán", "Crypto", "Tiết kiệm", "Vĩ mô"];
 
-const BOOKMARK_KEY = "vietfi_news_bookmarks";
 function getBookmarks(): Set<string | number> {
-  try { return new Set(JSON.parse(localStorage.getItem(BOOKMARK_KEY) || "[]")); } catch { return new Set(); }
+  return getNewsBookmarks() as Set<string | number>;
 }
 function saveBookmarks(bm: Set<string | number>) {
-  localStorage.setItem(BOOKMARK_KEY, JSON.stringify([...bm]));
+  setNewsBookmarks(bm as Set<string>);
 }
 
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };

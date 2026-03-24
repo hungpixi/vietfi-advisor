@@ -18,6 +18,12 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
   },
+  webServer: {
+    command: "npm run dev",
+    url: "http://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
   projects: [
     // ── Budget tests ─────────────────────────────────────────────────────────
     // addInitScript runs BEFORE page context creation → sets onboarding_done
@@ -28,15 +34,9 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
-        addInitScript: () =>
-          localStorage.setItem("vietfi_onboarding_done", "true"),
-      },
-      webServer: {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        addInitScript: () => localStorage.setItem("vietfi_onboarding_done", "true"),
+      } as any, // TS: addInitScript not in PlaywrightTestOptions type
     },
     // ── Onboarding tests ─────────────────────────────────────────────────────
     // addInitScript clears localStorage BEFORE context creation, ensuring
@@ -47,14 +47,9 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         addInitScript: () => localStorage.clear(),
-      },
-      webServer: {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+      } as any,
     },
     // ── Landing tests ─────────────────────────────────────────────────────────
     // No addInitScript — landing page doesn't need special localStorage state.
@@ -62,12 +57,6 @@ export default defineConfig({
       name: "chromium",
       testMatch: /landing\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], channel: "chromium" },
-      webServer: {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
     },
   ],
 });

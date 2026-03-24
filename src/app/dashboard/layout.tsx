@@ -36,6 +36,7 @@ import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
 import { getAuthUserId } from "@/lib/supabase/user-data";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 import { checkMarketAlerts } from "@/lib/market-alert";
+import { getBudgetPots, getDebts, getOnboardingState, getLessonsDone, getStreakFreeze as storageGetStreak, setStreakFreeze } from "@/lib/storage";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -170,15 +171,15 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   useEffect(() => {
     const check = () => {
-      const hasBudget = !!localStorage.getItem("vietfi_pots") && JSON.parse(localStorage.getItem("vietfi_pots") || "[]").length > 0;
-      const hasDebts = !!localStorage.getItem("vietfi_debts") && JSON.parse(localStorage.getItem("vietfi_debts") || "[]").length > 0;
-      const hasOnboarding = !!localStorage.getItem("vietfi_onboarding");
+      const pots = getBudgetPots();
+      const debts = getDebts();
+      const onboarding = getOnboardingState();
       setSetupStatus({
-        "/dashboard/budget": hasBudget,
-        "/dashboard/debt": hasDebts || (hasOnboarding && !JSON.parse(localStorage.getItem("vietfi_onboarding") || "{}").hasDebt),
-        "/dashboard/risk-profile": hasOnboarding,
-        "/dashboard/portfolio": hasOnboarding,
-        "/dashboard/personal-cpi": hasBudget,
+        "/dashboard/budget": pots.length > 0,
+        "/dashboard/debt": debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
+        "/dashboard/risk-profile": !!onboarding,
+        "/dashboard/portfolio": !!onboarding,
+        "/dashboard/personal-cpi": pots.length > 0,
       });
     };
     check();

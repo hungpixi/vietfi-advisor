@@ -1,28 +1,20 @@
 /**
  * Market Alert — Client-side volatility notification
- * 
+ *
  * Không cần cron — check mỗi khi user mở app.
  * Nếu VN-Index biến động mạnh (±2%) hoặc Vàng ±3% → hiện browser notification.
  */
 
-const ALERT_CACHE_KEY = "vietfi_market_alert";
+import { getMarketAlert, setMarketAlert } from "@/lib/storage";
+
 const ALERT_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 giờ cooldown giữa 2 alert
 
-interface AlertCache {
-  lastAlertTime: number;
-  lastAlertMessage: string;
+function getCache() {
+  return getMarketAlert();
 }
 
-function getCache(): AlertCache | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(ALERT_CACHE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
-function setCache(cache: AlertCache) {
-  localStorage.setItem(ALERT_CACHE_KEY, JSON.stringify(cache));
+function setCache(cache: { lastAlertTime: number; lastAlertMessage: string }) {
+  setMarketAlert(cache);
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {

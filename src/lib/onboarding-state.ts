@@ -4,6 +4,7 @@
  * ═══════════════════════════════════════════════════════════ */
 
 import { getCachedUserId, saveUserProfile } from "@/lib/supabase/user-data";
+import { getOnboardingState, setOnboardingState, clearOnboardingState, clearAllUserData } from "@/lib/storage";
 
 export interface OnboardingData {
   completed: boolean;
@@ -12,8 +13,6 @@ export interface OnboardingData {
   riskProfile: "conservative" | "balanced" | "growth" | "";
   setupAt: string;           // ISO date
 }
-
-const STORAGE_KEY = "vietfi_onboarding";
 
 const DEFAULT_DATA: OnboardingData = {
   completed: false,
@@ -26,9 +25,9 @@ const DEFAULT_DATA: OnboardingData = {
 export function getOnboardingData(): OnboardingData {
   if (typeof window === "undefined") return DEFAULT_DATA;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = getOnboardingState();
     if (saved) {
-      const raw = JSON.parse(saved) as Record<string, unknown>;
+      const raw = saved as unknown as Record<string, unknown>;
       // Validate schema to prevent localStorage tampering
       if (
         typeof raw === "object" && raw !== null &&
@@ -52,7 +51,7 @@ export function getOnboardingData(): OnboardingData {
           setupAt:     raw.setupAt,
         };
       }
-      localStorage.removeItem(STORAGE_KEY);
+      clearOnboardingState();
     }
   } catch { /* ignore */ }
   return DEFAULT_DATA;
@@ -61,7 +60,7 @@ export function getOnboardingData(): OnboardingData {
 export function saveOnboardingData(data: Partial<OnboardingData>): OnboardingData {
   const current = getOnboardingData();
   const updated = { ...current, ...data };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  setOnboardingState(updated);
   // Background sync to Supabase
   if (getCachedUserId()) {
     saveUserProfile(updated).catch(() => {});
@@ -78,12 +77,7 @@ export function completeOnboarding(data: Partial<OnboardingData>): OnboardingDat
 }
 
 export function resetOnboarding(): void {
-  localStorage.removeItem(STORAGE_KEY);
-  // Also clear related data
-  localStorage.removeItem("vietfi_pots");
-  localStorage.removeItem("vietfi_expenses");
-  localStorage.removeItem("vietfi_income");
-  localStorage.removeItem("vietfi_debts");
+  clearAllUserData();
 }
 
 export function isFirstTimeUser(): boolean {
@@ -93,13 +87,13 @@ export function isFirstTimeUser(): boolean {
 /* ─── Budget auto-generate từ thu nhập ─── */
 export function generateBudgetPots(income: number) {
   return [
-    { id: "1", name: "Ăn uống", iconKey: "Coffee", allocated: Math.round(income * 0.30), color: "#FF6B35" },
-    { id: "2", name: "Shopping", iconKey: "ShoppingBag", allocated: Math.round(income * 0.10), color: "#AB47BC" },
-    { id: "3", name: "Đi lại", iconKey: "Car", allocated: Math.round(income * 0.08), color: "#00E5FF" },
-    { id: "4", name: "Nhà ở", iconKey: "Home", allocated: Math.round(income * 0.25), color: "#22C55E" },
-    { id: "5", name: "Giải trí", iconKey: "Gamepad2", allocated: Math.round(income * 0.07), color: "#E6B84F" },
-    { id: "6", name: "Sức khỏe", iconKey: "Heart", allocated: Math.round(income * 0.05), color: "#EF4444" },
-    { id: "7", name: "Học tập", iconKey: "GraduationCap", allocated: Math.round(income * 0.05), color: "#3ECF8E" },
-    { id: "8", name: "Tiết kiệm", iconKey: "TrendingUp", allocated: Math.round(income * 0.10), color: "#FFD700" },
+    { id: "1", name: "Ăn uống",     iconKey: "Coffee",        allocated: Math.round(income * 0.30), color: "#FF6B35" },
+    { id: "2", name: "Shopping",    iconKey: "ShoppingBag",   allocated: Math.round(income * 0.10), color: "#AB47BC" },
+    { id: "3", name: "Đi lại",      iconKey: "Car",           allocated: Math.round(income * 0.08), color: "#00E5FF" },
+    { id: "4", name: "Nhà ở",       iconKey: "Home",          allocated: Math.round(income * 0.25), color: "#22C55E" },
+    { id: "5", name: "Giải trí",   iconKey: "Gamepad2",      allocated: Math.round(income * 0.07), color: "#E6B84F" },
+    { id: "6", name: "Sức khỏe",   iconKey: "Heart",         allocated: Math.round(income * 0.05), color: "#EF4444" },
+    { id: "7", name: "Học tập",    iconKey: "GraduationCap", allocated: Math.round(income * 0.05), color: "#3ECF8E" },
+    { id: "8", name: "Tiết kiệm",  iconKey: "TrendingUp",     allocated: Math.round(income * 0.10), color: "#FFD700" },
   ];
 }

@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, TrendingUp, Flame, Zap, Target, Shield } from "lucide-react";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
 import { cn } from "@/lib/utils";
+import { getLessonsDone, getStreakFreeze, setStreakFreeze } from "@/lib/storage";
+import type { StreakFreezeState } from "@/lib/storage";
 
-/* ─── Weekly Stats from localStorage ─── */
+/* ─── Weekly Stats ─── */
 interface WeeklyStats {
   xpEarned: number;
   questsCompleted: number;
@@ -20,7 +22,7 @@ function getWeeklyStats(): WeeklyStats {
   if (typeof window === "undefined") return { xpEarned: 0, questsCompleted: 0, lessonsCompleted: 0, longestStreak: 0, actionsThisWeek: [], daysActive: 0 };
 
   const gam = getGamification();
-  const lessonsDone = JSON.parse(localStorage.getItem("vietfi_lessons_done") || "[]");
+  const lessonsDone = getLessonsDone();
 
   // Simple stats from current state
   return {
@@ -34,12 +36,6 @@ function getWeeklyStats(): WeeklyStats {
 }
 
 /* ─── Streak Freeze ─── */
-interface FreezeState {
-  freezesAvailable: number;
-  lastFreeWeek: string; // ISO week string
-  usedThisWeek: boolean;
-}
-
 function getISOWeek(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -48,32 +44,32 @@ function getISOWeek(): string {
   return `${d.getFullYear()}-W${Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7) + 1}`;
 }
 
-export function getStreakFreezeState(): FreezeState {
+export function getStreakFreezeState(): StreakFreezeState {
   if (typeof window === "undefined") return { freezesAvailable: 1, lastFreeWeek: "", usedThisWeek: false };
-  const saved = localStorage.getItem("vietfi_streak_freeze");
+  const saved = getStreakFreeze();
   const currentWeek = getISOWeek();
   if (saved) {
-    const state = JSON.parse(saved) as FreezeState;
     // Auto-grant 1 free freeze per week
-    if (state.lastFreeWeek !== currentWeek) {
-      state.freezesAvailable = Math.min(state.freezesAvailable + 1, 3); // Max 3 stockpile
-      state.lastFreeWeek = currentWeek;
-      state.usedThisWeek = false;
-      localStorage.setItem("vietfi_streak_freeze", JSON.stringify(state));
+    if (saved.lastFreeWeek !== currentWeek) {
+      const updated: StreakFreezeState = {
+        freezesAvailable: Math.min(saved.freezesAvailable + 1, 3),
+        lastFreeWeek: currentWeek,
+        usedThisWeek: false,
+      };
+      setStreakFreeze(updated);
+      return updated;
     }
-    return state;
+    return saved;
   }
-  const initial: FreezeState = { freezesAvailable: 1, lastFreeWeek: currentWeek, usedThisWeek: false };
-  localStorage.setItem("vietfi_streak_freeze", JSON.stringify(initial));
+  const initial: StreakFreezeState = { freezesAvailable: 1, lastFreeWeek: currentWeek, usedThisWeek: false };
+  setStreakFreeze(initial);
   return initial;
 }
 
 export function useStreakFreeze(): boolean {
   const state = getStreakFreezeState();
   if (state.freezesAvailable <= 0) return false;
-  state.freezesAvailable -= 1;
-  state.usedThisWeek = true;
-  localStorage.setItem("vietfi_streak_freeze", JSON.stringify(state));
+  setStreakFreeze({ ...state, freezesAvailable: state.freezesAvailable - 1, usedThisWeek: true });
   return true;
 }
 
@@ -82,15 +78,14 @@ export function earnStreakFreeze(): boolean {
   if (gam.xp < 200) return false; // Need 200 XP to earn
   const state = getStreakFreezeState();
   if (state.freezesAvailable >= 3) return false; // Max 3
-  state.freezesAvailable += 1;
-  localStorage.setItem("vietfi_streak_freeze", JSON.stringify(state));
+  setStreakFreeze({ ...state, freezesAvailable: state.freezesAvailable + 1 });
   return true;
 }
 
 /* ─── Weekly Report Modal ─── */
 export function WeeklyReportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [stats, setStats] = useState<WeeklyStats | null>(null);
-  const [freezeState, setFreezeState] = useState<FreezeState | null>(null);
+  const [freezeState, setFreezeState] = useState<StreakFreezeState | null>(null);
 
   useEffect(() => {
     if (isOpen) {

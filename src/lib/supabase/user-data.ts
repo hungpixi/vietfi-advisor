@@ -8,20 +8,41 @@
 import { createClient } from "./client";
 import type { OnboardingData } from "@/lib/onboarding-state";
 import type { GamificationState } from "@/lib/gamification";
-import type { BudgetPot, Expense } from "@/lib/types/budget";
-
-// ── Re-export shared types ────────────────────────────────────────────
-
-export type { GamificationState } from "@/lib/gamification";
-export type { RiskResult } from "@/lib/calculations/risk-scoring";
-export { type BudgetPot, type Expense } from "@/lib/types/budget";
+import {
+  getBudgetPots as localGetBudgetPots,
+  setBudgetPots as localSetBudgetPots,
+  getExpenses as localGetExpenses,
+  setExpenses as localSetExpenses,
+  getDebts as localGetDebts,
+  setDebts as localSetDebts,
+} from "@/lib/storage";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+export interface BudgetPot {
+  id: string;
+  name: string;
+  iconKey: string;
+  allocated: number;
+  color: string;
+  sort_order?: number;
+}
+
+export interface Expense {
+  id: string;
+  pot_id?: string | null;
+  amount: number;
+  note?: string;
+  category?: string;
+  created_at?: string;
+  /** Required by budget types — ISO date string */
+  date: string;
+}
+
+/** Bundled budget state — pots + expenses for the current month. */
 export interface BudgetData {
   pots: BudgetPot[];
   expenses: Expense[];
-  income: number;
 }
 
 // ── Auth helper ────────────────────────────────────────────────────────
@@ -180,14 +201,14 @@ export async function getExpenses(): Promise<Expense[]> {
       note: row.note ?? "",
       category: row.category ?? "",
       created_at: row.created_at,
-      date: row.created_at ?? "",
+      date: row.created_at ?? new Date().toISOString(),
     }));
   } catch {
     return [];
   }
 }
 
-export async function addExpense(expense: Omit<Expense, "id" | "date"> & { date?: string }): Promise<void> {
+export async function addExpense(expense: Omit<Expense, "id">): Promise<void> {
   const userId = await getAuthUserId();
   if (!userId) return;
 
@@ -199,8 +220,32 @@ export async function addExpense(expense: Omit<Expense, "id" | "date"> & { date?
       amount: expense.amount,
       note: expense.note ?? "",
       category: expense.category ?? "",
-      created_at: expense.date ?? new Date().toISOString(),
+      created_at: expense.created_at ?? expense.date ?? new Date().toISOString(),
     });
+  } catch {
+    // silent
+  }
+}
+
+export async function saveExpenses(expenses: Expense[]): Promise<void> {
+  const userId = await getAuthUserId();
+  if (!userId) return;
+
+  try {
+    const supabase = createClient();
+    await supabase.from("expenses").delete().eq("user_id", userId);
+    if (expenses.length > 0) {
+      await supabase.from("expenses").insert(
+        expenses.map((e) => ({
+          user_id: userId,
+          pot_id: e.pot_id || null,
+          amount: e.amount,
+          note: e.note ?? "",
+          category: e.category ?? "",
+          created_at: e.created_at ?? e.date ?? new Date().toISOString(),
+        }))
+      );
+    }
   } catch {
     // silent
   }
@@ -294,15 +339,7 @@ export interface DebtItem {
   color: string;
 }
 
-export async function getDebts(): Promise<DebtItem[]> {
-  const { getDebts } = await import("@/lib/storage");
-  return getDebts();
-}
-
 export async function saveDebts(debts: DebtItem[]): Promise<void> {
-  const { setDebts } = await import("@/lib/storage");
-  setDebts(debts);
-
   const userId = await getAuthUserId();
   if (!userId) return;
 
@@ -328,72 +365,57 @@ export async function saveDebts(debts: DebtItem[]): Promise<void> {
   }
 }
 
-// ── Budget (full read/write) ─────────────────────────────────────────
+export async function getDebts(): Promise<DebtItem[]> {
+  const userId = await getAuthUserId();
+  if (!userId) return [];
 
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("debts")
+      .select("name, type, principal, rate, min_payment, icon, color")
+      .eq("user_id", userId);
+
+    if (error || !data) return [];
+
+    return data.map((row) => ({
+      name: row.name,
+      type: row.type,
+      principal: row.principal,
+      rate: row.rate,
+      min_payment: row.min_payment,
+      icon: row.icon ?? "CreditCard",
+      color: row.color ?? "#E6B84F",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ── Budget (bundled pots + expenses) ─────────────────────────────────
+
+/** Reads budget state from Supabase (logged-in) or localStorage (guest). */
 export async function getBudget(): Promise<BudgetData> {
   const userId = await getAuthUserId();
   if (userId) {
-    // TODO: read from Supabase once tables are wired up
+    const [pots, expenses] = await Promise.all([getBudgetPots(), getExpenses()]);
+    return { pots, expenses };
   }
-
-  const { getBudgetPots, getExpenses, getIncome } = await import("@/lib/storage");
+  // Guest — fall back to localStorage
   return {
-    pots: getBudgetPots(),
-    expenses: getExpenses(),
-    income: getIncome(),
+    pots: localGetBudgetPots(),
+    expenses: localGetExpenses(),
   };
 }
 
-export async function setBudget(data: BudgetData): Promise<void> {
-  const { setBudgetPots, setExpenses, setIncome } = await import("@/lib/storage");
-  setBudgetPots(data.pots);
-  setExpenses(data.expenses);
-  setIncome(data.income);
-
+/** Persists budget state to Supabase (logged-in) or localStorage (guest). */
+export async function setBudget(budget: BudgetData): Promise<void> {
   const userId = await getAuthUserId();
-  if (!userId) return;
-
-  // TODO: write to Supabase — sync pots + expenses + income atomically
-}
-
-// ── Gamification (localStorage-backed) ────────────────────────────────
-
-export async function getGamificationData(): Promise<GamificationState | null> {
-  const { getGamificationState } = await import("@/lib/storage");
-  return getGamificationState();
-}
-
-export async function setGamificationData(state: GamificationState): Promise<void> {
-  const { setGamificationState } = await import("@/lib/storage");
-  setGamificationState(state);
-
-  // Background sync to Supabase (non-blocking)
-  const userId = await getCachedUserId();
   if (userId) {
-    saveGamificationState(state).catch(() => {});
+    await Promise.all([saveBudgetPots(budget.pots), saveExpenses(budget.expenses)]);
+    return;
   }
+  localSetBudgetPots(budget.pots);
+  localSetExpenses(budget.expenses);
 }
 
-// ── Lessons Done ───────────────────────────────────────────────────────
-
-export async function getLessonsDoneData(): Promise<string[]> {
-  const { getLessonsDone } = await import("@/lib/storage");
-  return getLessonsDone();
-}
-
-export async function setLessonsDoneData(lessons: string[]): Promise<void> {
-  const { setLessonsDone } = await import("@/lib/storage");
-  setLessonsDone(lessons);
-}
-
-// ── Risk Result ────────────────────────────────────────────────────────
-
-export async function getRiskResultData(): Promise<import("@/lib/calculations/risk-scoring").RiskResult | null> {
-  const { getRiskResult } = await import("@/lib/storage");
-  return getRiskResult();
-}
-
-export async function setRiskResultData(result: import("@/lib/calculations/risk-scoring").RiskResult): Promise<void> {
-  const { setRiskResult } = await import("@/lib/storage");
-  setRiskResult(result);
-}

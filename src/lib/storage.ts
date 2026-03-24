@@ -104,6 +104,10 @@ export function setGamificationState(state: GamificationState): void {
   setItem(GAMIFICATION_KEY, state);
 }
 
+export function clearGamificationState(): void {
+  removeItem(GAMIFICATION_KEY);
+}
+
 /* ─── Onboarding ─── */
 
 const ONBOARDING_KEY = "vietfi_onboarding";
@@ -160,6 +164,22 @@ export function setSoundMuted(muted: boolean): void {
   }
 }
 
+/* ─── Market Alert Cache ─── */
+
+const MARKET_ALERT_KEY = "vietfi_market_alert";
+
+export interface MarketAlertCache {
+  lastAlertTime: number;
+  lastAlertMessage: string;
+}
+
+export function getMarketAlert(): MarketAlertCache | null {
+  return getItem<MarketAlertCache | null>(MARKET_ALERT_KEY, null);
+}
+
+export function setMarketAlert(cache: MarketAlertCache): void {
+  setItem(MARKET_ALERT_KEY, cache);
+}
 /* ─── Notification Dismissed ─── */
 
 const NOTIF_DISMISSED_KEY = "vietfi_notif_dismissed";
@@ -230,6 +250,22 @@ export function setLeaderboardOffsets(offsets: Record<string, number>): void {
   setItem(LEADERBOARD_OFFSETS_KEY, offsets);
 }
 
+/* ─── Leaderboard Bot Offsets (weekly) ─── */
+export function getLeaderboardBots(weekId: string): number[] {
+  return getItem<number[]>(`vietfi_leaderboard_bots_${weekId}`, []);
+}
+
+export function setLeaderboardBots(weekId: string, offsets: number[]): void {
+  setItem(`vietfi_leaderboard_bots_${weekId}`, offsets);
+}
+
+export function getLeaderboardBaseline(weekId: string): number {
+  return getItem<number>(`vietfi_leaderboard_baseline_${weekId}`, 0);
+}
+
+export function setLeaderboardBaseline(weekId: string, baseline: number): void {
+  setItem(`vietfi_leaderboard_baseline_${weekId}`, baseline);
+}
 /* ─── News Bookmarks ─── */
 
 const NEWS_BOOKMARKS_KEY = "vietfi_news_bookmarks";
@@ -256,6 +292,8 @@ const ALL_USER_KEYS = [
   STREAK_FREEZE_KEY,
   RISK_RESULT_KEY,
   NEWS_BOOKMARKS_KEY,
+  SOUND_MUTED_KEY,
+
 ];
 
 export function clearAllUserData(): void {

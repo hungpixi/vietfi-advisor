@@ -10,6 +10,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
 import type { BudgetPot, Expense } from "@/lib/types/budget";
+import { getBudgetPots, setBudgetPots, getExpenses, setExpenses, getIncome, setIncome } from "@/lib/storage";
 
 /* ─── Local alias — budget page uses "Pot" internally ─── */
 type Pot = BudgetPot;
@@ -201,19 +202,16 @@ export default function BudgetPage() {
 
   // Load from localStorage
   useEffect(() => {
-    const savedPots = localStorage.getItem("vietfi_pots");
-    const savedExpenses = localStorage.getItem("vietfi_expenses");
-    const savedIncome = localStorage.getItem("vietfi_income");
-    setPots(savedPots ? JSON.parse(savedPots) : defaultPots);
-    setExpenses(savedExpenses ? JSON.parse(savedExpenses) : []);
-    if (savedIncome) setIncome(parseInt(savedIncome));
+    setPots(getBudgetPots());
+    setExpenses(getExpenses());
+    setIncome(getIncome());
   }, []);
 
   // Save to localStorage + Supabase sync
   const save = useCallback((p: Pot[], e: Expense[], i: number) => {
-    localStorage.setItem("vietfi_pots", JSON.stringify(p));
-    localStorage.setItem("vietfi_expenses", JSON.stringify(e));
-    localStorage.setItem("vietfi_income", i.toString());
+    setBudgetPots(p);
+    setExpenses(e);
+    setIncome(i);
     // Background Supabase sync
     if (getCachedUserId()) {
       saveBudgetPots(p).catch(() => {});
@@ -242,7 +240,7 @@ export default function BudgetPage() {
     // Supabase sync
     if (getCachedUserId()) {
       const pot = pots.find(p => p.id === expense.potId);
-      addExpense({ amount: expense.amount, category: pot?.name || "Khác", note: expense.note }).catch(() => {});
+      addExpense({ amount: expense.amount, category: pot?.name || "Khác", note: expense.note, date: new Date().toISOString() }).catch(() => {});
     }
   };
 

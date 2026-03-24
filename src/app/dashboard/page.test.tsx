@@ -4,6 +4,7 @@ import DashboardOverview from './page';
 
 const mockFetchData = vi.fn();
 vi.stubGlobal('fetch', mockFetchData);
+vi.stubGlobal('Notification', { permission: 'default' });
 
 const onboardingData = {
   completed: true,
