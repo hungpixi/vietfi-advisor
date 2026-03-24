@@ -180,7 +180,6 @@ export function getMarketAlert(): MarketAlertCache | null {
 export function setMarketAlert(cache: MarketAlertCache): void {
   setItem(MARKET_ALERT_KEY, cache);
 }
-
 /* ─── Notification Dismissed ─── */
 
 const NOTIF_DISMISSED_KEY = "vietfi_notif_dismissed";
@@ -267,7 +266,6 @@ export function getLeaderboardBaseline(weekId: string): number {
 export function setLeaderboardBaseline(weekId: string, baseline: number): void {
   setItem(`vietfi_leaderboard_baseline_${weekId}`, baseline);
 }
-
 /* ─── News Bookmarks ─── */
 
 const NEWS_BOOKMARKS_KEY = "vietfi_news_bookmarks";
@@ -295,6 +293,7 @@ const ALL_USER_KEYS = [
   RISK_RESULT_KEY,
   NEWS_BOOKMARKS_KEY,
   SOUND_MUTED_KEY,
+
 ];
 
 export function clearAllUserData(): void {
