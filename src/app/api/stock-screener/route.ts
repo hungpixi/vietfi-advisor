@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   // Build cache key from filters
   const cacheKey = JSON.stringify(filters);
 
-  if (cache && Date.now() - cache.ts < CACHE_TTL && JSON.stringify((cache as { key?: string }).key) === cacheKey) {
+  if (cache && Date.now() - cache.ts < CACHE_TTL && (cache as { key?: string }).key === cacheKey) {
     return NextResponse.json(cache.data, {
       headers: { "X-Cache": "HIT", "Cache-Control": "public, s-maxage=1800" },
     });

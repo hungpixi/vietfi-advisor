@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server'
-import { crawlMarketData } from '@/lib/market-data/crawler'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 /**
  * Vercel Cron endpoint — triggered by vercel.json cron job.
- * Runs weekdays at 8:30am Vietnam time (UTC+7).
+ * Runs monthly on the 1st at midnight Vietnam time (UTC+7).
  *
  * Vercel sends: { cron: true } body with CRON_SECRET header.
+ *
+ * TODO (WDA2026/Hoàng): Implement macro-economic data refresh.
+ * Candidates: USD/VND rate, GSO CPI components, VN-Index P/E band,
+ * G-bond yield curve, PMI/PMI-NMI from VCCI.
  */
 export async function POST(request: Request) {
-  // Verify cron secret to prevent unauthorized invocations
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) {
-    console.error('[cron/market-data] CRON_SECRET is not set — rejecting request')
+    console.error('[cron/macro-update] CRON_SECRET is not set — rejecting request')
     return NextResponse.json(
       { error: 'Server misconfiguration: CRON_SECRET not set' },
       { status: 500 },
@@ -25,23 +28,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const snapshot = await crawlMarketData()
-
-    // TODO: Persist to Supabase or localStorage cache
-    // For now, just return the snapshot
+    // TODO: Fetch and persist macro-economic indicators
+    // - Exchange rates (USD/VND from SBV or Eximbank/ACB public rates)
+    // - Official CPI components from GSO Vietnam (gso.gov.vn)
+    // - VN-Index monthly close for P/E band history
+    // - G-bond yield tenor data from HNX or VBMA
 
     return NextResponse.json(
       {
         status: 'ok',
-        fetchedAt: snapshot.fetchedAt,
-        vnIndex: snapshot.vnIndex?.price ?? null,
-        goldVnd: snapshot.goldSjc?.goldVnd ?? null,
-        usdVnd: snapshot.usdVnd?.rate ?? null,
+        note: 'Macro-update cron stub — implement in next iteration',
+        updatedAt: new Date().toISOString(),
       },
       { status: 200 },
     )
   } catch (err) {
-    console.error('[cron/market-data] Error:', err)
+    console.error('[cron/macro-update] Error:', err)
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 })
   }
 }

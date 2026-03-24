@@ -6,11 +6,16 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!cronSecret) {
+    console.error('[cron/morning-brief] CRON_SECRET is not set — rejecting request')
+    return NextResponse.json(
+      { error: 'Server misconfiguration: CRON_SECRET not set' },
+      { status: 500 },
+    )
+  }
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
