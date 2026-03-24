@@ -15,16 +15,14 @@
 ## Muc Luc
 
 - [🚨 BẢN PHÂN CÔNG CÔNG VIỆC WDA2026 (Hưng & Hoàng) 🚨](./WDA2026_PHAN_CONG.md)
-- [Tong Quan](#-tong-quan)
-- [Tech Stack](#-tech-stack)
-- [Cai Dat & Chay](#-cai-dat--chay)
-- [Cau Truc Du An](#-cau-truc-du-an)
-- [Tinh Nang Da Hoan Thanh](#-tinh-nang-da-hoan-thanh)
-- [Quá Trình Tư Duy](#quá-trình-tư-duy)
-- [Trang Thai Hien Tai & Viec Can Lam](#-trang-thai-hien-tai--viec-can-lam)
-- [API Routes & Endpoints](#-api-routes--endpoints)
-- [Ky Thuat Test](#-ky-thuat-test)
-- [Lien He](#-lien-he)
+- [Tong Quan](#tong-quan)
+- [Tech Stack](#tech-stack)
+- [Cai Dat & Chay](#cai-dat--chay)
+- [Tinh Nang](#tinh-nang)
+- [API Routes & Endpoints](#api-routes--endpoints)
+- [Testing](#testing)
+- [Kien Truc He Thong](#kien-truc-he-thong)
+- [Team & Lien He](#team--lien-he)
 
 ---
 
@@ -51,9 +49,9 @@
 | **Batch AI** | `gemini-batch.ts` | 50% cheaper batch API cho Morning Brief & News |
 | **TTS** | Web Speech API (vi-VN) | Tu dong doc cau tra loi AI |
 | **STT** | Web Speech API (webkitSpeechRecognition) | Voice input tieng Viet |
-| **Auth** | Supabase Auth + `@supabase/ssr` | Email+Password, SSR cookie-based sessions |
+| **Auth** | Supabase Auth + `@supabase/ssr` | Email+Password, Google OAuth, SSR cookie-based sessions |
 | **Database** | Supabase PostgreSQL | Auth users, RLS-ready |
-| **Testing** | Vitest (57 tests across 10 files) | 70% line coverage enforced |
+| **Testing** | Vitest (57 tests) + Playwright E2E | 70% line coverage enforced |
 | **Scraping** | Cheerio | Crawl VN-Index, Gold, USD/VND, News RSS |
 | **Deploy** | Vercel | Production live |
 
@@ -62,21 +60,12 @@
 ## Cai Dat & Chay
 
 ```bash
-# 1. Clone
 git clone https://github.com/hungpixi/vietfi-advisor.git
 cd vietfi-advisor
-
-# 2. Install dependencies
 npm install
-
-# 3. Copy env
 cp .env.example .env.local
 # Dien GEMINI_API_KEY (bat buoc)
-# Dien SUPABASE keys (neu co)
-
-# 4. Chay dev
-npm run dev
-# → http://localhost:3000
+npm run dev   # → http://localhost:3000
 ```
 
 ### Environment Variables
@@ -91,141 +80,10 @@ npm run dev
 
 ---
 
-## Cau Truc Du An
-
-```
-vietfi-advisor/
-├── src/
-│   ├── proxy.ts                        # Next.js 16 proxy (session refresh)
-│   ├── app/
-│   │   ├── page.tsx                    # Landing page
-│   │   ├── layout.tsx                  # Root layout + fonts
-│   │   ├── globals.css                 # Tailwind v4 config
-│   │   ├── login/
-│   │   │   ├── page.tsx               # Login/Signup form
-│   │   │   └── actions.ts             # Server actions (login, signup)
-│   │   ├── auth/
-│   │   │   ├── confirm/route.ts       # Email OTP confirmation
-│   │   │   └── signout/route.ts       # Sign out handler
-│   │   ├── api/
-│   │   │   ├── chat/route.ts          # Gemini streaming API
-│   │   │   ├── tts/route.ts           # Text-to-Speech API
-│   │   │   ├── market-data/
-│   │   │   │   ├── route.ts           # Live market data (VN-Index, Gold, USD)
-│   │   │   │   └── route.test.ts      # 5 tests
-│   │   │   ├── news/
-│   │   │   │   ├── route.ts           # Tin tuc AI + sentiment analysis
-│   │   │   │   └── route.test.ts      # 3 tests
-│   │   │   ├── morning-brief/
-│   │   │   │   ├── route.ts           # AI Morning Brief generator
-│   │   │   │   └── route.test.ts      # 2 tests
-│   │   │   ├── stock-screener/
-│   │   │   │   └── route.ts           # VN stock screening (maxPE, maxPB, minROE)
-│   │   │   └── cron/
-│   │   │       ├── market-data/
-│   │   │       │   └── route.ts       # Vercel Cron endpoint
-│   │   │       └── morning-brief/
-│   │   │           ├── route.ts       # Cron for morning brief
-│   │   │           └── route.test.ts # 2 tests
-│   │   ├── dashboard/
-│   │   │   ├── page.tsx               # Tong quan (hub chinh, ~500 lines)
-│   │   │   ├── page.test.tsx          # 4 tests
-│   │   │   ├── components/
-│   │   │   │   ├── MarketSection.tsx   # Live market cards + FG gauge + notifications
-│   │   │   │   ├── DailyQuestSection.tsx # Self-contained quest polling + confetti
-│   │   │   │   └── NotificationBanner.tsx # Push notification permission banner
-│   │   │   ├── layout.tsx             # Sidebar + Gamification bar
-│   │   │   ├── budget/page.tsx        # Quy Chi tieu (6 Hu)
-│   │   │   ├── debt/page.tsx          # Quy No (Avalanche/Snowball)
-│   │   │   ├── housing/page.tsx       # Mua nha / Cho thue calculator
-│   │   │   ├── personal-cpi/page.tsx  # Lam phat ca nhan
-│   │   │   ├── leaderboard/page.tsx   # Bang xep hang
-│   │   │   ├── learn/page.tsx         # Bai hoc 60 giay
-│   │   │   ├── sentiment/page.tsx      # Nhiet ke thi truong
-│   │   │   ├── news/page.tsx          # Tin tuc AI
-│   │   │   ├── macro/page.tsx         # Xu huong kinh te (live data)
-│   │   │   ├── macro/page.test.tsx    # 5 tests
-│   │   │   ├── market/page.tsx        # Live market data (VN-Index, Gold, USD)
-│   │   │   ├── risk-profile/page.tsx  # Tinh cach dau tu
-│   │   │   ├── portfolio/page.tsx     # Co van danh muc
-│   │   │   └── screener/page.tsx      # VN stock screener UI
-│   │   └── test/
-│   │       └── lottie/
-│   │           └── page.tsx           # Lottie animation test page
-│   ├── components/
-│   │   ├── vet-vang/
-│   │   │   ├── VetVangFloat.tsx       # Floating button mo chat
-│   │   │   ├── VetVangChat.tsx        # Chat window + TTS + STT
-│   │   │   └── AnimatedParrot.tsx     # Lottie mascot animation
-│   │   ├── gamification/
-│   │   │   ├── Badges.tsx             # 8 hieu hieu
-│   │   │   ├── Celebration.tsx        # Confetti len level
-│   │   │   ├── ShareCard.tsx          # Share MXH
-│   │   │   ├── WeeklyReport.tsx       # Bao cao tuan
-│   │   │   └── XPToast.tsx            # Popup +XP
-│   │   └── onboarding/
-│   │       └── QuickSetupWizard.tsx   # Setup thu nhap ban dau
-│   └── lib/
-│       ├── storage.ts                 # Typed localStorage wrapper (36 accessors, 18 keys)
-│       ├── types/
-│       │   └── budget.ts             # Shared BudgetPot + Expense types
-│       ├── gemini.ts                  # callGemini + callGeminiJSON (retry)
-│       ├── gemini-batch.ts            # Batch Gemini API (50% cheaper)
-│       ├── supabase.ts                # Legacy client (backward compat)
-│       ├── supabase/
-│       │   ├── client.ts             # Browser client (@supabase/ssr)
-│       │   ├── server.ts             # Server client (cookie-based)
-│       │   ├── middleware.ts         # Session refresh helper
-│       │   ├── migrate-local.ts      # localStorage → Supabase migration
-│       │   ├── user-data.ts          # Hybrid DAL: Supabase + localStorage fallback
-│       │   └── useUserData.ts        # React hooks: useUserBudget, useUserDebts, useUserGamification
-│       ├── gamification.ts            # XP, Streak, Levels, Badges
-│       ├── onboarding-state.ts        # Trang thai onboarding
-│       ├── expense-parser.ts           # Regex expense parser (0 AI calls)
-│       ├── scripted-responses.ts     # 500+ canned responses
-│       ├── market-alert.ts           # Push notification market alerts
-│       ├── sounds.ts                  # Sound effects
-│       ├── utils.ts                   # Utility functions
-│       ├── morning-brief.ts           # Morning Brief generator + AI commentary
-│       ├── morning-brief.test.ts      # 4 tests
-│       ├── calculations/
-│       │   ├── debt-optimizer.ts     # Avalanche & Snowball solver
-│       │   ├── fg-index.ts          # Fear & Greed Index VN
-│       │   ├── personal-cpi.ts      # CPI ca nhan calculator
-│       │   └── risk-scoring.ts      # Cham diem rui ro dau tu
-│       └── market-data/
-│           ├── crawler.ts            # Crawl VN-Index, Gold SJC, USD/VND
-│           ├── crawler.test.ts       # 10 tests
-│           ├── parser.ts             # Vietnamese number/text parsing
-│           ├── parser.test.ts        # 19 tests
-│           └── stock-screener.ts    # Stock screening logic
-│       └── news/
-│           └── crawler.ts            # News RSS crawler (CafeF)
-│           └── crawler.test.ts       # 4 tests
-├── public/
-│   ├── assets/                       # Mascot images (5 levels)
-│   ├── docs/                         # Screenshots cho README
-│   └── quotes.json                   # 40 quotes cho Vet Vang
-├── scripts/
-│   └── generate_audio.py             # VieNeu-TTS voice pipeline
-├── voice_ref/                         # Voice reference files (gitignored)
-├── ui-prototype/                      # HTML prototype ban dau
-├── vitest.config.ts                   # Vitest configuration
-└── .env.example                       # Template cho env vars
-```
-
----
-
-## Tinh Nang Da Hoan Thanh
+## Tinh Nang
 
 ### 1. Vet Vang AI Chatbot
-- Gemini 2.0 Flash streaming qua Edge Runtime
-- Personality: xung tao-may, roast chi tieu, <50 chu per response
-- Voice Input: nhan dien giong noi tieng Viet (Web Speech API)
-- Voice Output: TTS tu dong doc cau tra loi (pitch 1.3 cho giong vet)
-- 7 Quick Actions: Chi tiêu, Nợ, Đầu tư, Motivate, Vàng vs CK, Lạm phát, Mua nhà
-- Mascot thay doi anh theo Level (5 levels) + Lottie animation (`AnimatedParrot.tsx`)
-- 3-tier fallback: Regex parser → Scripted responses → Gemini
+Gemini 2.0 Flash streaming qua Edge Runtime. Personality: xung tao-may, roast chi tieu, <50 chu per response. Voice Input/Output tieng Viet (Web Speech API), pitch 1.3 cho giong vet. 7 Quick Actions, mascot thay doi anh theo 5 level + Lottie animation. 3-tier fallback: Regex parser → Scripted responses → Gemini.
 
 ### 2. Quan Ly Tai Chinh
 - **Quy Chi tieu (6 Hu):** CRUD thu nhap/chi tieu, bieu do Recharts, canh bao overspending
@@ -236,64 +94,25 @@ vietfi-advisor/
 - **Mua nha / Cho thue:** Calculator so sanh mua vs thue dua tren thu nhap + lai suat
 
 ### 3. Thi Truong & Vi Mo
-- **Xu huong kinh te (Macro)** — du lieu **thoi gian thuc**: VN-Index (cafef), Vang SJC (Yahoo Finance), USD/VND (SBV homepage)
-- **Live Market Dashboard** — trang rieng hien thi chi so thi truong real-time
-- Auto-refresh moi 5 phut + cron job sang 8:30am (weekdays)
-- AI commentary tu sinh tu du lieu thuc
-- Nhiet ke thi truong (Fear & Greed Index VN)
+Live data: VN-Index (cafef), Vang SJC (Yahoo Finance), USD/VND (SBV). Auto-refresh 5 phut + cron job 8:30am weekdays. Fear & Greed Index VN, AI commentary.
 
 ### 4. Gamification
-- XP System (+10 moi action)
-- 5 Levels: Vet Con → Teen → Truong Thanh → Dai Gia → Ong Hoang
-- Streak (ngay lien tiep), 8 Badges, Confetti celebrations
-- Bang xep hang (1 user + 14 bot AI)
-- Micro-learning: 12+ bai hoc 60s + quiz
-- Sound effects (`sounds.ts`) cho XP gain, level up, streak
+XP System, 5 Levels (Vet Con → Teen → Truong Thanh → Dai Gia → Ong Hoang), Streak, 8 Badges, Confetti, Bang xep hang (1 user + 14 bot AI), Micro-learning 12+ bai hoc 60s, Sound effects.
 
 ### 5. PWA + Push Notifications
-- **Service Worker** — offline cache trang chinh, stale-while-revalidate
-- **Manifest.json** — "Add to Home Screen" cho mobile
-- **Push Notifications** — canh bao khi VN-Index ±2%, Vang ±3% (`market-alert.ts`)
-- **Permission banner** — UX moi khi lan dau vao dashboard
+Service Worker offline cache, "Add to Home Screen", Push Notifications khi VN-Index ±2% hoac Vang ±3%.
 
 ### 6. Live News + Morning Brief AI
-- **Tin tuc AI** (`news/crawler.ts`) — crawl CafeF RSS, Gemini AI sentiment analysis (Tich cuc/Tieu cuc/Trung lap)
-- **Morning Brief** (`morning-brief.ts`) — tu sinh brief moi ngay tu live articles + Gemini batch API (50% gia)
-- **Auto-refresh** — cache 5 phut, fallback offline
+Crawl CafeF RSS, Gemini sentiment analysis (Tich cuc/Tieu cuc/Trung lap), AI Morning Brief tu live articles via Gemini batch API (50% gia).
 
 ### 7. VN Stock Screener
-- **API** (`/api/stock-screener`) — loc co phieu theo maxPE, maxPB, minROE, exchange
-- **Dashboard** (`/dashboard/screener`) — giao dien loc + ket qua tra ve
-- **Logic** (`lib/market-data/stock-screener.ts`) — tinh toan chi so tai chinh
+Loc co phieu theo maxPE, maxPB, minROE, exchange.
 
 ### 8. Supabase Sync + Google OAuth
-- **Google OAuth** — dang nhap nhanh 1-click
-- **Background Sync** (`supabase/migrate-local.ts`, `supabase/user-data.ts`) — localStorage ↔ Supabase
-- **RLS policies** — bao mat du lieu theo user
+Background sync localStorage ↔ Supabase (RLS-protected), one-time migration.
 
 ### 9. Data Export
-- **CSV Export** — xuat chi tieu + khoan no ra CSV (BOM cho Excel Viet hoa)
-
----
-
-## Ky Thuat Test
-
-```bash
-npm test       # Vitest — 57 tests across 10 files (70% line coverage enforced)
-```
-
-| File | Tests | Muc do |
-|------|-------|--------|
-| `src/lib/market-data/parser.test.ts` | 19 | VnFloat, extractNumber, ranges, currencyMode |
-| `src/lib/market-data/crawler.test.ts` | 10 | VN-Index, Gold SJC, USD/VND |
-| `src/lib/news/crawler.test.ts` | 4 | CafeF RSS, sentiment classification |
-| `src/lib/morning-brief.test.ts` | 4 | Brief generation, article parsing |
-| `src/app/api/market-data/route.test.ts` | 5 | 200 OK, 500 error, partial data, structure |
-| `src/app/api/news/route.test.ts` | 3 | 200 OK, structure, error handling |
-| `src/app/api/morning-brief/route.test.ts` | 2 | 200 OK, structure |
-| `src/app/api/cron/morning-brief/route.test.ts` | 2 | CRON_SECRET auth, success |
-| `src/app/dashboard/macro/page.test.tsx` | 5 | Loading skeleton, success, error, retry |
-| `src/app/dashboard/page.test.tsx` | 3 | Render, initialState, navLinks |
+CSV Export chi tieu + no (BOM cho Excel Viet hoa).
 
 ---
 
@@ -301,59 +120,31 @@ npm test       # Vitest — 57 tests across 10 files (70% line coverage enforced
 
 | Method | Endpoint | Mo ta | Status |
 |--------|----------|-------|--------|
-| POST | `/api/chat` | Gemini streaming chat (Vet Vang) | ✅ Hoat dong |
-| POST | `/api/tts` | Text-to-Speech (edge-tts) | ✅ Hoat dong |
-| GET | `/api/market-data` | Live market data (VN-Index, Gold, USD) | ✅ Hoat dong |
-| POST | `/api/cron/market-data` | Cron job (Vercel Cron, CRON_SECRET) | ✅ Hoat dong |
-| GET | `/api/news` | Tin tuc AI + sentiment analysis (CafeF RSS) | ✅ Hoat dong |
-| GET | `/api/morning-brief` | AI Morning Brief tu live news articles | ✅ Hoat dong |
-| POST | `/api/cron/morning-brief` | Cron job for morning brief (CRON_SECRET) | ✅ Hoat dong |
-| GET | `/api/stock-screener` | VN stock screening (maxPE, maxPB, minROE) | ✅ Hoat dong |
-| GET | `/auth/confirm` | Email OTP confirmation | ✅ Hoat dong |
-| POST | `/auth/signout` | Sign out user | ✅ Hoat dong |
+| POST | `/api/chat` | Gemini streaming chat (Vet Vang) | ✅ |
+| POST | `/api/tts` | Text-to-Speech (edge-tts) | ✅ |
+| GET | `/api/market-data` | Live market data (VN-Index, Gold, USD) | ✅ |
+| POST | `/api/cron/market-data` | Cron job (CRON_SECRET) | ✅ |
+| GET | `/api/news` | Tin tuc AI + sentiment (CafeF RSS) | ✅ |
+| GET | `/api/morning-brief` | AI Morning Brief | ✅ |
+| POST | `/api/cron/morning-brief` | Cron job for morning brief (CRON_SECRET) | ✅ |
+| GET | `/api/stock-screener` | VN stock screening | ✅ |
+| GET | `/auth/confirm` | Email OTP confirmation | ✅ |
+| POST | `/auth/signout` | Sign out user | ✅ |
 
 ---
 
-## Trang Thai Hien Tai & Viec Can Lam
+## Testing
 
-### Da xong ✅
-- [x] Landing page
-- [x] 13 dashboard pages (UI + logic)
-- [x] Vet Vang AI chatbot (Gemini streaming)
-- [x] TTS + STT (Web Speech API)
-- [x] Gamification system day du (XP, Streak, Badges, Sound effects)
-- [x] 4 calculation engines
-- [x] Voice clone pipeline (VieNeu-TTS script)
-- [x] **Supabase Auth** — Email+Password, SSR cookie sessions, login/signup page
-- [x] **Live market data** — VN-Index, Gold SJC, USD/VND crawl + dashboard
-- [x] **News scrape + AI tom tat** — CafeF RSS + Gemini sentiment analysis
-- [x] **Morning Brief AI** — batch Gemini API (50% gia), cron job, dashboard
-- [x] **VN Stock Screener** — API + screening logic + dashboard page
-- [x] **Supabase migration** — `migrate-local.ts` + `user-data.ts` sync logic
-- [x] **Vitest tests** — 57 tests across 10 files
-- [x] **Vercel Deploy** — Production live tai [vietfi-advisor.vercel.app](https://vietfi-advisor.vercel.app)
-- [x] **Optimization Sprint** — Typed localStorage wrapper, component extraction, vitest coverage 70%+, hybrid DAL
+```bash
+npm test              # Vitest (watch mode)
+npm run test:run      # Vitest single run, CI
+npm run test:e2e      # Playwright E2E — all specs
+npm run test:e2e:ui   # Playwright with UI mode
+npm run test:e2e:headed  # Playwright headed
+npm run test:e2e:debug  # Playwright debug
+```
 
-### Can lam
-
-1. **Playwright E2E tests** — vitest chi cover unit; can playwright cho critical user flows
-
----
-
-## Screenshots
-
-| Tinh nang | Preview |
-|-----------|---------|
-| Dashboard | ![Dashboard](./public/docs/audit_dashboard_1773930999275.png) |
-| Quy No | ![Debt](./public/docs/audit_debt_1773931014486.png) |
-| Quy Chi tieu | ![Budget](./public/docs/audit_budget_1773931000033.png) |
-| Nhiet ke thi truong | ![Sentiment](./public/docs/audit_sentiment_1773931016194.png) |
-| Bang xep hang | ![Leaderboard](./public/docs/audit_leaderboard_page_1774006278785.png) |
-| Bai hoc tai chinh | ![Learn](./public/docs/audit_learn_page_1774006350794.png) |
-| Xu huong kinh te | ![Macro](./public/docs/audit_macro_1773931132462.png) |
-| Tinh cach dau tu | ![Risk](./public/docs/audit_risk_1773931164096.png) |
-| Co van danh muc | ![Portfolio](./public/docs/audit_portfolio_1773931153498.png) |
-| CPI ca nhan | ![CPI](./public/docs/audit_cpi_retry_1773931015040.png) |
+57 Vitest unit tests across 10 files. Playwright E2E coverage: landing, onboarding, budget management (15 tests). 70% line coverage enforced.
 
 ---
 
@@ -379,66 +170,14 @@ graph TD
     K -- migrate-local.ts --> E
 ```
 
-## Quá Trình Tư Duy
-
-**Tại sao chọn Next.js 16 + Vercel?**
-- App Router cho SSR/SSG hybrid → SEO tốt, load nhanh
-- Edge Runtime → latency thấp cho Gemini streaming
-- Vercel Cron → free scheduled crawling
-
-**Tại sao Gamification?**
-- Gen Z Vietnam quen với Duolingo/game → áp dụng streak + XP vào tài chính
-- Leaderboard tạo social pressure → duy trì thói quen ghi chi tiêu
-
-**Tại sao local-first + Supabase hybrid?**
-- Guest users dùng localStorage → 0 friction, không cần đăng ký
-- Logged-in users sync lên Supabase → data an toàn, multi-device
-
-**Tại sao Gemini Batch cho Morning Brief?**
-- Batch API gia 50% so voi interactive → tiết kiệm chi phí cho Vercel Hobby cron
-- Bulk AI processing cho News summaries thay vì streaming chat
-
-**Khác biệt so với app tài chính khác?**
-- **Vẹt Vàng AI** — chatbot xéo xắc, xưng tao-mày → gần gũi GenZ VN
-- **Live market data** — crawl real-time, không dùng API trả phí
-- **Push notifications** — cảnh báo biến động mạnh, không spam
-- **VN Stock Screener** — lọc cổ phiếu Việt Nam theo PE/PB/ROE
-
-## Huong Di Tuong Lai
-
-1. ✅ ~~Supabase Auth~~ + ~~Google OAuth~~
-2. ✅ ~~Live Market Data~~ + ~~News AI~~
-3. ✅ ~~Morning Brief AI~~ — batch Gemini + cron job
-4. ✅ ~~VN Stock Screener~~ — API + dashboard
-5. ✅ ~~PWA + Push Notifications~~
-6. ✅ ~~CSV Export~~
-7. **Voice Clone** — giong Vet Vang clone tu ZinZin (VieNeu-TTS)
-8. **Mascot Animation** — Lottie animation cho Vet Vang
-9. **AI Insights** — phan tich chi tieu tu dong, du bao cashflow
-10. **Playwright E2E Tests** — cover critical user flows
-
 ---
 
-## Team
+## Team & Lien He
 
 - **Hung** — AI, Frontend, Gamification, Voice
 - **Hoang** — Data Crawling, Market APIs, News Scraping
 
 > Du an thi **WDA 2026** — De tai Tai chinh ca nhan
-
----
-
-## 🤖 Bạn muốn ứng dụng AI tương tự?
-
-| Bạn cần | Chúng tôi đã làm ✅ |
-|---------|---------------------|
-| AI Chatbot cho app | Vẹt Vàng — Gemini streaming + TTS + STT |
-| Dashboard tài chính | 13 trang, real-time market data, gamification |
-| Crawl dữ liệu live | VN-Index, Gold, USD/VND, News RSS |
-| Batch AI (rẻ hơn 50%) | Gemini Batch API cho Morning Brief + News summaries |
-| VN Stock Screener | Lọc cổ phiếu theo PE, PB, ROE, exchange |
-| PWA + Push Notifications | Service Worker + Web Push + market alerts |
-| Auth + Database | Supabase Auth + PostgreSQL + RLS + localStorage migration |
 
 <p align="center">
   <a href="https://comarai.com"><img src="https://img.shields.io/badge/🚀_Yêu_cầu_Demo-comarai.com-E6B84F?style=for-the-badge" alt="Demo"/></a>
