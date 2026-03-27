@@ -12,61 +12,75 @@ import {
   getComparison, needsAI, DATA_INTENTS,
   type ScriptedResponseItem, type Intent,
 } from "@/lib/scripted-responses";
+import { type PersonaMode, PERSONAS, getVetvangPersona } from "@/lib/vetvang-persona";
+import VetVangConfig from "./VetVangConfig";
+import { analyzeDTI } from "@/lib/calculations/debt-optimizer";
 
 // ── Build user financial context from localStorage ──
-function getUserDataContext(): string {
+function getUserDataContext(personaMode: PersonaMode): string {
   if (typeof window === "undefined") return "";
   const parts: string[] = [];
+  const persona = PERSONAS[personaMode];
+
+  parts.push(`[HƯỚNG DẪN TÍNH CÁCH CỦA VẸT VÀNG MÀ BẠN PHẢI NHẬP VAI]`);
+  parts.push(`Tên: Vẹt Vàng (Mascot tư vấn tài chính của ứng dụng Vietfi Advisor).`);
+  parts.push(`Tính cách hiện tại: ${persona.name} - ${persona.desc}`);
+  parts.push(`Luôn trả lời theo tính cách này. Không bao giờ tự xưng là AI hay ngôn ngữ máy móc.\n`);
 
   try {
-    // Budget pots
-    const pots = getBudgetPots();
-    const expenses = getExpenses();
-    if (pots.length > 0) {
-      // Compute spent per pot from expenses
-      const spentByPot: Record<string, number> = {};
-      expenses.forEach(e => {
-        const potId = e.pot_id ?? e.potId ?? "";
-        spentByPot[potId] = (spentByPot[potId] ?? 0) + e.amount;
-      });
-      const potSummary = pots.map(p => {
-        const spent = spentByPot[p.id] ?? 0;
-        return `${p.name}: ${spent.toLocaleString("vi-VN")}đ/${p.allocated.toLocaleString("vi-VN")}đ`;
-      }).join(", ");
-      parts.push(`Ngân sách: ${potSummary}`);
-    }
-
-    // Expenses (recent 30)
-    if (expenses.length > 0) {
-      const total = expenses.reduce((s, e) => s + e.amount, 0);
-      parts.push(`Tổng chi tiêu: ${total.toLocaleString("vi-VN")}đ, ${expenses.length} khoản`);
-      // Top categories
-      const catMap = new Map<string, number>();
-      expenses.forEach(e => catMap.set(e.category ?? "", (catMap.get(e.category ?? "") ?? 0) + e.amount));
-      const topCats = [...catMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
-      if (topCats.length > 0) {
-        parts.push(`Top chi: ${topCats.filter(([c]) => c).map(([c, v]) => `${c} ${v.toLocaleString("vi-VN")}đ`).join(", ")}`);
-      }
-    }
-
-    // Debts
+    const income = getIncome();
     const debts = getDebts();
-    if (debts.length > 0) {
-      const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
-      const debtList = debts.map(d => `${d.name}(${d.type}): ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.rate}%`).join("; ");
-      parts.push(`Nợ tổng: ${totalDebt.toLocaleString("vi-VN")}đ — ${debtList}`);
-    } else {
-      parts.push("Không có khoản nợ");
-    }
+    const expenses = getExpenses();
+    const pots = getBudgetPots();
 
     // Income
-    const income = getIncome();
     if (income > 0) {
       parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
     }
+
+    // Cashflow 50-30-20 Analysis
+    if (pots.length > 0) {
+      const spentByPot: Record<string, number> = {};
+      let totalSpent = 0;
+      expenses.forEach(e => {
+        const potId = e.pot_id ?? e.potId ?? "";
+        spentByPot[potId] = (spentByPot[potId] ?? 0) + e.amount;
+        totalSpent += e.amount;
+      });
+      const potSummary = pots.map(p => {
+        const spent = spentByPot[p.id] ?? 0;
+        return `- ${p.name}: Tiêu ${spent.toLocaleString("vi-VN")}đ / Ngân sách ${p.allocated.toLocaleString("vi-VN")}đ`;
+      }).join("\n");
+      parts.push(`[BỨC TRANH CHI TIÊU - CASHFLOW]\nTổng chi tiêu: ${totalSpent.toLocaleString("vi-VN")}đ.\n${potSummary}`);
+      
+      parts.push(`(Ghi chú cho AI: Hãy đối chiếu xem user có làm đúng quy tắc 50-30-20 không. Đặc biệt khen nếu user tiêu ở Quỹ Tiết Kiệm/Đầu tư, và chê nếu xài lố Quỹ mong muốn/giải trí)`);
+    }
+
+    // Debt & DTI Analysis
+    if (debts.length > 0) {
+      const mappedDebts = debts.map((d, index) => ({
+        id: `debt-${index}`,
+        name: d.name,
+        type: (d.type as "personal" | "credit_card" | "mortgage" | "bnpl" | "loan_shark") || "personal",
+        principal: d.principal,
+        rate: d.rate,
+        minPayment: d.min_payment,
+      }));
+      const dti = analyzeDTI(mappedDebts, income || 1); // fallback income=1 to avoid Infinity
+      const debtList = debts.map(d => `${d.name}: lố ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.rate}%/năm`).join("; ");
+      parts.push(`[PHÂN TÍCH NỢ & DTI]`);
+      parts.push(`Tổng nợ: ${dti.totalDebt.toLocaleString("vi-VN")}đ.`);
+      parts.push(`Chỉ số DTI (Debt-to-Income): ${dti.dtiRatio.toFixed(1)}% (Mức độ rủi ro: ${dti.dtiLevel.toUpperCase()})`);
+      parts.push(`Chi tiết: ${debtList}`);
+      if (dti.dtiRatio > 60) {
+        parts.push(`(Ghi chú ĐẶC BIỆT cho AI: DTI của user đang VƯỢT MỨC MÀU ĐỎ (>60%). Tùy theo tính cách mà hãy thảng thốt cảnh báo tuyệt đối KHÔNG CHI TIÊU THÊM, tước thẻ tín dụng và lo kiếm tiền trả nợ ngay lập tức!)`);
+      }
+    } else {
+      parts.push(`Tình trạng nợ: Không có khoản nợ nào (Tốt).`);
+    }
+
   } catch { /* ignore parse errors */ }
 
-  if (parts.length === 0) return "[User chưa có dữ liệu tài chính]";
   return `[DỮ LIỆU TÀI CHÍNH CỦA USER]\n${parts.join("\n")}`;
 }
 
@@ -90,6 +104,16 @@ interface VetVangChatProps {
 
 export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: VetVangChatProps) {
   const [input, setInput] = useState("");
+  const [persona, setPersona] = useState<PersonaMode>("mo_hon");
+  const [showConfig, setShowConfig] = useState(false);
+
+  // Load saved persona on mount
+  useEffect(() => {
+    setPersona(getVetvangPersona());
+  }, []);
+
+  const activePersonaConfig = PERSONAS[persona];
+
   const greetingItem = getScriptedResponse("greeting");
   const { messages, setMessages, sendMessage, status, error } = useChat({
     messages: [
@@ -316,14 +340,14 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Inject user data context for data-dependent questions
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
-      const ctx = getUserDataContext();
+      const ctx = getUserDataContext(persona);
       // Market intents → also fetch live data
       if (MARKET_INTENTS.includes(intent)) {
         fetchMarketContext().then(mkt => {
-          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
         });
       } else {
-        sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+        sendMessage({ text: `${ctx}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
       }
     } else {
       sendMessage({ text });
@@ -355,13 +379,13 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Inject user data context + market data for data-dependent questions
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
-      const ctx = getUserDataContext();
+      const ctx = getUserDataContext(persona);
       if (MARKET_INTENTS.includes(intent) || MARKET_INTENTS.includes(key)) {
         fetchMarketContext().then(mkt => {
-          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực.` });
+          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực.` });
         });
       } else {
-        sendMessage({ text: `${ctx}\n\nCâu hỏi: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+        sendMessage({ text: `${ctx}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
       }
     } else {
       sendMessage({ text });
@@ -388,17 +412,30 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
             style={{ background: "linear-gradient(90deg, rgba(230,184,79,0.08) 0%, transparent 100%)" }}>
             <div className="flex items-center gap-2.5">
               <div className="relative">
-                <span className="text-2xl">🦜</span>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#22C55E] rounded-full border-2 border-[#111318]" />
+                <span className="text-2xl">{activePersonaConfig.emoji}</span>
+                <div 
+                  className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#111318]" 
+                  style={{ backgroundColor: activePersonaConfig.color }}
+                />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-1">
-                  Vẹt Vàng <Sparkles className="w-3 h-3 text-[#E6B84F]" />
+                  Vẹt Vàng <Sparkles className="w-3 h-3" style={{ color: activePersonaConfig.color }} />
                 </h3>
-                <p className="text-[9px] text-white/25">Lv.{level} {levelName} • {xp} XP</p>
+                <p className="text-[9px] text-white/40 flex items-center gap-1">
+                  Lv.{level} {levelName} • <span style={{ color: activePersonaConfig.color }}>Mode: {activePersonaConfig.name}</span>
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowConfig(!showConfig)}
+                className={`p-1.5 rounded-lg transition-colors text-[10px] font-bold border ${
+                  showConfig ? "bg-white/10 text-white" : "border-white/10 text-white/50 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                ⚙️
+              </button>
               <button
                 onClick={() => {
                   const newMuted = !soundMuted;
@@ -438,13 +475,24 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
             <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, #E6B84F, #FFD700)" }}
+                style={{ background: `linear-gradient(90deg, ${activePersonaConfig.color}, #FFFFFF)` }}
                 initial={{ width: 0 }}
                 animate={{ width: `${(xp / 1000) * 100}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
           </div>
+
+          {/* Config Popover */}
+          <AnimatePresence>
+            {showConfig && (
+              <VetVangConfig 
+                currentPersona={persona} 
+                onPersonaChange={(m) => { setPersona(m); setShowConfig(false); }} 
+                onClose={() => setShowConfig(false)} 
+              />
+            )}
+          </AnimatePresence>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin">
@@ -461,9 +509,13 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                   <div
                     className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-[#E6B84F]/15 text-white/80 rounded-br-sm"
-                        : "bg-white/[0.04] text-white/70 rounded-bl-sm border border-white/[0.06]"
+                        ? "text-white/90 rounded-br-sm"
+                        : "bg-white/[0.04] text-white/80 rounded-bl-sm border border-white/[0.06]"
                     }`}
+                    style={msg.role === "user" ? { 
+                      backgroundColor: `${activePersonaConfig.color}20`,
+                      border: `1px solid ${activePersonaConfig.color}30`
+                    } : {}}
                   >
                     {msg.parts?.[0]?.text || msg.content}
                   </div>
@@ -566,10 +618,14 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                 className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E6B84F]/30 transition-colors"
                 disabled={isLoading}
               />
-              <button
+                <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="p-2 rounded-xl bg-gradient-to-r from-[#E6B84F] to-[#D4A43F] text-black disabled:opacity-30 hover:shadow-[0_0_16px_rgba(230,184,79,0.3)] transition-all flex items-center justify-center min-w-[36px]"
+                className="p-2 rounded-xl text-black disabled:opacity-30 transition-all flex items-center justify-center min-w-[36px]"
+                style={{ 
+                  background: `linear-gradient(to right, ${activePersonaConfig.color}, #FFFFFF)`,
+                  boxShadow: `0 0 16px ${activePersonaConfig.color}30`
+                }}
               >
                 <Send className="w-4 h-4" />
               </button>

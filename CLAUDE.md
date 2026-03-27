@@ -67,16 +67,17 @@ All dashboard pages share `dashboard/layout.tsx` which mounts: sidebar navigatio
 
 **Existing pages**: budget, debt, housing, leaderboard, learn, macro, market, news, personal-cpi, portfolio, risk-profile, screener, sentiment
 
-### Calculation Engines (`src/lib/calculations/`)
+### Calculation Engines (`src/lib/calculations/` và Component-level PnL)
 
 Pure TypeScript, no AI calls:
 
-| File | Purpose |
+| File/Component | Purpose |
 |------|---------|
 | `debt-optimizer.ts` | DTI + Snowball/Avalanche month-by-month simulation |
 | `fg-index.ts` | Fear & Greed Index for VN market (5 weighted indicators) |
 | `personal-cpi.ts` | Personal inflation vs official CPI (7 GSO categories) |
 | `risk-scoring.ts` | 5 prospect theory questions → risk profile + allocation |
+| `GoldTracker.tsx` | Pricing Engine 2.0 (Real-time PnL): Multi-brand DOM scraping (Webgia) + DOJI XML API. Tích hợp Graceful Degradation tự động fallback sang nội suy từ Gold Global (`goldUsd * Rate + Premium`). |
 
 ---
 

@@ -227,10 +227,11 @@ export default function MacroPage() {
 
       {/* Loading skeletons */}
       {isLoading && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <SkeletonCard delay={0} />
           <SkeletonCard delay={0.05} />
           <SkeletonCard delay={0.1} />
+          <SkeletonCard delay={0.15} />
         </div>
       )}
 
@@ -242,7 +243,7 @@ export default function MacroPage() {
       {/* Live data */}
       {fetchState === 'success' && snapshot && (
         <>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {/* VN-Index */}
             {snapshot.vnIndex ? (
               <IndicatorCard
@@ -256,7 +257,7 @@ export default function MacroPage() {
             ) : (
               <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-white/30" />
-                <span className="text-sm text-white/40">VN-Index: không có dữ liệu</span>
+                <span className="text-sm text-white/40">VN-Index: N/A</span>
               </div>
             )}
 
@@ -276,7 +277,28 @@ export default function MacroPage() {
             ) : (
               <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-white/30" />
-                <span className="text-sm text-white/40">Vàng SJC: không có dữ liệu</span>
+                <span className="text-sm text-white/40">Vàng SJC: N/A</span>
+              </div>
+            )}
+
+            {/* Silver */}
+            {snapshot.silver ? (
+              <IndicatorCard
+                emoji="🥈"
+                label="Bạc (Thế giới)"
+                value={`${fmtVnd(snapshot.silver.silverVnd)} đ/lượng`}
+                sub={fmtChangePct(snapshot.silver.changePct)}
+                trend={
+                  snapshot.silver.changePct > 0 ? 'up' :
+                  snapshot.silver.changePct < 0 ? 'down' : 'neutral'
+                }
+                note={`~$${snapshot.silver.silverUsd}/oz`}
+                delay={0.08}
+              />
+            ) : (
+              <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-white/30" />
+                <span className="text-sm text-white/40">Bạc: N/A</span>
               </div>
             )}
 
@@ -287,13 +309,13 @@ export default function MacroPage() {
                 label="USD/VND"
                 value={fmtVnd(Math.round(snapshot.usdVnd.rate))}
                 trend="neutral"
-                note="Tỷ giá tham khảo; mỗi nơi mỗi khác"
+                note="Tỷ giá tham khảo"
                 delay={0.1}
               />
             ) : (
               <div data-testid="macro-error" className="glass-card p-5 flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-white/30" />
-                <span className="text-sm text-white/40">USD/VND: không có dữ liệu</span>
+                <span className="text-sm text-white/40">USD/VND: N/A</span>
               </div>
             )}
           </div>
@@ -329,6 +351,7 @@ export default function MacroPage() {
             <div className="flex flex-wrap gap-3 text-[12px] text-white/80">
               <span>VN-Index: {snapshot.vnIndex ? fmtTrend(snapshot.vnIndex.changePct) : 'N/A'}</span>
               <span>Vàng SJC: {snapshot.goldSjc ? fmtTrend(snapshot.goldSjc.changePct) : 'N/A'}</span>
+              <span>Bạc: {snapshot.silver ? fmtTrend(snapshot.silver.changePct) : 'N/A'}</span>
               <span>USD/VND: --</span>
             </div>
           </div>
@@ -339,7 +362,7 @@ export default function MacroPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden"
+              className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden mb-6"
             >
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
               <div className="relative z-10">
@@ -354,6 +377,53 @@ export default function MacroPage() {
                   <SourceBadge label={snapshot.goldSjc?.source ?? 'Yahoo Finance'} />
                   <SourceBadge label={snapshot.usdVnd?.source ?? 'SBV'} />
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Market News */}
+          {snapshot.news && snapshot.news.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="glass-card flex flex-col overflow-hidden"
+            >
+              <div className="p-4 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.01]">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[#E6B84F]" />
+                  <h3 className="text-sm font-semibold text-white">Tin tức thị trường nổi bật</h3>
+                </div>
+                <SourceBadge label="VnExpress (Kinh Doanh)" />
+              </div>
+              <div className="flex flex-col">
+                {snapshot.news.map((item, idx) => {
+                  let pubLabel = item.pubDate;
+                  try {
+                    const d = new Date(item.pubDate);
+                    if (!isNaN(d.getTime())) {
+                       pubLabel = d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+                    }
+                  } catch {}
+                  
+                  return (
+                    <a
+                      key={idx}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-4 hover:bg-white/[0.02] transition-colors border-b border-white/[0.02] last:border-0 block group"
+                    >
+                      <div className="text-[13px] font-medium text-white/90 group-hover:text-[#E6B84F] transition-colors line-clamp-2 leading-relaxed mb-1.5">
+                        {item.title}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] text-white/40">
+                        <Clock className="w-3 h-3" />
+                        {pubLabel}
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             </motion.div>
           )}

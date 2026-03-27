@@ -10,6 +10,15 @@ import type { OnboardingData } from "@/lib/onboarding-state";
 import type { MarketSnapshot } from "@/lib/market-data/crawler";
 import type { RiskResult } from "@/lib/calculations/risk-scoring";
 
+export interface GoldPurchase {
+  id: string;
+  brand: string;      // "SJC", "BTMC", "DOJI", "PNJ", "Khác"
+  type: string;       // "Vàng miếng", "Vàng nhẫn 9999"
+  weight: number;     // Số chỉ (1 lượng = 10 chỉ)
+  buyPrice: number;   // Giá mua vào trên MỘT CHỈ (VND)
+  date: string;       // YYYY-MM-DD
+}
+
 /* ─── Reusable helpers ─── */
 
 const isServer = typeof window === "undefined";
@@ -279,6 +288,29 @@ export function setNewsBookmarks(bookmarks: Set<string>): void {
   setItem(NEWS_BOOKMARKS_KEY, Array.from(bookmarks));
 }
 
+/* ─── Gold Purchases (Physical Gold Tracker) ─── */
+
+const GOLD_KEY = "vietfi_gold_purchases";
+
+export function getGoldPurchases(): GoldPurchase[] {
+  return getItem<GoldPurchase[]>(GOLD_KEY, []);
+}
+
+export function setGoldPurchases(data: GoldPurchase[]): void {
+  setItem(GOLD_KEY, data);
+}
+
+export function addGoldPurchase(data: Omit<GoldPurchase, "id">): void {
+  const current = getGoldPurchases();
+  current.push({ ...data, id: Date.now().toString() });
+  setGoldPurchases(current);
+}
+
+export function deleteGoldPurchase(id: string): void {
+  const current = getGoldPurchases();
+  setGoldPurchases(current.filter((g) => g.id !== id));
+}
+
 /* ─── Clear All User Data ─── */
 
 const ALL_USER_KEYS = [
@@ -293,7 +325,7 @@ const ALL_USER_KEYS = [
   RISK_RESULT_KEY,
   NEWS_BOOKMARKS_KEY,
   SOUND_MUTED_KEY,
-
+  GOLD_KEY,
 ];
 
 export function clearAllUserData(): void {

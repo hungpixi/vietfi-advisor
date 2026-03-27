@@ -1,0 +1,82 @@
+commit 989135632caaf9c946aedeeec8ff5e8708b0f9a6
+Author: Nguyen Huy Hoang <24520554@gm.uit.edu.vn>
+Date:   Wed Mar 25 02:22:47 2026 +0700
+
+    fix: address security audit findings F-001 through F-005
+    
+    - F-001: Fix double-JSON.stringify on stock-screener cache key comparison
+      causing cache misses and repeated upstream fetches.
+    - F-002: Fail-closed CRON_SECRET auth — return 500 if env var is unset
+      instead of silently skipping auth checks on both /cron/market-data and
+      /cron/morning-brief.
+    - F-003: Remove ignoreDuringBuilds/ignoreBuildErrors from next.config.ts so
+      TypeScript and ESLint errors block production builds.
+    - F-004: Implement missing /api/cron/macro-update route (scheduled monthly in
+      vercel.json) with fail-closed auth and stub macro refresh logic.
+    - F-005: Add Content-Security-Policy header and move inline SW registration
+      script from layout.tsx to public/sw-register.js to avoid unsafe-inline
+      in the default script-src policy.
+
+M	next.config.ts
+A	public/sw-register.js
+A	src/app/api/cron/macro-update/route.ts
+M	src/app/api/cron/market-data/route.ts
+M	src/app/api/cron/morning-brief/route.ts
+M	src/app/api/stock-screener/route.ts
+M	src/app/layout.tsx
+
+commit d7474fca56b2f0302a4c208b7faf2b6239f5d018
+Author: Nguyen Huy Hoang <24520554@gm.uit.edu.vn>
+Date:   Wed Mar 25 02:14:00 2026 +0700
+
+    docs: trim README from 461 to 199 lines — remove redundant overlap with CLAUDE.md
+    
+    Removed sections moved to CLAUDE.md (agent guidance):
+    - Full project structure tree (was 120 lines, redundant with file system)
+    - Detailed features "already hoan thanh" section
+    - Detailed testing table (now in CLAUDE.md)
+    - Quá Trình Tư Duy section (developer rationale)
+    - Hướng Đi Tương Lai roadmap
+    - Screenshots table
+    - Everything AI table (services offered)
+    
+    Kept sections unique to README:
+    - Tech Stack with tech badges
+    - Setup & environment variables
+    - Feature overview (concise, 1-2 lines each)
+    - API routes table (end-user API reference)
+    - Testing commands
+    - System architecture mermaid diagram
+    - Team & contact
+    
+    Updated:
+    - Playwright E2E listed in tech stack and testing sections
+    - "Google OAuth" added to Supabase row
+    - Lottie mascot (from huong-di-tuong-lai → shipped)
+    - Trang Thai / Can lam section removed (both items shipped)
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+M	README.md
+
+commit 39ffee06225c6977cc374063609908b0892b7d90
+Author: Nguyen Huy Hoang <24520554@gm.uit.edu.vn>
+Date:   Wed Mar 25 02:11:31 2026 +0700
+
+    docs: update CLAUDE.md — add E2E test commands, remove stale pending work, trim redundant sections
+    
+    - Add test:e2e, test:e2e:ui, test:e2e:headed, test:e2e:debug npm scripts
+    - Remove "Playwright E2E tests" from Pending Work (already shipped)
+    - Remove verbose API routes, news system, stock screener, morning brief
+      sections (already in README, discoverable)
+    - Remove verbose key lib files table (file paths are self-evident)
+    - Remove extracted dashboard components table (self-discoverable)
+    - Remove duplicate gamification system description
+    - Remove duplicate PWA section
+    - Remove duplicate animations & mascot section
+    - Add vitest single-run command (test:run)
+    - Reference .env.example instead of "documented in README"
+    
+    Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+M	CLAUDE.md

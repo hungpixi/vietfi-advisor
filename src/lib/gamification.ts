@@ -158,6 +158,29 @@ export function addXP(actionKey: string): { newXP: number; xpGained: number; lev
   };
 }
 
+export function spendXP(amount: number): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem("vf_gamification");
+    if (!raw) return false;
+    const state = JSON.parse(raw) as GamificationState;
+    if (state.xp >= amount) {
+      state.xp -= amount;
+      
+      const newLvl = getLevel(state.xp);
+      state.level = LEVELS.indexOf(newLvl);
+      state.levelName = newLvl.name;
+
+      save(state);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn("spendXP err", e);
+    return false;
+  }
+}
+
 /* ─── Daily Quest ─── */
 export interface DailyQuest {
   id: string;

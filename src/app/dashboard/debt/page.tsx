@@ -6,6 +6,7 @@ import {
   Plus,
   AlertTriangle,
   ArrowDown,
+  ArrowRight,
   ArrowUp,
   TrendingDown,
   Banknote,
@@ -22,7 +23,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
-import { Debt, analyzeDTI, snowballPlan, avalanchePlan, PayoffStep } from "@/lib/calculations/debt-optimizer";
+import { Debt, analyzeDTI, snowballPlan, avalanchePlan, PayoffStep, getFreedomMonth } from "@/lib/calculations/debt-optimizer";
 import { getDebts, setDebts } from "@/lib/storage";
 
 /* ─── Types ─── */
@@ -252,6 +253,7 @@ export default function DebtPage() {
   const [strategy, setStrategy] = useState<"snowball" | "avalanche">("snowball");
   const [showAddModal, setShowAddModal] = useState(false);
   const [payingDebt, setPayingDebt] = useState<UIDebt | null>(null);
+  const [hasPledged, setHasPledged] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -309,11 +311,35 @@ export default function DebtPage() {
 
   const currentPlan = strategy === "snowball" ? snowballPlan(debts) : avalanchePlan(debts);
 
-  // Domino Effect Chart Data
-  const chartData = currentPlan.map(p => ({
-    month: `T${p.month}`,
-    remaining: p.remaining
-  })).filter((_, i) => i % Math.max(1, Math.floor(currentPlan.length / 10)) === 0 || i === currentPlan.length - 1);
+  // ─── XỬ LÝ DỮ LIỆU STACKED CHART (DOMINO EFFECT) ───
+  const maxMonth = currentPlan.length > 0 ? Math.max(...currentPlan.map(p => p.month)) : 0;
+  const chartData: any[] = [];
+  const initialBalances = Object.fromEntries(debts.map(d => [d.name, d.principal]));
+
+  for (let m = 0; m <= maxMonth; m++) {
+    if (m === 0) {
+      chartData.push({ month: "Now", ...initialBalances });
+      continue;
+    }
+    
+    // Lấy sample 8 điểm trên biểu đồ cho đẹp
+    if (m % Math.max(1, Math.floor(maxMonth / 8)) === 0 || m === maxMonth) {
+      const stepsInMonth = currentPlan.filter(p => p.month === m);
+      const row: any = { month: `T${m}` };
+      debts.forEach(d => {
+        const step = stepsInMonth.find(p => p.debtName === d.name);
+        row[d.name] = step ? step.remaining : 0;
+      });
+      chartData.push(row);
+    }
+  }
+
+  // ─── TÍNH TOÁN NGÀY ĐỘC LẬP (FREEDOM DAY) ───
+  const freedomMonthStr = getFreedomMonth(maxMonth);
+
+  // ─── SMART REFINANCE ADVISOR (TÌM NỢ ĐỘC HẠI) ───
+  const toxicDebt = debts.find(d => d.rate >= 40);
+  const canRefinance = toxicDebt && dtiRatio < 50; // Còn dư địa DTI để vay NH
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
@@ -364,17 +390,73 @@ export default function DebtPage() {
         </motion.div>
       </motion.div>
 
-      {/* DTI Alert */}
-      {dtiRatio >= 40 && (
+      {/* Domino Effect Alert (>= 60) */}
+      {dtiRatio >= 60 && (
+        <motion.div variants={fadeIn} className="glass-card p-4 border-[#991B1B]/40 bg-[#991B1B]/10 mb-6">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5 animate-pulse" />
+            <div>
+              <h3 className="text-sm font-bold text-[#EF4444]">BÁO ĐỘNG ĐỎ: HIỆU ỨNG DOMINO NỢ!</h3>
+              <p className="text-xs text-white/70 mt-1 mb-3">
+                Tỷ lệ nợ của bạn là <strong>{dtiRatio.toFixed(1)}%</strong> (&gt;60%), vượt qua vạch tử thần. 
+                Bạn đang rơi vào vòng xoáy lấy nợ nuôi nợ (Hiệu ứng Domino).
+              </p>
+              <div className="bg-black/30 p-3 rounded-lg border border-[#EF4444]/20">
+                <span className="text-[10px] font-mono text-[#EF4444] tracking-wider mb-1 block">ACTION CARD (HÀNH ĐỘNG KHẨN CẤP)</span>
+                <ul className="text-[11px] text-white/60 space-y-1.5 list-disc pl-4">
+                  <li><strong>Cắt ngay 100%</strong> các hũ chi tiêu không thiết yếu (Mua sắm, Hưởng thụ) tháng này.</li>
+                  <li><strong>Bán bớt tiêu sản</strong> hoặc tìm cách <strong>đảo nợ</strong> sang khoản vay thế chấp dài hạn để giảm áp lực dòng tiền ngay lập tức.</li>
+                  <li>Nếu để kéo dài vòng lặp này, bạn sẽ mất hoàn toàn khả năng chi trả sau 3-6 tháng nữa.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Normal DTI Alert (40-60) */}
+      {dtiRatio >= 40 && dtiRatio < 60 && !toxicDebt && (
         <motion.div variants={fadeIn} className="glass-card p-4 border-[#EF4444]/20 mb-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-semibold text-[#EF4444]">Tỷ lệ nợ/thu nhập vượt ngưỡng!</h3>
               <p className="text-xs text-white/40 mt-1">
-                Tỷ lệ nợ {dtiRatio}% (ngưỡng an toàn &lt;20%). Bạn đang dùng {dtiRatio}% thu nhập hàng tháng để trả nợ.
+                Tỷ lệ nợ {dtiRatio.toFixed(1)}% (ngưỡng an toàn &lt;20%). Bạn đang dùng {dtiRatio.toFixed(1)}% thu nhập hàng tháng để trả nợ.
                 Nên ưu tiên giảm nợ trước khi đầu tư.
               </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── SMART REFINANCE ADVISOR (ĐẢO NỢ THÔNG MINH) ─── */}
+      {canRefinance && (
+        <motion.div variants={fadeIn} className="glass-card p-5 border-[#00E5FF]/40 bg-[#00E5FF]/5 mb-6 shadow-[0_0_30px_rgba(0,229,255,0.05)]">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-[#00E5FF]/10 flex items-center justify-center flex-shrink-0 border border-[#00E5FF]/20">
+              <Banknote className="w-5 h-5 text-[#00E5FF] animate-bounce" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[#00E5FF] flex items-center gap-2">
+                💡 CỐ VẤN AI: CHIẾN THUẬT ĐẢO NỢ KHẨN CẤP
+                <span className="px-2 py-0.5 bg-[#00E5FF]/20 text-[#00E5FF] text-[9px] rounded-full uppercase tracking-wider">Khuyên dùng</span>
+              </h3>
+              <p className="text-xs text-white/70 mt-2 mb-3 leading-relaxed">
+                Phát hiện khoản <strong>{toxicDebt.name}</strong> có lãi suất quá độc hại ({toxicDebt.rate}%/năm). 
+                Tuy nhiên DTI của bạn (<strong>{dtiRatio.toFixed(1)}%</strong>) vẫn cho phép vay tín chấp ngân hàng! 
+                Thay vì cắn răng trả lãi cắt cổ, hãy dùng **Chiến Thuật Lấy Bạc Lẻ Đập Lô Lớn**.
+              </p>
+              <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                   <ShieldAlert className="w-4 h-4 text-[#FF6B35]" /> Trả {toxicDebt.rate}%/năm
+                   <ArrowRight className="w-4 h-4 text-white/20 mx-1" /> 
+                   <Banknote className="w-4 h-4 text-[#00E5FF]" /> Vay NH 15%/năm
+                </div>
+                <button className="px-4 py-1.5 bg-[#00E5FF]/10 text-[#00E5FF] text-xs font-semibold rounded-lg hover:bg-[#00E5FF]/20 transition-colors border border-[#00E5FF]/20">
+                   Tìm gói vay tín chấp (Sắp ra mắt)
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -471,53 +553,111 @@ export default function DebtPage() {
                 : "💡 Trả khoản lãi cao nhất trước → tối ưu tài chính"}
             </div>
 
-            {/* Priority Order */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/20">THỨ TỰ ƯU TIÊN</span>
+            {/* ─── BẢN ĐỒ THOÁT NỢ (GAMIFIED ROADMAP) ─── */}
+            <div className="space-y-0 relative mt-5 mb-2 pl-2">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/20 block mb-4">THỨ TỰ TIÊU DIỆT NỢ</span>
+              
+              {/* Timeline Line */}
+              <div className="absolute left-[17px] top-[30px] bottom-[10px] w-0.5 bg-gradient-to-b from-[#22C55E]/50 via-white/10 to-transparent z-0" />
+
               {sortedDebts.map((debt, i) => {
                 const Icon = ICON_MAP[debt.icon] || Banknote;
+                const isFirst = i === 0;
                 return (
-                  <div key={debt.id} className="flex items-center gap-2.5 p-2 rounded-lg bg-white/[0.02]">
-                    <span className="text-xs font-bold text-white/20 w-4">#{i + 1}</span>
-                    <Icon className="w-3.5 h-3.5" style={{ color: debt.color }} />
-                    <span className="text-xs text-white/60 flex-1 truncate">{debt.name}</span>
-                    <span className="text-xs font-medium text-white/40">
-                      {strategy === "snowball" ? formatVND(debt.principal) : `${debt.rate}%`}
-                    </span>
+                  <div key={debt.id} className="relative z-10 flex items-start gap-3 p-3 mt-1 group">
+                    {/* Node / Checkpoint */}
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border-2 transition-all ${isFirst ? "bg-[#22C55E]/20 border-[#22C55E] ring-4 ring-[#22C55E]/10 scale-110" : "bg-[#111] border-white/20 group-hover:border-white/40"}`}>
+                       <span className={`text-[10px] font-bold ${isFirst ? "text-[#22C55E]" : "text-white/40"}`}>{i + 1}</span>
+                    </div>
+
+                    <div className={`flex-1 flex flex-col pt-0.5 ${isFirst ? "opacity-100" : "opacity-60"}`}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-3 h-3" style={{ color: debt.color }} />
+                        <span className={`text-xs font-semibold ${isFirst ? "text-white" : "text-white/60"}`}>{debt.name}</span>
+                        {isFirst && <span className="px-1.5 py-0.5 bg-[#22C55E]/20 text-[#22C55E] text-[8px] rounded uppercase font-bold tracking-wider ml-auto animate-pulse flex items-center gap-1"><ArrowDown className="w-2 h-2"/> Dồn Lực</span>}
+                      </div>
+                      <div className="flex gap-3 text-[10px] mt-1">
+                         <span className="text-white/40">Gốc: <strong className="text-white/80">{formatVND(debt.principal)}</strong></span>
+                         <span className="text-white/40">Lãi: <strong className={isFirst ? "text-[#EF4444]" : "text-white/50"}>{debt.rate}%</strong></span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-white/[0.04]">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-4 h-4 text-[#22C55E]" />
-                <div>
-                  <span className="text-xs text-white/60">Dự kiến thoát nợ — Tối ưu nhất</span>
-                  <p className="text-sm font-bold text-[#22C55E]">~{currentPlan.length > 0 ? currentPlan[currentPlan.length - 1].month : 0} tháng</p>
+            <div className="mt-6 pt-5 border-t border-white/[0.04]">
+              {/* ─── THE PLEDGE (BẢN KÝ CAM KẾT) ─── */}
+              {!hasPledged && totalDebt > 0 && (
+                 <motion.button 
+                   whileHover={{ scale: 1.02 }}
+                   whileTap={{ scale: 0.98 }}
+                   onClick={() => {
+                     setHasPledged(true);
+                     addXP("pledge_debt_free");
+                     // Bắn pháo hoa UI (Sẽ thêm lib canvas-confetti nếu có tgian)
+                   }}
+                   className="w-full mb-6 p-1 rounded-xl bg-gradient-to-r from-[#E6B84F] via-[#FF6B35] to-[#AB47BC] shadow-[0_0_20px_rgba(230,184,79,0.3)] animate-pulse"
+                 >
+                   <div className="bg-[#111] w-full h-full rounded-lg p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">✍️</span>
+                        <div className="text-left">
+                           <h4 className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] uppercase tracking-wider">Lời thề sắt đá</h4>
+                           <p className="text-[10px] text-white/50">Cam kết giảm tiêu xài, khô máu trả nợ (+200 XP)</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-white bg-white/10 px-3 py-1.5 rounded-md">Ký Ngay</span>
+                   </div>
+                 </motion.button>
+              )}
+
+              {/* ─── WIDGET: NGÀY ĐỘC LẬP TÀI CHÍNH (FREEDOM DAY) ─── */}
+              <div className="relative overflow-hidden rounded-xl border border-[#22C55E]/30 bg-gradient-to-br from-[#22C55E]/10 to-transparent p-5 mb-5 group">
+                {/* Background glow */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#22C55E]/10 rounded-full blur-3xl group-hover:bg-[#22C55E]/20 transition-all"></div>
+                
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#22C55E]/20 flex items-center justify-center border border-[#22C55E]/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                       <TrendingDown className="w-4 h-4 text-[#22C55E]" />
+                    </div>
+                    <span className="text-xs font-bold text-white/80 uppercase tracking-widest leading-tight">Ngày Độc Lập<br/><span className="text-[9px] text-white/40 font-normal">Tài Chính</span></span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-black text-[#22C55E] drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">{freedomMonthStr}</p>
+                    <span className="text-[10px] text-white/50 bg-[#22C55E]/10 px-2 py-0.5 rounded-full border border-[#22C55E]/20">Còn {maxMonth} tháng</span>
+                  </div>
                 </div>
               </div>
               
-              {/* Domino Effect Chart */}
+              {/* Domino Effect Chart (Thác Đổ) */}
               {chartData.length > 0 && (
-                <div className="h-[120px] w-full mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="w-full mt-2 relative" style={{ height: "200px" }}>
+                  <ResponsiveContainer width="100%" height={200}>
                     <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorRemaining" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
                       <XAxis dataKey="month" stroke="#ffffff40" fontSize={10} tickLine={false} axisLine={false} />
                       <YAxis stroke="#ffffff40" fontSize={10} tickFormatter={(val) => `${(val/1000000).toFixed(0)}M`} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        formatter={(value: any) => [formatVND(value as number), "Dư nợ"]}
-                        labelStyle={{ color: 'black' }}
-                        contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: 'white' }}
+                        contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px', color: 'white', opacity: 0.95 }}
+                        itemStyle={{ fontSize: '11px', fontWeight: 600 }}
+                        labelStyle={{ fontSize: '10px', color: '#999', marginBottom: '4px' }}
+                        formatter={(value: any) => formatVND(value as number)}
                       />
-                      <Area type="monotone" dataKey="remaining" stroke={strategy === "snowball" ? "#E6B84F" : "#00E5FF"} fillOpacity={1} fill="url(#colorRemaining)" strokeWidth={2} />
+                      {/* Vòng lặp đè các khoản nợ thành khối Stacked (Thác Đổ) */}
+                      {sortedDebts.map((debt, index) => (
+                        <Area 
+                          key={debt.id} 
+                          type="monotone" 
+                          dataKey={debt.name} 
+                          stackId="1" 
+                          stroke={debt.color} 
+                          fill={debt.color} 
+                          fillOpacity={0.8 - (index * 0.1)} 
+                          strokeWidth={1} 
+                        />
+                      ))}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -537,7 +677,7 @@ export default function DebtPage() {
             <div className="mt-4 pt-3 border-t border-white/[0.04]">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-white/20">TỶ LỆ NỢ/THU NHẬP</span>
-                <span className="text-xs font-bold" style={{ color: dtiColor }}>{dtiRatio}%</span>
+                <span className="text-xs font-bold" style={{ color: dtiColor }}>{dtiRatio.toFixed(1)}%</span>
               </div>
               <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                 <div

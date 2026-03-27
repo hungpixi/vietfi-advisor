@@ -42,6 +42,26 @@ export interface CryptoData {
   source: string
 }
 
+export interface SilverData {
+  silverUsd: number
+  silverVnd: number
+  changePct: number
+  source: string
+}
+
+export interface NewsItem {
+  title: string
+  link: string
+  pubDate: string
+}
+
+export interface GoldBrandData {
+  buy: number
+  sell: number
+}
+
+export type GoldBrands = Record<string, GoldBrandData>
+
 export interface MacroData {
   gdpYoY: Array<{ period: string; value: number }>
   cpiYoY: Array<{ period: string; value: number }>
@@ -52,8 +72,11 @@ export interface MarketSnapshot {
   fetchedAt: string   // ISO timestamp
   vnIndex: VnIndexData | null
   goldSjc: GoldData | null
+  silver: SilverData | null
+  goldBrands?: GoldBrands
   usdVnd: ExchangeRateData | null
   btc: CryptoData | null
+  news: NewsItem[]
   macro: MacroData
   aiSummary?: string | null
 }
@@ -352,6 +375,45 @@ export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null>
   }
 }
 
+// ── Silver ───────────────────────────────────────────────────────────────────
+
+const YAHOO_SILVER_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/SI=F?interval=1d&range=2d'
+
+export async function fetchSilver(usdVndRate: number): Promise<SilverData | null> {
+  try {
+    const resp = await fetch(YAHOO_SILVER_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    } as RequestInit)
+
+    if (!resp.ok) return null
+
+    const json = await resp.json() as Record<string, unknown>
+    const chart = json.chart as Record<string, unknown> | undefined
+    const result = Array.isArray(chart?.result) ? (chart.result[0] as Record<string, unknown>) : undefined
+    
+    if (!result || !result.meta) return null
+    const meta = result.meta as Record<string, unknown>
+
+    const regularMarketPrice = Number(meta.regularMarketPrice)
+    const chartPreviousClose = Number(meta.chartPreviousClose || meta.previousClose)
+
+    if (Number.isNaN(regularMarketPrice) || regularMarketPrice <= 0) return null
+
+    const changePct = chartPreviousClose > 0 ? ((regularMarketPrice - chartPreviousClose) / chartPreviousClose) * 100 : 0
+    // Quy đổi lượng (tương đối): 1 lượng = 1.20565 troy oz
+    const silverVnd = Math.round(regularMarketPrice * usdVndRate * (37.5 / 31.1035))
+
+    return {
+      silverUsd: Math.round(regularMarketPrice * 100) / 100,
+      silverVnd,
+      changePct: Math.round(changePct * 100) / 100,
+      source: 'Yahoo Finance (SI=F)',
+    }
+  } catch {
+    return null
+  }
+}
+
 // ── Bitcoin (BTC) ─────────────────────────────────────────────────────────────
 
 const COINGECKO_BTC_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
@@ -394,6 +456,122 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
   }
 
   return null
+}
+
+// ── News RSS ──────────────────────────────────────────────────────────────────
+
+const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
+
+export async function fetchNews(): Promise<NewsItem[]> {
+  try {
+    const resp = await fetch(VNEXPRESS_RSS_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    } as RequestInit)
+
+    if (!resp.ok) return []
+    const xml = await resp.text()
+
+    const $ = cheerio.load(xml, { xmlMode: true })
+    const items: NewsItem[] = []
+
+    $('item').slice(0, 5).each((_, el) => {
+      const titleRaw = $(el).find('title').text() || ''
+      const title = titleRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+      const linkRaw = $(el).find('link').text() || ''
+      const link = linkRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+      const pubDate = $(el).find('pubDate').text() || ''
+
+      if (title && link) {
+        items.push({ title, link, pubDate })
+      }
+    })
+
+    return items
+  } catch {
+    return []
+  }
+}
+
+// ── Multi-Brand Gold Crawler ──────────────────────────────────────────────────
+
+export async function fetchMultiBrandGold(): Promise<GoldBrands> {
+  const brands: GoldBrands = {}
+
+  // 1. Fetch DOJI XML
+  try {
+    const dojiXml = await fetch('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      next: { revalidate: 600 }
+    }).then(r => r.text())
+    
+    let dojiSjcBuy = 0, dojiSjcSell = 0
+    let dojiRingBuy = 0, dojiRingSell = 0
+    
+    const matches = [...dojiXml.matchAll(/<Row Name="(.*?)" .*?Buy="(.*?)" Sell="(.*?)"/g)]
+    for (const m of matches) {
+      const name = m[1]
+      const buy = parseFloat(m[2].replace(/,/g, '')) * 1000000
+      const sell = parseFloat(m[3].replace(/,/g, '')) * 1000000
+      
+      if (name.includes('SJC') && dojiSjcBuy === 0 && buy > 10000000) {
+        dojiSjcBuy = buy; dojiSjcSell = sell
+      }
+      if ((name.includes('Nhẫn Tròn') || name.includes('9999')) && dojiRingBuy === 0 && buy > 10000000) {
+        dojiRingBuy = buy; dojiRingSell = sell
+      }
+    }
+    if (dojiSjcBuy > 0) brands['DOJI_SJC'] = { buy: dojiSjcBuy, sell: dojiSjcSell }
+    if (dojiRingBuy > 0) brands['DOJI_NHAN'] = { buy: dojiRingBuy, sell: dojiRingSell }
+  } catch {}
+
+  // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
+  const fetchWebgia = async (brandCode: string, urlId: string) => {
+    try {
+      const html = await fetch(`https://webgia.com/gia-vang/${urlId}/`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        next: { revalidate: 600 }
+      }).then(r => r.text())
+      
+      const $ = cheerio.load(html)
+      let ringBuy = 0, ringSell = 0
+      let sjcBuy = 0, sjcSell = 0
+      
+      $('table tbody tr').each((_, el) => {
+        const name = $(el).find('td').first().text().trim().toLowerCase()
+        const buyStr = $(el).find('td').eq(1).text().replace(/\D/g, '')
+        const sellStr = $(el).find('td').eq(2).text().replace(/\D/g, '')
+        if (!buyStr) return
+        
+        let buy = parseInt(buyStr, 10)
+        let sell = parseInt(sellStr, 10)
+        
+        // Cố gắng chuẩn hóa về giá 1 lượng (~80,000,000)
+        // Nếu giá trị < 10,000,000 -> khả năng là giá 1 chỉ -> nhân 10
+        if (buy > 100000 && buy < 10000000) buy *= 10
+        if (sell > 100000 && sell < 10000000) sell *= 10
+        
+        if (buy < 10000000 || buy > 150000000) return // Bỏ qua nếu giá vô lý
+        
+        if ((name.includes('nhẫn') || name.includes('vàng rồng') || name.includes('trơn') || name.includes('9999')) && ringBuy === 0) {
+          ringBuy = buy; ringSell = sell
+        }
+        if (name.includes('sjc') && sjcBuy === 0) {
+          sjcBuy = buy; sjcSell = sell
+        }
+      })
+      
+      if (sjcBuy > 0) brands[`${brandCode}_SJC`] = { buy: sjcBuy, sell: sjcSell }
+      if (ringBuy > 0) brands[`${brandCode}_NHAN`] = { buy: ringBuy, sell: ringSell }
+    } catch {}
+  }
+
+  await Promise.allSettled([
+    fetchWebgia('BTMC', 'bao-tin-minh-chau'),
+    fetchWebgia('PNJ', 'pnj'),
+    fetchWebgia('Mi Hồng', 'mi-hong')
+  ])
+
+  return brands
 }
 
 // ── Main crawler ──────────────────────────────────────────────────────────────
@@ -448,18 +626,24 @@ export async function crawlMarketData(): Promise<MarketSnapshot> {
   const usdVndRate = usdVnd?.rate ?? 25085
 
   // Fetch all data in parallel
-  const [vnIndex, goldSjc, btc] = await Promise.all([
+  const [vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
     fetchVnIndex(),
     fetchGoldSjc(usdVndRate),
     fetchBtc(),
+    fetchSilver(usdVndRate),
+    fetchNews(),
+    fetchMultiBrandGold()
   ])
 
   const snapshot: MarketSnapshot = {
     fetchedAt,
     vnIndex,
     goldSjc,
+    silver,
+    goldBrands,
     usdVnd,
     btc,
+    news,
     macro: getMacroData(),
     aiSummary: null,
   }

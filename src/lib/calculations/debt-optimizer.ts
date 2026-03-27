@@ -23,7 +23,7 @@ export interface PayoffStep {
 export interface DebtAnalysis {
   totalDebt: number;
   dtiRatio: number;        // % — Debt-to-Income
-  dtiLevel: "safe" | "warning" | "danger";
+  dtiLevel: "safe" | "warning" | "danger" | "domino";
   dtiColor: string;
   totalMonthlyMin: number;
   totalHiddenInterest: number;  // Tổng lãi phí ẩn nếu chỉ trả min
@@ -40,7 +40,8 @@ export function analyzeDTI(debts: Debt[], monthlyIncome: number): DebtAnalysis {
   let dtiColor: string;
   if (dtiRatio < 20) { dtiLevel = "safe"; dtiColor = "#00E676"; }
   else if (dtiRatio < 40) { dtiLevel = "warning"; dtiColor = "#FFD700"; }
-  else { dtiLevel = "danger"; dtiColor = "#FF5252"; }
+  else if (dtiRatio < 60) { dtiLevel = "danger"; dtiColor = "#FF5252"; }
+  else { dtiLevel = "domino"; dtiColor = "#991B1B"; }
 
   // Tính lãi ẩn và lãi suất thực tế từng khoản
   const realInterestRates = debts.map(d => {
@@ -85,16 +86,29 @@ function simulatePayoff(debts: Debt[], extraPayment: number): PayoffStep[] {
   let month = 0;
   const maxMonths = 360; // 30 năm max
 
+  // TIỀN MỞ KHOÁ (Freed-up cashflow): Lượng tiền hàng tháng rảnh rang sau khi thanh toán xong 1 khoản nợ
+  let accumulatedSnowball = 0; 
+
   while (remaining.some((d) => d.balance > 0) && month < maxMonths) {
     month++;
-    let extra = extraPayment;
+    
+    // Mỗi đầu tháng, người dùng có thể trả: (Tiền trả thêm cố định) + (Lượng tiền các khoản nợ cũ đã giải phóng)
+    let extraAvailableForThisMonth = extraPayment + accumulatedSnowball;
 
     for (const debt of remaining) {
       if (debt.balance <= 0) continue;
 
       const monthlyRate = debt.rate / 12 / 100;
       const interest = debt.balance * monthlyRate;
-      let payment = debt.minPayment + (remaining.indexOf(debt) === 0 ? extra : 0);
+      
+      // CHỈ ưu tiên dồn 'extraAvailableForThisMonth' vào khoản nợ ĐẦU TIÊN (chưa trả xong) trong danh sách đã sort
+      let payment = debt.minPayment;
+      if (extraAvailableForThisMonth > 0) {
+        payment += extraAvailableForThisMonth;
+        extraAvailableForThisMonth = 0; // Đã dồn hết lực vào khoản nợ này
+      }
+
+      // Không trả quá số tiền còn nợ + lãi tháng này
       payment = Math.min(payment, debt.balance + interest);
 
       debt.balance = debt.balance + interest - payment;
@@ -107,12 +121,18 @@ function simulatePayoff(debts: Debt[], extraPayment: number): PayoffStep[] {
         remaining: Math.round(debt.balance),
         totalInterest: Math.round(interest),
       });
-    }
 
-    // Khi 1 khoản trả xong → chuyển extra qua khoản tiếp theo
-    const paidOff = remaining.filter((d) => d.balance <= 0);
-    if (paidOff.length > 0) {
-      extra += paidOff.reduce((sum, d) => sum + d.minPayment, 0);
+      // KHI KHOẢN NỢ NÀY VỪA ĐƯỢC TRẢ XONG TRONG THÁNG NÀY (Snowball Effect Hype!)
+      if (debt.balance <= 0) {
+        // Vĩnh viễn mở khoá số tiền Min Payment của lịch này để dồn cho lịch sau ở các tháng tới
+        accumulatedSnowball += debt.minPayment;
+        
+        // Cú hích (Cascade Effect): Nếu payment của tháng này > balance + interest, thì tiền dư sẽ được quăng thẳng xuống khoản nợ bên dưới ngay trong cùng 1 tháng
+        const overpaid = payment - (debt.balance + interest);
+        if (overpaid > 0) {
+           extraAvailableForThisMonth += overpaid;
+        }
+      }
     }
   }
 
@@ -129,4 +149,12 @@ export function summarizePlan(steps: PayoffStep[]): {
   const totalInterestPaid = steps.reduce((sum, s) => sum + s.totalInterest, 0);
   const totalPaid = steps.reduce((sum, s) => sum + s.payment, 0);
   return { totalMonths, totalInterestPaid, totalPaid };
+}
+
+/* ─── Helper: Lấy Ngày Độc Lập Tài Chính (Freedom Day) ─── */
+export function getFreedomMonth(addMonths: number): string {
+  if (addMonths <= 0) return "Hôm nay";
+  const date = new Date();
+  date.setMonth(date.getMonth() + addMonths);
+  return `Tháng ${date.getMonth() + 1}/${date.getFullYear()}`;
 }

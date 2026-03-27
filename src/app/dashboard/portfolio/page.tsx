@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
+import { GoldTracker } from "@/components/portfolio/GoldTracker";
 
 /* ─── Types ─── */
 interface AllocationItem { asset: string; percent: number; color: string; }
@@ -269,6 +270,42 @@ export default function PortfolioPage() {
               </Link>
             )}
 
+            <div className="mt-4 mb-4 pt-4 border-t border-[#E6B84F]/10">
+              <h4 className="text-[10px] font-bold text-[#E6B84F] mb-2 uppercase tracking-wider">Hành động cụ thể (Action Cards)</h4>
+              <div className="space-y-2">
+                {riskType === "conservative" && (
+                  <>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#00E5FF]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#00E5FF]">Hành động 1:</strong> Gửi ngay 50% tiền nhàn rỗi vào sổ tiết kiệm online kỳ hạn linh hoạt.
+                    </div>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#E6B84F]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#E6B84F]">Hành động 2:</strong> Trích 20% mua vàng SJC hoặc nhẫn trơn 9999 làm tài sản trú ẩn dài hạn.
+                    </div>
+                  </>
+                )}
+                {riskType === "balanced" && (
+                  <>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#22C55E]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#22C55E]">Hành động 1:</strong> Mua chứng chỉ quỹ ETF (VN30/VN100) hàng tháng để trung bình giá cổ phiếu.
+                    </div>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#00E5FF]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#00E5FF]">Hành động 2:</strong> Giữ 30% tiền mặt/tiết kiệm như quỹ khẩn cấp để bắt đáy khi thị trường hoảng loạn.
+                    </div>
+                  </>
+                )}
+                {riskType === "growth" && (
+                  <>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#22C55E]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#22C55E]">Hành động 1:</strong> Dồn 40% vào thị trường Cổ phiếu: Tự mua các mã rớt sâu hoặc mua ETF theo định kỳ.
+                    </div>
+                    <div className="bg-white/5 p-2.5 rounded border border-[#AB47BC]/20 text-[11px] text-white/70 leading-relaxed">
+                      <strong className="text-[#AB47BC]">Hành động 2:</strong> Trích 25% mua Crypto (BTC/ETH). Biến động cực mạnh nên dứt khoát Không All-in.
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="flex items-center gap-3">
               <div className="text-center">
                 <TrendingUp className="w-5 h-5 text-[#22C55E] mx-auto mb-0.5" />
@@ -357,6 +394,11 @@ export default function PortfolioPage() {
           <span className="flex items-center gap-1 text-[10px] text-[#E6B84F]"><div className="w-2 h-2 rounded-full bg-[#E6B84F]" />Cơ sở</span>
           <span className="flex items-center gap-1 text-[10px] text-[#22C55E]"><div className="w-2 h-2 rounded-full bg-[#22C55E]" />Lạc quan</span>
         </div>
+      </motion.div>
+
+      {/* Sổ Vàng (Physical Gold Tracker) */}
+      <motion.div variants={fadeIn} className="mt-6">
+        <GoldTracker marketData={marketData} />
       </motion.div>
     </motion.div>
   );
