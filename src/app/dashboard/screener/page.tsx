@@ -8,6 +8,8 @@ import {
   Building2, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import RequireTier from "@/components/gamification/RequireTier";
+import { UserRole } from "@/lib/rbac";
 
 /* ─── Types ─── */
 
@@ -125,7 +127,8 @@ export default function ScreenerPage() {
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <RequireTier requiredRole={UserRole.MASTER} featureName="Lọc Cổ Phiếu VIP">
+      <div className="space-y-6 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -353,7 +356,8 @@ export default function ScreenerPage() {
       <p className="text-[11px] text-white/20 text-center">
         ⚠️ Dữ liệu từ TCBS API. Đây KHÔNG phải lời khuyên đầu tư. Hãy tự nghiên cứu trước khi quyết định.
       </p>
-    </div>
+      </div>
+    </RequireTier>
   );
 }
 

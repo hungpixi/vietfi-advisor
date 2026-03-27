@@ -5,6 +5,8 @@ import { Calculator, AlertTriangle, ArrowUpRight, Info, Download } from "lucide-
 import { useState, useEffect } from "react";
 import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
 import { getBudgetPots, getExpenses } from "@/lib/storage";
+import RequireTier from "@/components/gamification/RequireTier";
+import { UserRole } from "@/lib/rbac";
 
 /* ─── Budget → CPI mapping ─── */
 const BUDGET_TO_CPI: Record<string, string> = {
@@ -75,7 +77,8 @@ export default function PersonalCPIPage() {
   };
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={stagger}>
+    <RequireTier requiredRole={UserRole.PRO} featureName="Lạm Phát Của Tôi">
+      <motion.div initial="hidden" animate="visible" variants={stagger}>
       <motion.div variants={fadeIn} className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
           Lạm phát <span className="text-gradient">của tôi</span>
@@ -266,6 +269,7 @@ export default function PersonalCPIPage() {
           </div>
         </div>
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </RequireTier>
   );
 }
