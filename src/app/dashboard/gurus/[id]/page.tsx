@@ -22,6 +22,8 @@ export default function GuruDetailPage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userXp, setUserXp] = useState(0);
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   useEffect(() => {
     if (id && GURU_PERSONAS[id]) {
       setGuru(GURU_PERSONAS[id]);
@@ -46,7 +48,8 @@ export default function GuruDetailPage() {
       const today = new Date().toISOString().slice(0, 10);
       localStorage.setItem("vf_unlocked_gurus", JSON.stringify([...unlockedList, `${id}_${today}`]));
     } else {
-      alert("Bạn không đủ XP (Cà phê) để mời Guru này rồi! Hãy ghi chép chi tiêu để kiếm thêm nhé.");
+      setErrorMsg("Thật tiếc, bạn chưa đủ Cà Phê! Hãy ghi chép Quỹ Chi Tiêu để kiếm XP nhé.");
+      setTimeout(() => setErrorMsg(""), 4000);
     }
   };
 
@@ -212,6 +215,21 @@ export default function GuruDetailPage() {
               </div>
             </div>
 
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Error Toast */}
+      <AnimatePresence>
+        {errorMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-950/80 border border-red-500/30 text-red-200 px-6 py-3 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-3 z-50 pointer-events-none"
+          >
+            <AlertTriangle size={18} className="text-red-400" />
+            <span className="font-medium">{errorMsg}</span>
           </motion.div>
         )}
       </AnimatePresence>

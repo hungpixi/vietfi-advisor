@@ -71,6 +71,7 @@ const navGroups = [
     items: [
       { href: "/dashboard/risk-profile", label: "Tính cách đầu tư", icon: UserCircle },
       { href: "/dashboard/portfolio", label: "Cố vấn danh mục", icon: PieChart },
+      { href: "/dashboard/gurus", label: "Cố vấn Lão làng", icon: Sparkles },
       { href: "/dashboard/learn", label: "Bài Học Vẹt", icon: BookOpen },
     ],
   },
