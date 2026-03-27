@@ -88,3 +88,59 @@ Pure TypeScript, no AI calls:
 - **Animations**: Framer Motion for component animations. Lottie JSON parts for the mascot in `public/animations/`.
 - **TypeScript**: Strict mode. Small, focused files (200–500 lines typical). Extract utilities rather than adding to large modules.
 - **Vietnamese context**: All UI text, canned responses, and financial logic must use Vietnamese currency (VND), Vietnamese financial terminology, and VN-specific financial context (SJC gold, VN-Index, USD/VND, Sacombank Eximbank rates).
+
+---
+
+## 🛑 Những điểm yếu cần cải thiện (Technical Debt & Improvements Phase 8)
+
+### 1. Đồng bộ hóa State (State Management & Syncing)
+- **Hiện trạng:** Hệ thống đang phụ thuộc quá nhiều vào `localStorage` (gamification, XP, mở khóa Guru, Quản trị Nợ). Có hàm `migrateLocalStorageToSupabase` nhưng chưa bao phủ hết các edge cases.
+- **Vấn đề:** Khi user đăng nhập trên thiết bị khác (Mobile vs PC), trạng thái mở khóa Guru (300 XP) hoặc cấp bậc Tier có thể bị lệch.
+- **Cải thiện:** Cần cấu trúc lại theo kiến trúc Local-First. Dùng Zustand kết hợp với Supabase Realtime để sync State 2 chiều. Mọi logic trừ tiền (XP) phải được verify ở Backend (Supabase RPC) để tránh hack.
+
+### 2. Vẹt Vàng AI (Streaming & Context Window)
+- **Hiện trạng:** Prompt của Vẹt Vàng đã được inject Context (DTI, Cashflow) nhưng output trả về là dạng block (đợi gen xong mới hiện).
+- **Vấn đề:** Nếu Context ngày càng dài, Gemini API sẽ phản hồi chậm (>5s), làm giảm độ WOW của UX.
+- **Cải thiện:** Bắt buộc phải implement `ai/rsc` (Vercel AI SDK) để hỗ trợ tính năng **Text Streaming** (chữ nhảy từng từ). Quản lý History Chat bằng sliding window để tránh tốn token.
+
+### 3. Fake Gemini & Data Crawler
+- **Hiện trạng:** Đang dùng Simulated Mock cho bản demo do thiếu API Key Local, và scrape HTML tĩnh từ CafeF.
+- **Vấn đề:** Nếu CafeF đổi DOM, crawler sẽ gãy. Mock Gemini chỉ có tác dụng Demo Pitch Deck.
+- **Cải thiện:** Đưa Crawler tách riêng ra một microservice (Python/FastAPI) hoặc dùng Browserless/ScrapingBee. Morning Brief cần phải call Gemini API thật và Cache lại 24h trên Redis (Upstash) để tối ưu chi phí.
+
+### 4. Thuật toán "Trạm Cấp Cứu" (Financial ER)
+- **Hiện trạng:** Rule-based tĩnh (cắt 50-100% hũ giải trí).
+- **Cải thiện:** Cần áp dụng Linear Programming (Thuật toán tối ưu tuyến tính) để Vẹt Vàng tự động tìm ra số tiền tối ưu nhất rút từ nhiều hũ khác nhau (không chỉ hũ Giải trí mà còn Hũ Tiết kiệm khẩn cấp) để trả nợ một cách êm ái nhất.
+
+---
+
+## 🎯 Siêu Kế Hoạch Tiếp Theo (Tasks Siêu Chi Tiết)
+
+### TASK 1: Di cư toàn bộ sang Server-Driven State (Supabase)
+- **Mục tiêu:** Xóa sổ sự phụ thuộc vào `localStorage`, đưa mọi quyền sinh sát (XP, Mở khóa) lên Server.
+- **Micro-tasks:**
+  1. Thêm Role-Based Policies trên Supabase cho table `user_stats`.
+  2. Viết RPC `execute_xp_spend(user_id, cost, entity_unlocked)` để khóa Guru.
+  3. Cài đặt `Zustand` store: `useAppStore`, `useGamificationStore`.
+  4. Viết middleware đồng bộ biến đổi từ `localStorage` sang Zustand.
+
+### TASK 2: Social Share & Viral Loop (WOW Factor Marketing)
+- **Mục tiêu:** Biến VietFi thành cỗ máy tự Viral qua tính năng "Khoe Độ Nợ Máu" và "Khoe Guru Cố Vấn".
+- **Micro-tasks:**
+  1. Route: `GET /api/og/share-dti?score=80` generate file PNG động hiển thị Vẹt Vàng chửi user.
+  2. Dựng Modal Share (`ShareModal.tsx`) trên Dashboard `debt/page` mỗi khi user đạt DTI > 40%.
+  3. Tích hợp Web Share API cho thiết bị mobile.
+
+### TASK 3: Real-Time Market Data WebSocket
+- **Mục tiêu:** Nâng cấp trải nghiệm Trading Dashboard với data tick-by-tick.
+- **Micro-tasks:**
+  1. Hook vào API Binance WSS cho rổ Crypto và TradingView C++ cho Forex/Gold.
+  2. Đập bỏ `setInterval(fetch)` trong `MarketSection.tsx` và thay bằng Event Listeners.
+  3. Emit event `FLASH_CRASH` để Vẹt Vàng popup thẳng lên màn hình khi TT rớt >5%.
+
+### TASK 4: Triển khai luồng Onboarding Gamified Tối Thượng
+- **Mục tiêu:** User mới vào không bị ngộp bởi giao diện, giống game nhập vai.
+- **Micro-tasks:**
+  1. Thiết kế UX luồng Swipe Card (như Tinder). User quẹt trái/phải để chọn nhu cầu.
+  2. Tặng "Welcome Box" 500 XP lúc hoàn tất Setup. Dùng Lottie Animation làm hiệu ứng đập hộp.
+  3. Đẩy luồng Onboarding lên thành Page `/onboarding` và chặn middleware không cho vào Dashboard nếu chưa pass.

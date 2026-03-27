@@ -6,7 +6,7 @@ import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { playPop, playDing, getSoundMuted, setSoundMuted } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
-import { getBudgetPots, getExpenses, getDebts, getIncome } from "@/lib/storage";
+import { getBudgetPots, getExpenses, getDebts, getIncome, getRiskResult } from "@/lib/storage";
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
   getComparison, needsAI, DATA_INTENTS,
@@ -38,7 +38,8 @@ function getUserDataContext(personaMode: PersonaMode): string {
       parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
     }
 
-    // Cashflow 50-30-20 Analysis
+    // Cashflow 50-30-20 Analysis & Free Cashflow
+    let essentialExpense = 0;
     if (pots.length > 0) {
       const spentByPot: Record<string, number> = {};
       let totalSpent = 0;
@@ -54,6 +55,21 @@ function getUserDataContext(personaMode: PersonaMode): string {
       parts.push(`[BỨC TRANH CHI TIÊU - CASHFLOW]\nTổng chi tiêu: ${totalSpent.toLocaleString("vi-VN")}đ.\n${potSummary}`);
       
       parts.push(`(Ghi chú cho AI: Hãy đối chiếu xem user có làm đúng quy tắc 50-30-20 không. Đặc biệt khen nếu user tiêu ở Quỹ Tiết Kiệm/Đầu tư, và chê nếu xài lố Quỹ mong muốn/giải trí)`);
+
+      essentialExpense = pots.filter(p => ['Ăn uống', 'Nhà cửa', 'Đi lại', 'Hoá đơn', 'Sức khoẻ'].some(k => p.name.includes(k))).reduce((sum, p) => sum + p.allocated, 0);
+      if (essentialExpense === 0) essentialExpense = pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5;
+    }
+
+    if (income > 0) {
+      const debtMin = debts.reduce((sum, d) => sum + d.min_payment, 0);
+      const freeCashflow = income - essentialExpense - debtMin;
+      parts.push(`Dư địa đầu tư/tháng (Free Cashflow): ${freeCashflow.toLocaleString("vi-VN")}đ.`);
+      if (freeCashflow < 0) {
+         parts.push(`(Ghi chú CHẾT NGƯỜI: DÒNG TIỀN ÂM ${Math.abs(freeCashflow).toLocaleString("vi-VN")}đ! Khuyên cắt giảm chi tiêu ngay lập tức, tuyệt đối CẤM ĐẦU TƯ rủi ro!)`);
+      } else if (freeCashflow > 0) {
+         const riskLabel = getRiskResult()?.label || "Cân bằng";
+         parts.push(`(Ghi chú: Dòng tiền đang dương ${freeCashflow.toLocaleString("vi-VN")}đ. Khuyên user bơm tiền này vào Quỹ Dự Phòng hoặc Đầu Tư (ETF, Vàng) tuỳ theo Risk DNA: ${riskLabel})`);
+      }
     }
 
     // Debt & DTI Analysis

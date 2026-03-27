@@ -23,27 +23,15 @@ import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
-import { Debt, analyzeDTI, snowballPlan, avalanchePlan, PayoffStep, getFreedomMonth } from "@/lib/calculations/debt-optimizer";
-import { getDebts, setDebts } from "@/lib/storage";
+import { analyzeDTI, snowballPlan, avalanchePlan, getFreedomMonth } from "@/lib/calculations/debt-optimizer";
+import { getDebts, setDebts as saveDebtsLocal } from "@/lib/storage";
 
-/* ─── Types ─── */
-// Extends the core Debt interface with UI-specific fields
-interface UIDebt extends Debt {
-  icon: string;
-  color: string;
-}
-// Local definitions removed in favor of UIDebt
-
-const ICON_MAP: Record<string, typeof CreditCard> = {
-  credit_card: CreditCard,
-  bnpl: Smartphone,
-  personal: UserX,
-  mortgage: Home,
-  loan_shark: ShieldAlert,
-  other: Banknote,
-};
-
-const COLOR_OPTIONS = ["#EF4444", "#AB47BC", "#00E5FF", "#22C55E", "#FF6B35", "#E6B84F"];
+import { UIDebt, ICON_MAP, formatVND } from "@/components/debt/types";
+import { AddDebtModal } from "@/components/debt/AddDebtModal";
+import { PayDebtModal } from "@/components/debt/PayDebtModal";
+import { ExtraPaymentSlider } from "@/components/debt/ExtraPaymentSlider";
+import { DTIDominoGauge } from "@/components/debt/DTIDominoGauge";
+import { FinancialTriageModal } from "@/components/debt/FinancialTriageModal";
 
 const defaultDebts: UIDebt[] = [
   { id: "1", name: "Thẻ tín dụng VIB", type: "credit_card", principal: 5000000, rate: 25, minPayment: 250000, icon: "credit_card", color: "#EF4444", hiddenFees: 99000 },
@@ -58,202 +46,16 @@ const monthlyIncome = 12000000;
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
-function formatVND(n: number) {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}tr`;
-  if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
-  return n.toString();
-}
-
-/* ═══════════════════ ADD DEBT MODAL ═══════════════════ */
-function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (d: Omit<UIDebt, "id">) => void }) {
-  const [name, setName] = useState("");
-  const [principal, setPrincipal] = useState(0);
-  const [rate, setRate] = useState(0);
-  const [minPayment, setMinPayment] = useState(0);
-  const [hiddenFees, setHiddenFees] = useState(0);
-  const [type, setType] = useState<UIDebt["type"]>("other" as any);
-  const [color, setColor] = useState("#E6B84F");
-
-  const handleSubmit = () => {
-    if (!name || principal <= 0) return;
-    onAdd({ name, principal, rate, minPayment: minPayment || Math.round(principal * 0.05), type, hiddenFees, icon: type, color });
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md glass-card p-6"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white">Thêm khoản nợ</h3>
-          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Tên khoản nợ</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30" placeholder="VD: Thẻ tín dụng..." />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Số tiền nợ (₫)</label>
-              <input type="number" value={principal || ""} onChange={(e) => setPrincipal(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30" placeholder="5000000" />
-            </div>
-            <div>
-              <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Lãi suất (%/năm)</label>
-              <input type="number" value={rate || ""} onChange={(e) => setRate(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30" placeholder="18" />
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Trả tối thiểu/tháng (₫)</label>
-            <input type="number" value={minPayment || ""} onChange={(e) => setMinPayment(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30" placeholder="250000" />
-          </div>
-          <div>
-            <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Loại nợ</label>
-            <div className="flex flex-wrap gap-1.5">
-              {Object.entries(ICON_MAP).map(([key]) => (
-                <button key={key} onClick={() => setType(key as any)}
-                  className={`px-2.5 py-1.5 text-[10px] rounded-lg border transition-all ${type === key ? "bg-[#E6B84F]/15 text-[#E6B84F] border-[#E6B84F]/20" : "bg-white/[0.03] text-white/40 border-white/[0.06]"}`}
-                >
-                  {key === "credit_card" ? "Thẻ tín dụng" : key === "bnpl" ? "Trả sau" : key === "personal" ? "Vay người thân" : key === "mortgage" ? "Nhà/Phòng trọ" : key === "loan_shark" ? "Tín dụng đen" : "Khác"}
-                </button>
-              ))}
-            </div>
-          </div>
-          {(type === "bnpl" || type === "credit_card") && (
-             <div>
-                <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">
-                  Phí ẩn / phí duy trì hàng tháng (₫) <span className="text-[#EF4444]">*</span>
-                </label>
-                <input type="number" value={hiddenFees || ""} onChange={(e) => setHiddenFees(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-[#EF4444]/30 rounded-lg text-sm text-white focus:outline-none focus:border-[#EF4444]" placeholder="Ví dụ: 30000 (phí SPayLater)" />
-                <p className="text-[9px] text-[#EF4444]/60 mt-1">Các khoản BNPL/Thẻ tín dụng thường có phí ẩn (bảo hiểm, phí quản lý...). Điền vào để thấy Lãi suất thực tế!</p>
-             </div>
-          )}
-          <div>
-            <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Màu sắc</label>
-            <div className="flex gap-2">
-              {COLOR_OPTIONS.map((c) => (
-                <button key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full transition-all ${color === c ? "ring-2 ring-white/30 scale-110" : ""}`} style={{ backgroundColor: c }} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <button onClick={handleSubmit} className="w-full mt-4 py-2.5 bg-gradient-primary text-black text-xs font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(230,184,79,0.2)] transition-all">
-          Thêm khoản nợ
-        </button>
-      </motion.div>
-    </div>
-  );
-}
-
-/* ═══════════════════ PAY DEBT MODAL ═══════════════════ */
-function PayDebtModal({ debt, onClose, onPay }: { debt: UIDebt; onClose: () => void; onPay: (id: string, amount: number) => void }) {
-  const [amount, setAmount] = useState(debt.minPayment);
-  const quickAmounts = [debt.minPayment, Math.round(debt.principal * 0.1), Math.round(debt.principal * 0.25), debt.principal];
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} onClick={(e) => e.stopPropagation()} className="w-full max-w-sm glass-card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white">Ghi nhận đã trả — {debt.name}</h3>
-          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="mb-3">
-          <label className="text-[10px] text-white/25 uppercase font-mono tracking-wider block mb-1">Số tiền đã trả (₫)</label>
-          <input type="number" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30" />
-        </div>
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {quickAmounts.filter((v, i, a) => a.indexOf(v) === i && v > 0).map((v) => (
-            <button key={v} onClick={() => setAmount(v)} className={`px-2.5 py-1.5 text-[10px] rounded-lg border transition-all ${amount === v ? "bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/20" : "bg-white/[0.03] text-white/40 border-white/[0.06]"}`}>
-              {formatVND(v)}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => { onPay(debt.id, Math.min(amount, debt.principal)); onClose(); }} className="w-full py-2.5 bg-[#22C55E] text-black text-xs font-semibold rounded-lg hover:bg-[#22C55E]/90 transition-all flex items-center justify-center gap-1.5">
-          <Check className="w-3.5 h-3.5" /> Ghi nhận đã trả {formatVND(amount)}
-        </button>
-      </motion.div>
-    </div>
-  );
-}
-
-/* ═══════════════════ EXTRA PAYMENT SLIDER ═══════════════════ */
-function ExtraPaymentSlider({ totalDebt, totalMonthlyMin, debts }: { totalDebt: number; totalMonthlyMin: number; debts: UIDebt[] }) {
-  const [extra, setExtra] = useState(0);
-  const maxExtra = Math.min(3000000, totalDebt); // max 3tr/tháng
-
-  const baseMonths = Math.max(1, Math.ceil(totalDebt / totalMonthlyMin));
-  const newMonths = totalMonthlyMin + extra > 0 ? Math.max(1, Math.ceil(totalDebt / (totalMonthlyMin + extra))) : baseMonths;
-  const savedMonths = baseMonths - newMonths;
-
-  // Tính lãi tiết kiệm được
-  const baseInterest = debts.reduce((s, d) => s + d.principal * (d.rate / 12 / 100) * baseMonths, 0);
-  const newInterest = debts.reduce((s, d) => s + d.principal * (d.rate / 12 / 100) * newMonths, 0);
-  const savedInterest = Math.max(0, baseInterest - newInterest);
-
-  return (
-    <div className="mt-4 pt-3 border-t border-white/[0.04]">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-white/20">NẾU TRẢ THÊM</span>
-        <span className="text-xs font-bold text-[#E6B84F]">+{formatVND(extra)}/tháng</span>
-      </div>
-
-      {/* Slider */}
-      <input
-        type="range"
-        min={0}
-        max={maxExtra}
-        step={50000}
-        value={extra}
-        onChange={(e) => setExtra(Number(e.target.value))}
-        className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-[#E6B84F]"
-        style={{
-          background: `linear-gradient(to right, #E6B84F ${(extra / maxExtra) * 100}%, rgba(255,255,255,0.05) ${(extra / maxExtra) * 100}%)`,
-        }}
-      />
-
-      <div className="flex justify-between text-[9px] text-white/15 mt-1 mb-3">
-        <span>0</span>
-        <span>{formatVND(maxExtra)}</span>
-      </div>
-
-      {extra > 0 && (
-        <div className="space-y-2 bg-white/[0.02] rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-white/40">Thoát nợ mới</span>
-            <span className="text-xs font-bold text-[#22C55E]">~{newMonths} tháng</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-white/40">Nhanh hơn</span>
-            <span className="text-xs font-bold text-[#E6B84F]">{savedMonths} tháng</span>
-          </div>
-          {savedInterest > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-white/40">Tiết kiệm lãi</span>
-              <span className="text-xs font-bold text-[#22C55E]">{formatVND(Math.round(savedInterest))}</span>
-            </div>
-          )}
-          <p className="text-[10px] text-white/20 mt-1 pt-2 border-t border-white/[0.04]">
-            💡 Trả thêm {formatVND(extra)}/tháng → thoát nợ nhanh hơn {savedMonths} tháng{savedInterest > 0 ? `, tiết kiệm ${formatVND(Math.round(savedInterest))} tiền lãi` : ""}!
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ═══════════════════ PAGE ═══════════════════ */
+
+
 export default function DebtPage() {
   const [debts, setDebts] = useState<UIDebt[]>(defaultDebts);
   const [strategy, setStrategy] = useState<"snowball" | "avalanche">("snowball");
   const [showAddModal, setShowAddModal] = useState(false);
   const [payingDebt, setPayingDebt] = useState<UIDebt | null>(null);
   const [hasPledged, setHasPledged] = useState(false);
+  const [showTriage, setShowTriage] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
@@ -345,6 +147,27 @@ export default function DebtPage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       {showAddModal && <AddDebtModal onClose={() => setShowAddModal(false)} onAdd={addDebt} />}
       {payingDebt && <PayDebtModal debt={payingDebt} onClose={() => setPayingDebt(null)} onPay={payDebt} />}
+      {showTriage && <FinancialTriageModal debts={debts} dtiRatio={dtiRatio} onClose={() => setShowTriage(false)} />}
+
+      {/* Triage Banner Alert (Hiển thị khi DTI nguy hiểm) */}
+      {dtiRatio >= 40 && (
+        <motion.div variants={fadeIn} className="mb-6 relative overflow-hidden bg-gradient-to-r from-[#EF4444]/20 to-[#FF6B35]/10 border border-[#EF4444] rounded-2xl p-4 shadow-[0_0_30px_rgba(239,68,68,0.15)] flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#EF4444]/20 rounded-full blur-3xl" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-12 h-12 bg-[#EF4444] rounded-full flex items-center justify-center animate-pulse shrink-0 shadow-[0_0_15px_#EF4444]">
+              <ShieldAlert className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-[15px] font-black text-white uppercase tracking-wider mb-1">Cảnh báo: Tê Liệt Tài Chính</h2>
+              <p className="text-xs text-white/70 leading-relaxed">DTI của bạn đã vượt ngưỡng an toàn ({dtiRatio.toFixed(1)}%). Bạn cần tái cấu trúc nợ khẩn cấp trước khi quá muộn!</p>
+            </div>
+          </div>
+          <button onClick={() => setShowTriage(true)} className="relative z-10 w-full md:w-auto shrink-0 px-5 py-3 bg-[#EF4444] text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-[#FF6B35] transition-all flex items-center justify-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Vào Trạm Cấp Cứu
+          </button>
+        </motion.div>
+      )}
 
       {/* Header */}
       <motion.div variants={fadeIn} className="mb-6">
@@ -376,7 +199,7 @@ export default function DebtPage() {
         </motion.div>
         <motion.div variants={fadeIn} className="glass-card p-4">
           <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">Tỷ lệ nợ/thu nhập</span>
-          <div className="text-xl font-bold mt-1" style={{ color: dtiColor }}>{dtiRatio}%</div>
+          <div className="text-xl font-bold mt-1" style={{ color: dtiColor }}>{dtiRatio.toFixed(1)}%</div>
           <span className="text-[10px]" style={{ color: dtiColor }}>{dtiLabel}</span>
         </motion.div>
         <motion.div variants={fadeIn} className="glass-card p-4">
@@ -389,78 +212,6 @@ export default function DebtPage() {
           <span className="text-[10px] text-white/25">Nếu chỉ trả min</span>
         </motion.div>
       </motion.div>
-
-      {/* Domino Effect Alert (>= 60) */}
-      {dtiRatio >= 60 && (
-        <motion.div variants={fadeIn} className="glass-card p-4 border-[#991B1B]/40 bg-[#991B1B]/10 mb-6">
-          <div className="flex items-start gap-3">
-            <ShieldAlert className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5 animate-pulse" />
-            <div>
-              <h3 className="text-sm font-bold text-[#EF4444]">BÁO ĐỘNG ĐỎ: HIỆU ỨNG DOMINO NỢ!</h3>
-              <p className="text-xs text-white/70 mt-1 mb-3">
-                Tỷ lệ nợ của bạn là <strong>{dtiRatio.toFixed(1)}%</strong> (&gt;60%), vượt qua vạch tử thần. 
-                Bạn đang rơi vào vòng xoáy lấy nợ nuôi nợ (Hiệu ứng Domino).
-              </p>
-              <div className="bg-black/30 p-3 rounded-lg border border-[#EF4444]/20">
-                <span className="text-[10px] font-mono text-[#EF4444] tracking-wider mb-1 block">ACTION CARD (HÀNH ĐỘNG KHẨN CẤP)</span>
-                <ul className="text-[11px] text-white/60 space-y-1.5 list-disc pl-4">
-                  <li><strong>Cắt ngay 100%</strong> các hũ chi tiêu không thiết yếu (Mua sắm, Hưởng thụ) tháng này.</li>
-                  <li><strong>Bán bớt tiêu sản</strong> hoặc tìm cách <strong>đảo nợ</strong> sang khoản vay thế chấp dài hạn để giảm áp lực dòng tiền ngay lập tức.</li>
-                  <li>Nếu để kéo dài vòng lặp này, bạn sẽ mất hoàn toàn khả năng chi trả sau 3-6 tháng nữa.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Normal DTI Alert (40-60) */}
-      {dtiRatio >= 40 && dtiRatio < 60 && !toxicDebt && (
-        <motion.div variants={fadeIn} className="glass-card p-4 border-[#EF4444]/20 mb-6">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-semibold text-[#EF4444]">Tỷ lệ nợ/thu nhập vượt ngưỡng!</h3>
-              <p className="text-xs text-white/40 mt-1">
-                Tỷ lệ nợ {dtiRatio.toFixed(1)}% (ngưỡng an toàn &lt;20%). Bạn đang dùng {dtiRatio.toFixed(1)}% thu nhập hàng tháng để trả nợ.
-                Nên ưu tiên giảm nợ trước khi đầu tư.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ─── SMART REFINANCE ADVISOR (ĐẢO NỢ THÔNG MINH) ─── */}
-      {canRefinance && (
-        <motion.div variants={fadeIn} className="glass-card p-5 border-[#00E5FF]/40 bg-[#00E5FF]/5 mb-6 shadow-[0_0_30px_rgba(0,229,255,0.05)]">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#00E5FF]/10 flex items-center justify-center flex-shrink-0 border border-[#00E5FF]/20">
-              <Banknote className="w-5 h-5 text-[#00E5FF] animate-bounce" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[#00E5FF] flex items-center gap-2">
-                💡 CỐ VẤN AI: CHIẾN THUẬT ĐẢO NỢ KHẨN CẤP
-                <span className="px-2 py-0.5 bg-[#00E5FF]/20 text-[#00E5FF] text-[9px] rounded-full uppercase tracking-wider">Khuyên dùng</span>
-              </h3>
-              <p className="text-xs text-white/70 mt-2 mb-3 leading-relaxed">
-                Phát hiện khoản <strong>{toxicDebt.name}</strong> có lãi suất quá độc hại ({toxicDebt.rate}%/năm). 
-                Tuy nhiên DTI của bạn (<strong>{dtiRatio.toFixed(1)}%</strong>) vẫn cho phép vay tín chấp ngân hàng! 
-                Thay vì cắn răng trả lãi cắt cổ, hãy dùng **Chiến Thuật Lấy Bạc Lẻ Đập Lô Lớn**.
-              </p>
-              <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-white/50">
-                   <ShieldAlert className="w-4 h-4 text-[#FF6B35]" /> Trả {toxicDebt.rate}%/năm
-                   <ArrowRight className="w-4 h-4 text-white/20 mx-1" /> 
-                   <Banknote className="w-4 h-4 text-[#00E5FF]" /> Vay NH 15%/năm
-                </div>
-                <button className="px-4 py-1.5 bg-[#00E5FF]/10 text-[#00E5FF] text-xs font-semibold rounded-lg hover:bg-[#00E5FF]/20 transition-colors border border-[#00E5FF]/20">
-                   Tìm gói vay tín chấp (Sắp ra mắt)
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Empty state */}
       {debts.length === 0 && (

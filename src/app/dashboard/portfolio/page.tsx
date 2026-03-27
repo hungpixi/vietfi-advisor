@@ -7,6 +7,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAx
 import Link from "next/link";
 import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
 import { GoldTracker } from "@/components/portfolio/GoldTracker";
+import { CashflowDNA } from "@/components/portfolio/CashflowDNA";
 
 /* ─── Types ─── */
 interface AllocationItem { asset: string; percent: number; color: string; }
@@ -187,6 +188,9 @@ export default function PortfolioPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Tích hợp Component Cashflow DNA & Mục Tiêu Sống */}
+      <CashflowDNA currentCapital={capital} />
 
       <div className="grid lg:grid-cols-2 gap-4 mb-4">
         {/* Allocation Pie */}

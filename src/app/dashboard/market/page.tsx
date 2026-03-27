@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { addXP } from "@/lib/gamification";
+import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -145,7 +146,28 @@ export default function MarketDeepDivePage() {
   const [trendData, setTrendData] = useState(fallbackTrendData);
   const [activeChart, setActiveChart] = useState<"vnindex" | "gold" | "btc">("vnindex");
 
-  useEffect(() => { addXP("check_market"); }, []);
+  const [freeCashflow, setFreeCashflow] = useState(0);
+  const [riskType, setRiskType] = useState("balanced");
+
+  useEffect(() => { 
+    addXP("check_market"); 
+    
+    // Tính Free Cashflow & Lấy Risk DNA
+    const income = getIncome();
+    const pots = getBudgetPots();
+    const debts = getDebts();
+    const essentials = pots.filter(p => ['Ăn uống', 'Nhà cửa', 'Đi lại', 'Hoá đơn', 'Sức khoẻ'].some(k => p.name.includes(k))).reduce((sum, p) => sum + p.allocated, 0);
+    const essentialExpense = essentials > 0 ? essentials : pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5;
+    const debtMin = debts.reduce((sum, d) => sum + d.min_payment, 0);
+    setFreeCashflow(income - essentialExpense - debtMin);
+
+    const risk = getRiskResult();
+    if (risk) {
+      if (risk.score <= 6) setRiskType("conservative");
+      else if (risk.score <= 10) setRiskType("balanced");
+      else setRiskType("growth");
+    }
+  }, []);
 
   // Try loading live market data
   useEffect(() => {
@@ -187,16 +209,80 @@ export default function MarketDeepDivePage() {
     btc: { key: "btc", label: "BTC (nghìn $)", color: "#F97316", unit: "K" },
   }[activeChart];
 
+  const getDynamicFlashAlert = () => {
+    if (freeCashflow < 0) {
+      return {
+        type: 'danger',
+        msg: `Dòng tiền đang ÂM ${Math.abs(freeCashflow).toLocaleString('vi-VN')}đ! Đừng nhìn chằm chằm vào thị trường nữa, quay về "Trung Tâm Nợ" cày cuốc hoặc cắt giảm chi tiêu ngay!`,
+        icon: "🚨"
+      };
+    }
+    if (freeCashflow === 0) {
+      return {
+        type: 'warning',
+        msg: `Dư địa đầu tư đang là 0đ. Rủi ro trắng tay cực cao, hãy tạo dòng tiền dương trước khi săn cơ hội!`,
+        icon: "⏳"
+      };
+    }
+    
+    if (riskType === 'conservative') {
+      return {
+        type: 'safe',
+        msg: `Với dòng tiền dư ${freeCashflow.toLocaleString('vi-VN')}đ và DNA "Bảo Thủ": Tốt nhất là bơm qua Sổ Tiết Kiệm hoặc Vàng Nhẫn. Bỏ qua Cổ phiếu & Crypto khúc biến động này.`,
+        icon: "🛡️"
+      };
+    } else if (riskType === 'balanced') {
+      return {
+        type: 'balanced',
+        msg: `Dư địa rảnh tay ${freeCashflow.toLocaleString('vi-VN')}đ. Nhặt một ít Chứng Chỉ Quỹ ETF VN30 hoặc Gom Vàng lúc điều chỉnh, đừng FOMO All-in.`,
+        icon: "⚖️"
+      };
+    } else {
+      return {
+        type: 'aggressive',
+        msg: `Dư địa ${freeCashflow.toLocaleString('vi-VN')}đ + Khẩu vị Tăng Trưởng: VN-Index đang Sợ Hãi (Fear) là lúc múc Cổ Phiếu Bluechip giá Sale! Chờ gì nữa múc đi ba!`,
+        icon: "🚀"
+      };
+    }
+  };
+
+  const alert = getDynamicFlashAlert();
+
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       {/* Header */}
-      <motion.div variants={fadeIn} className="mb-6">
+      <motion.div variants={fadeIn} className="mb-4">
         <h1 className="text-xl md:text-2xl font-bold text-white mb-1">
           Phân Tích <span className="text-gradient">Thị Trường</span>
         </h1>
         <p className="text-[13px] text-white/40 leading-relaxed max-w-3xl">
           Phân tích sâu 4 kênh đầu tư — Chứng khoán, Vàng, BĐS, Crypto. Trạng thái hiện tại, cơ hội, và hành động gợi ý.
         </p>
+      </motion.div>
+
+      {/* ═══ FLASH ALERT THEO RISK DNA ═══ */}
+      <motion.div variants={fadeIn} className="mb-6">
+        <div className={`p-4 rounded-xl border flex items-start gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.3)]
+          ${alert.type === 'danger' ? 'bg-[#EF4444]/15 border-[#EF4444]/30' : 
+            alert.type === 'warning' ? 'bg-[#F59E0B]/15 border-[#F59E0B]/30' : 
+            alert.type === 'safe' ? 'bg-[#00E5FF]/15 border-[#00E5FF]/30' : 
+            alert.type === 'balanced' ? 'bg-[#22C55E]/15 border-[#22C55E]/30' : 
+            'bg-gradient-to-r from-[#FF6B35]/20 to-[#AB47BC]/20 border-[#FF6B35]/30'}`}>
+           <span className="text-2xl shrink-0 mt-0.5">{alert.icon}</span>
+           <div>
+             <span className={`text-[10px] font-bold uppercase tracking-wider 
+               ${alert.type === 'danger' ? 'text-[#EF4444]' : 
+                 alert.type === 'warning' ? 'text-[#F59E0B]' : 
+                 alert.type === 'safe' ? 'text-[#00E5FF]' : 
+                 alert.type === 'balanced' ? 'text-[#22C55E]' : 
+                 'text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B35] to-[#E6B84F]'}`}>
+               VẸT VÀNG PHÍM HÀNG DỰA TRÊN DÒNG TIỀN CỦA BẠN
+             </span>
+             <p className="text-sm font-medium text-white/90 leading-relaxed mt-1">
+               {alert.msg}
+             </p>
+           </div>
+        </div>
       </motion.div>
 
       {/* ═══ 4 Asset Cards ═══ */}

@@ -406,7 +406,8 @@ function parseRssItems(xml: string, section: string, limit: number, maxChars: nu
       const title = node.find('title').first().text().trim()
       const rawLink = node.find('link').first().text().trim()
       const link = sanitizeHttpUrl(rawLink)
-      const published = normalizeDate(node.find('pubDate').first().text().trim())
+      const rawPubDate = node.find('pubDate').text().trim() || node.find('pubdate').text().trim()
+      const published = normalizeDate(rawPubDate)
 
       const summaryHtml = node.find('description').first().text().trim()
       const contentHtml =

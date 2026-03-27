@@ -1,4 +1,5 @@
 "use client";
+// Force HMR rebuild to fix Next.js hydration cache mismatch
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";

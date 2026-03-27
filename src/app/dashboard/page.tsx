@@ -55,6 +55,7 @@ interface NewsItem {
   source: string;
   time: string;
   sentiment: NewsSentimentLabel;
+  category?: string;
 }
 
 function generateBriefFromArticles(articles: NewsArticle[]): BriefData {
@@ -250,6 +251,16 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
 }
 
 function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
+  const [activeTab, setActiveTab] = useState("Tất cả");
+  const TABS = ["Tất cả", "Trang chủ", "Kinh tế vĩ mô", "Chứng khoán", "Bất động sản", "Khác"];
+
+  const filteredItems = useMemo(() => {
+    if (loading || !items.length) return [];
+    if (activeTab === "Tất cả") return items.slice(0, 6);
+    if (activeTab === "Khác") return items.filter(i => !["Trang chủ", "Kinh tế vĩ mô", "Chứng khoán", "Bất động sản"].includes(i.category || "")).slice(0, 6);
+    return items.filter(i => i.category === activeTab).slice(0, 6);
+  }, [items, activeTab, loading]);
+
   return (
     <motion.div variants={fadeIn} className="glass-card p-5">
       <div className="flex items-center justify-between mb-3">
@@ -261,6 +272,24 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
           Tất cả <ArrowUpRight className="w-3 h-3" />
         </Link>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-3 mb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "-ms-autohiding-scrollbar" }}>
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] font-semibold transition-colors ${
+              activeTab === tab
+                ? "bg-[#E6B84F] text-[#111318]"
+                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2">
         {loading ? (
           [1, 2, 3].map((i) => (
@@ -269,9 +298,11 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
               <div className="h-3 bg-white/[0.06] rounded w-1/3" />
             </div>
           ))
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-6 text-xs text-white/30 italic">Không có tin tức nào trong danh mục này</div>
         ) : (
-          items.map((n: NewsItem, i: number) => {
-            const s = sentimentTag[n.sentiment];
+          filteredItems.map((n: NewsItem, i: number) => {
+            const s = sentimentTag[n.sentiment] || sentimentTag.neutral;
             return (
               <div
                 key={i}
@@ -282,12 +313,12 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-white/25">{n.source}</span>
-                  <span className="text-[10px] text-white/25 flex items-center gap-0.5">
+                  <span className="text-[10px] text-white/25 flex items-center gap-0.5" title={n.time}>
                     <Clock className="w-2.5 h-2.5" />
-                    {n.time}
+                    {n.time.includes("vừa xong") ? "Mới đây" : n.time}
                   </span>
                   <span
-                    className="text-[10px] px-1.5 py-0.5 rounded-full ml-auto"
+                    className="text-[10px] px-1.5 py-0.5 rounded-full ml-auto whitespace-nowrap"
                     style={{ color: s.color, backgroundColor: `${s.color}12` }}
                   >
                     {s.label}
@@ -464,11 +495,12 @@ export default function DashboardOverview() {
 
   const liveNews: NewsItem[] = useMemo(() => {
     if (liveArticles.length === 0) return FALLBACK_NEWS;
-    return liveArticles.slice(0, 6).map((a) => ({
+    return liveArticles.map((a) => ({
       title: a.title,
       source: a.source,
       time: formatTimeAgo(a.published),
       sentiment: a.sentiment,
+      category: a.category,
     }));
   }, [liveArticles]);
 
