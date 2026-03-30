@@ -542,7 +542,7 @@ export default function DashboardOverview() {
                   </div>
                   <p className="text-[10px] text-white/40 mt-1">{assetSummary}</p>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-[10px] text-white/20 font-mono">
+                <div suppressHydrationWarning className="hidden sm:flex items-center gap-2 text-[10px] text-white/20 font-mono">
                   <Calendar className="w-3 h-3" />
                   {new Date().toLocaleDateString("vi-VN")}
                 </div>
