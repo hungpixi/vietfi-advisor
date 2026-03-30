@@ -205,7 +205,7 @@ export default function BudgetPage() {
     setPots(getBudgetPots());
     setExpenses(getExpenses());
     setIncome(getIncome());
-  }, []);
+  }, []); // Initial load only
 
   // Save to localStorage + Supabase sync
   const save = useCallback((p: Pot[], e: Expense[], i: number) => {

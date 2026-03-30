@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 // ── In-memory cache ──────────────────────────────────────────────────────────
 // Persists across requests within the same serverless function instance.
 // On Vercel/serverless: cleared on cold start. On Node: persists indefinitely.
-const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes (higher to reduce frequent slow crawls)
+const CACHE_TTL_MS = 1 * 60 * 1000 // 1 minute
 
 interface CacheEntry {
   snapshot: MarketSnapshot

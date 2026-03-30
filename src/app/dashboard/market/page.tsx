@@ -145,6 +145,8 @@ export default function MarketDeepDivePage() {
   const [opportunities, setOpportunities] = useState(fallbackOpportunities);
   const [trendData, setTrendData] = useState(fallbackTrendData);
   const [activeChart, setActiveChart] = useState<"vnindex" | "gold" | "btc">("vnindex");
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
 
   const [freeCashflow, setFreeCashflow] = useState(0);
   const [riskType, setRiskType] = useState("balanced");
@@ -169,38 +171,75 @@ export default function MarketDeepDivePage() {
     }
   }, []);
 
-  // Try loading live market data
+  // Synchronize trend data to smoothly scale to the current live price
+  const updateTrendData = (vniVal?: number, goldVal?: number, btcVal?: number) => {
+    const base = fallbackTrendData[fallbackTrendData.length - 1];
+    const vniRatio = vniVal ? vniVal / base.vnindex : 1;
+    const goldRatio = goldVal ? goldVal / base.gold : 1;
+    const btcRatio = btcVal ? btcVal / base.btc : 1;
+
+    setTrendData(fallbackTrendData.map(d => ({
+      ...d,
+      vnindex: Number((d.vnindex * vniRatio).toFixed(2)),
+      gold: Number((d.gold * goldRatio).toFixed(2)),
+      btc: Number((d.btc * btcRatio).toFixed(2)),
+    })));
+  };
+
+  // Try loading live market data with auto-refresh
   useEffect(() => {
     let active = true;
-    (async () => {
+    const fetchMarket = async () => {
       try {
-        const resp = await fetch("/api/market-data", { cache: "no-store" });
+        const resp = await fetch("/api/market-data", { cache: "no-store", next: { revalidate: 0 } });
         if (!resp.ok) return;
         const data = await resp.json();
         if (!active || !data) return;
 
-        // Update assets with live data if available
-        // API trả về: vnIndex: { price, change, changePct }, goldSjc: { goldVnd, changePct }, btcUsdt: { priceUsd, changePct24h }
+        if (data.fetchedAt) {
+          const dt = new Date(data.fetchedAt);
+          setLastUpdated(`${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')} ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`);
+        }
+
         const vni = data.vnIndex;
         const gold = data.goldSjc;
-        const btc = data.btcUsdt;
+        const btc = data.btc || data.btcUsdt; // support both keys just in case
+        
+        if (data.aiSummary) {
+          setAiSummary(data.aiSummary);
+        }
+        
         if (vni || gold || btc) {
           setAssets(prev => prev.map(a => {
             if (a.asset === "Chứng khoán" && vni?.price) {
-              return { ...a, price: vni.price.toLocaleString("vi-VN"), change: vni.changePct ?? a.change };
+              return { ...a, price: vni.price.toLocaleString("vi-VN", { maximumFractionDigits: 2 }), change: vni.changePct ?? a.change };
             }
             if (a.asset === "Vàng SJC" && gold?.goldVnd) {
               return { ...a, price: gold.goldVnd.toLocaleString("vi-VN"), change: gold.changePct ?? a.change };
             }
             if (a.asset === "Bitcoin" && btc?.priceUsd) {
-              return { ...a, price: `$${btc.priceUsd.toLocaleString("en-US")}`, change: btc.changePct24h ?? a.change };
+              return { ...a, price: `$${btc.priceUsd.toLocaleString("en-US", { maximumFractionDigits: 2 })}`, change: btc.changePct24h ?? a.change };
             }
             return a;
           }));
+
+          // Verify Graph Sync to match real-time
+          updateTrendData(
+            vni?.price, 
+            gold?.goldVnd ? gold.goldVnd / 1e6 : undefined, 
+            btc?.priceUsd ? btc.priceUsd / 1000 : undefined
+          );
         }
       } catch { /* fallback */ }
-    })();
-    return () => { active = false; };
+    };
+
+    fetchMarket();
+    const intervalId = setInterval(fetchMarket, 60000); // 1 minute auto-refresh
+    
+    return () => { 
+      active = false; 
+      clearInterval(intervalId);
+    };
   }, []);
 
   const chartConfig = {
@@ -252,9 +291,20 @@ export default function MarketDeepDivePage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       {/* Header */}
       <motion.div variants={fadeIn} className="mb-4">
-        <h1 className="text-xl md:text-2xl font-bold text-white mb-1">
-          Phân Tích <span className="text-gradient">Thị Trường</span>
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-white mb-1 sm:mb-0">
+            Phân Tích <span className="text-gradient">Thị Trường</span>
+          </h1>
+          {lastUpdated && (
+            <div className="text-[11px] font-medium text-white/70 bg-white/[0.03] px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 w-fit">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Cập nhật lần cuối: {lastUpdated}
+            </div>
+          )}
+        </div>
         <p className="text-[13px] text-white/40 leading-relaxed max-w-3xl">
           Phân tích sâu 4 kênh đầu tư — Chứng khoán, Vàng, BĐS, Crypto. Trạng thái hiện tại, cơ hội, và hành động gợi ý.
         </p>
@@ -449,8 +499,8 @@ export default function MarketDeepDivePage() {
             <span className="text-2xl">🦜</span>
             <div className="flex-1">
               <span className="text-xs text-[#f3d42f] font-semibold">Vẹt Vàng tổng kết</span>
-              <p className="text-sm text-white/60 mt-1 leading-relaxed">
-                &quot;Thị trường đang vùng Sợ hãi — đây thường là lúc người giỏi ra tay. Nhưng nhớ: DCA chứ đừng All-in! Mở Cố vấn Danh mục để xem phân bổ phù hợp nha 🦜🔥&quot;
+              <p className="text-sm text-white/60 mt-2 leading-relaxed whitespace-pre-line">
+                {aiSummary || `"Thị trường đang vùng Sợ hãi — đây thường là lúc người giỏi ra tay. Nhưng nhớ: DCA chứ đừng All-in! Mở Cố vấn Danh mục để xem phân bổ phù hợp nha 🦜🔥"`}
               </p>
               <Link href="/dashboard/portfolio" className="group inline-flex items-center gap-1 text-xs text-[#f3d42f] font-medium mt-2 hover:underline">
                 Mở Cố vấn Danh mục <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />

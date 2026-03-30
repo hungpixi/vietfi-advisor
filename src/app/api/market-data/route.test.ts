@@ -26,6 +26,8 @@ describe('getMarketDataResponse', () => {
       },
       btc: null,
       aiSummary: null,
+      silver: null,
+      news: [],
     }
 
     const response = await getMarketDataResponse(() => Promise.resolve(snapshot))
@@ -58,6 +60,8 @@ describe('getMarketDataResponse', () => {
       },
       btc: null,
       aiSummary: null,
+      silver: null,
+      news: [],
     }
 
     // Seed cache
@@ -88,6 +92,8 @@ describe('getMarketDataResponse', () => {
       },
       btc: null,
       aiSummary: null,
+      silver: null,
+      news: [],
     }
 
     await getMarketDataResponse(() => Promise.resolve(snapshot))
@@ -116,6 +122,8 @@ describe('getMarketDataResponse', () => {
       },
       btc: null,
       aiSummary: null,
+      silver: null,
+      news: [],
     }
 
     const response = await getMarketDataResponse(() => Promise.resolve(snapshot))

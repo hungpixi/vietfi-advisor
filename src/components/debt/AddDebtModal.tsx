@@ -9,7 +9,7 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
   const [rate, setRate] = useState<number | "">("");
   const [minPayment, setMinPayment] = useState<number | "">("");
   const [hiddenFees, setHiddenFees] = useState<number | "">("");
-  const [type, setType] = useState<UIDebt["type"]>("other" as any);
+  const [type, setType] = useState<UIDebt["type"]>("other");
   const [color, setColor] = useState("#E6B84F");
 
   const handleSubmit = () => {
@@ -88,7 +88,7 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
                 const label = key === "credit_card" ? "Thẻ tín dụng" : key === "bnpl" ? "Trả sau (SPayLater...)" : key === "personal" ? "Vay người thân" : key === "mortgage" ? "Nhà/Phòng trọ" : key === "loan_shark" ? "Tín dụng đen" : "Khác";
                 const isSelected = type === key;
                 return (
-                  <button key={key} onClick={() => setType(key as any)}
+                  <button key={key} onClick={() => setType(key as UIDebt["type"])}
                     className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all ${isSelected ? "bg-[#E6B84F] text-black border-[#E6B84F] shadow-[0_0_15px_rgba(230,184,79,0.3)]" : "bg-black/30 text-white/50 border-white/10 hover:bg-white/5"}`}
                   >
                     {label}
@@ -112,7 +112,7 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
                     <ShieldAlert className="w-3.5 h-3.5" /> Phí ẩn / Thuế Máu (VNĐ/tháng)
                   </label>
                   <p className="text-[10px] text-white/60 mb-3 leading-relaxed">
-                    Các khoản vay tài chính, trả sau (Buy Now Pay Later) thường gài <strong className="text-white">"Phí duy trì", "Phí bảo hiểm khoản vay", "Phí thu hộ"</strong>. Cộng hết vào đây để thấy bức tranh thật!
+                    Các khoản vay tài chính, trả sau (Buy Now Pay Later) thường gài <strong className="text-white">&quot;Phí duy trì&quot;, &quot;Phí bảo hiểm khoản vay&quot;, &quot;Phí thu hộ&quot;</strong>. Cộng hết vào đây để thấy bức tranh thật!
                   </p>
                   <div className="relative">
                     <input type="number" value={hiddenFees} onChange={(e) => setHiddenFees(Number(e.target.value))} className="w-full px-4 py-3 bg-black/60 border border-[#EF4444]/50 rounded-xl text-sm text-white focus:outline-none focus:border-[#EF4444] transition-colors shadow-inner" placeholder="Ví dụ: 30000" />

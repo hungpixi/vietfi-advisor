@@ -596,12 +596,12 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
     `- Lãi suất tiền gửi 12T: ${snapshot.macro.deposit12m.min.toFixed(1)}–${snapshot.macro.deposit12m.max.toFixed(1)}%`,
   ].filter(Boolean).join('\n')
 
-  const prompt = `Bạn là chuyên gia phân tích tài chính viết cho CafeF/VnExpress Kinh tế. Phong cách: súc tích, trung lập, dùng số liệu cụ thể.\n\n` +
-    `DỮ LIỆU THỊ TRƯỜNG (chỉ dùng các số liệu này, không suy diễn ngoài):\n${dataBlock}\n\n` +
-    `Viết đúng 3 câu bằng tiếng Việt theo cấu trúc sau:\n` +
-    `Câu 1 – Thị trường: nhận định VN-Index và vàng/tỷ giá (nếu có).\n` +
-    `Câu 2 – Vĩ mô: đánh giá GDP/CPI/lãi suất và xu hướng ngắn hạn.\n` +
-    `Câu 3 – Gợi ý: một hành động cụ thể, thực tế cho nhà đầu tư cá nhân.`
+  const prompt = `Bạn là chuyên gia phân tích tài chính viết cho CafeF/VnExpress. Phong cách: súc tích, chuyên nghiệp, trung lập.\n\n` +
+    `DỮ LIỆU THỊ TRƯỜNG HIỆN TẠI (tuyệt đối không bịa số liệu gốc):\n${dataBlock}\n\n` +
+    `Viết TRỰC TIẾP một bài tóm tắt ngắn bằng tiếng Việt gồm 3 đoạn (không dùng list, gạch đầu dòng, không chào hỏi, không thêm prefix "Câu 1:" hay "Đoạn 1:"), với nội dung:\n` +
+    `Đoạn 1: Nhận định nhanh về VN-Index và vàng hoặc tỷ giá.\n` +
+    `Đoạn 2: Nhận định nhanh về Vĩ mô (GDP/CPI/Lãi suất).\n` +
+    `Đoạn 3: Gợi ý hành động hoặc lưu ý cho nhà đầu tư cá nhân.`;
 
   try {
     const aiText = await Promise.race([
@@ -611,7 +611,10 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
       ),
     ])
 
-    return aiText.replace(/\*\*/g, '').trim().replace(/[\r\n]+/g, ' ')
+    let cleaned = aiText.replace(/(\*\*|##|#)/g, '').trim();
+    // Xoá các câu "slop" dư thừa của AI ở đầu
+    cleaned = cleaned.replace(/^(Dạ,|Vâng,|Dưới đây là|Theo số liệu|Chắc chắn rồi|Để tóm tắt).*?:\s*/i, '');
+    return cleaned;
   } catch (error) {
     console.warn('AI summary unavailable, using fallback text', error)
     return null

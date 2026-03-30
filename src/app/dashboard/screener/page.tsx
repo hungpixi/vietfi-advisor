@@ -96,7 +96,7 @@ export default function ScreenerPage() {
 
   useEffect(() => {
     fetchStocks();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchStocks]);
 
   const sorted = [...stocks].sort((a, b) => {
     const av = a[sortKey] ?? 0;

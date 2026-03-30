@@ -5,7 +5,7 @@
 export interface Debt {
   id: string;
   name: string;
-  type: "credit_card" | "mortgage" | "personal" | "bnpl" | "loan_shark";
+  type: "credit_card" | "mortgage" | "personal" | "bnpl" | "loan_shark" | "other";
   principal: number;     // Dư nợ gốc (VND)
   rate: number;          // Lãi suất năm (%)
   minPayment: number;    // Trả tối thiểu/tháng

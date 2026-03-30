@@ -39,6 +39,9 @@ describe('MarketSnapshot type', () => {
       usdVnd: { rate: 25085, source: 'test' },
       btc: null,
       macro: { gdpYoY: [], cpiYoY: [], deposit12m: { min: 0, max: 0, source: 'test' } },
+      silver: null,
+      news: [],
+      aiSummary: null,
     }
     expect(snap.vnIndex!.price).toBe(1200)
     expect(snap.goldSjc!.goldVnd).toBe(75000000)
@@ -53,6 +56,9 @@ describe('MarketSnapshot type', () => {
       usdVnd: { rate: 25085, source: 'test' },
       btc: null,
       macro: { gdpYoY: [], cpiYoY: [], deposit12m: { min: 0, max: 0, source: 'test' } },
+      silver: null,
+      news: [],
+      aiSummary: null,
     }
     expect(snap.goldSjc!.goldUsd).toBe(3000)
   })

@@ -41,8 +41,6 @@ const defaultDebts: UIDebt[] = [
   { id: "5", name: "Tín dụng đen", type: "loan_shark", principal: 1500000, rate: 60, minPayment: 200000, icon: "loan_shark", color: "#FF6B35", hiddenFees: 0 },
 ];
 
-const monthlyIncome = 12000000;
-
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
@@ -51,6 +49,7 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } }
 
 export default function DebtPage() {
   const [debts, setDebts] = useState<UIDebt[]>(defaultDebts);
+  const [monthlyIncome, setMonthlyIncome] = useState(12000000);
   const [strategy, setStrategy] = useState<"snowball" | "avalanche">("snowball");
   const [showAddModal, setShowAddModal] = useState(false);
   const [payingDebt, setPayingDebt] = useState<UIDebt | null>(null);
@@ -60,6 +59,12 @@ export default function DebtPage() {
   // Load from localStorage
   useEffect(() => {
     setDebts(getDebts() as unknown as UIDebt[]);
+    
+    // Dynamically load user's income
+    import("@/lib/storage").then((mod) => {
+      const income = mod.getIncome();
+      setMonthlyIncome(income);
+    });
   }, []);
 
   // Save to localStorage + Supabase sync
@@ -174,7 +179,7 @@ export default function DebtPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">Quỹ Nợ</h1>
-            <p className="text-[13px] text-white/40">Hợp nhất tất cả khoản nợ — tìm lộ trình thoát nợ</p>
+              <p className="text-white/40 text-xs">Phân tích dòng tiền &amp; lộ trình thoát nợ tối ưu</p>
           </div>
           <div className="flex items-center gap-2">
             {debts.length > 0 && (
@@ -394,7 +399,7 @@ export default function DebtPage() {
                         contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '12px', color: 'white', opacity: 0.95 }}
                         itemStyle={{ fontSize: '11px', fontWeight: 600 }}
                         labelStyle={{ fontSize: '10px', color: '#999', marginBottom: '4px' }}
-                        formatter={(value: any) => formatVND(value as number)}
+                        formatter={(value: unknown) => formatVND(value as number)}
                       />
                       {/* Vòng lặp đè các khoản nợ thành khối Stacked (Thác Đổ) */}
                       {sortedDebts.map((debt, index) => (

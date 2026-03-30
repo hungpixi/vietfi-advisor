@@ -102,7 +102,7 @@ function GamificationBar() {
       setGam(newGam);
     }, 1000);
     return () => clearInterval(t);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getGamification]); // Polling from the local storage helper function
 
   const { current, next, progress, xpToNext } = getLevelProgress(gam.xp);
 
