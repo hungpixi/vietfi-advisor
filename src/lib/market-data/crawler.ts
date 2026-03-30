@@ -131,17 +131,27 @@ export function parseSbvExchangeRate(html: string): ExchangeRateData | null {
 
 // ── VN-Index ─────────────────────────────────────────────────────────────────
 
+async function fetchWithCache(url: string, options: RequestInit = {}, timeoutMs = 8000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal, next: { revalidate: 300, ...((options as any).next || {}) } } as RequestInit)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 const CAFEF_MSHDATA_URL = 'https://msh-appdata.cafef.vn/rest-api/api/v1/StockMarket'
 
 export async function fetchVnIndex(): Promise<VnIndexData | null> {
   try {
-    const resp = await fetch(CAFEF_MSHDATA_URL, {
+    const resp = await fetchWithCache(CAFEF_MSHDATA_URL, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
         Referer: 'https://cafef.vn/',
       },
       // Node fetch on Vercel Edge — SSL verify issue handled by skip
-    } as RequestInit)
+    })
 
     if (!resp.ok) return null
 
@@ -176,9 +186,9 @@ export async function fetchVnIndex(): Promise<VnIndexData | null> {
 }
 export async function fetchBtc(): Promise<CryptoData | null> {
   try {
-    const resp = await fetch(COINGECKO_BTC_URL, {
+    const resp = await fetchWithCache(COINGECKO_BTC_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    } as RequestInit)
+    })
 
     if (!resp.ok) return null
 
@@ -338,9 +348,9 @@ function parseGiavangGoldPrice(body: unknown): { goldVnd: number; changePct: num
 
 export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null> {
   try {
-    const resp = await fetch(GIAVANG_ALL_URL, {
+    const resp = await fetchWithCache(GIAVANG_ALL_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    } as RequestInit)
+    })
 
     if (!resp.ok) return null
 
@@ -381,9 +391,9 @@ const YAHOO_SILVER_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/SI=F
 
 export async function fetchSilver(usdVndRate: number): Promise<SilverData | null> {
   try {
-    const resp = await fetch(YAHOO_SILVER_URL, {
+    const resp = await fetchWithCache(YAHOO_SILVER_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    } as RequestInit)
+    })
 
     if (!resp.ok) return null
 
@@ -426,12 +436,12 @@ const OPEN_ER_API = 'https://open.er-api.com/v6/latest/USD'
 export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
   // Method 1: SBV homepage
   try {
-    const resp = await fetch(SBV_HOMEPAGE, {
+    const resp = await fetchWithCache(SBV_HOMEPAGE, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
       },
-    } as RequestInit)
+    })
     if (resp.ok) {
       const html = await resp.text()
       const parsed = parseSbvExchangeRate(html)
@@ -443,7 +453,7 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
 
   // Method 2: open.er-api.com (free, no key)
   try {
-    const resp = await fetch(OPEN_ER_API, { timeout: 10_000 } as RequestInit)
+    const resp = await fetchWithCache(OPEN_ER_API, {}, 10_000)
     if (resp.ok) {
       const json = await resp.json() as { rates?: { VND?: number } }
       const vnd = json.rates?.VND
@@ -464,9 +474,9 @@ const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
 
 export async function fetchNews(): Promise<NewsItem[]> {
   try {
-    const resp = await fetch(VNEXPRESS_RSS_URL, {
+    const resp = await fetchWithCache(VNEXPRESS_RSS_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    } as RequestInit)
+    })
 
     if (!resp.ok) return []
     const xml = await resp.text()
@@ -499,7 +509,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
 
   // 1. Fetch DOJI XML
   try {
-    const dojiXml = await fetch('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
+    const dojiXml = await fetchWithCache('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       next: { revalidate: 600 }
     }).then(r => r.text())
@@ -527,7 +537,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
   // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
   const fetchWebgia = async (brandCode: string, urlId: string) => {
     try {
-      const html = await fetch(`https://webgia.com/gia-vang/${urlId}/`, {
+      const html = await fetchWithCache(`https://webgia.com/gia-vang/${urlId}/`, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
         next: { revalidate: 600 }
       }).then(r => r.text())

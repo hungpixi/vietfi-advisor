@@ -160,7 +160,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...init, signal: controller.signal } as RequestInit)
+    return await fetch(url, { ...init, signal: controller.signal, next: { revalidate: 300, ...((init as any).next || {}) } } as RequestInit)
   } finally {
     clearTimeout(timer)
   }
@@ -466,28 +466,27 @@ export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSna
   const interval = rateLimitPerSec > 0 ? Math.ceil(1000 / rateLimitPerSec) : 0
   const articles: NewsArticle[] = []
 
-  for (const [section, url] of Object.entries(feeds)) {
-    try {
-      const resp = await fetchWithTimeout(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
-        },
-      } as RequestInit, 10_000)
+  // Fetch all feeds concurrently, relies on Next.js Data cache for speed
+  await Promise.allSettled(
+    Object.entries(feeds).map(async ([section, url]) => {
+      try {
+        const resp = await fetchWithTimeout(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0',
+            Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
+          },
+        } as RequestInit, 8_000)
 
-      if (!resp.ok) continue
+        if (!resp.ok) return
 
-      const xml = await resp.text()
-      const sectionItems = parseRssItems(xml, section, limitPerSection, maxChars, includeContent)
-      articles.push(...sectionItems)
-    } catch {
-      // Keep crawling other sections even when one feed fails.
-    }
-
-    if (interval > 0) {
-      await sleep(interval)
-    }
-  }
+        const xml = await resp.text()
+        const sectionItems = parseRssItems(xml, section, limitPerSection, maxChars, includeContent)
+        articles.push(...sectionItems)
+      } catch {
+        // Keep crawling other sections even when one feed fails.
+      }
+    })
+  )
 
   articles.sort((a, b) => b.published.localeCompare(a.published))
 
