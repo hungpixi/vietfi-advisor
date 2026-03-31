@@ -62,11 +62,11 @@ export function TriageDoctor({ dti, debtCount, phase }: DoctorProps) {
         }`} />
         
         <Image
-          src="/vietfi_mascot_sly_1773897837198.png"
-          alt="Vet Vang Doctor"
+          src="/assets/mascot.png"
+          alt="Vet Vàng Doctor"
           width={96}
           height={96}
-          className="relative z-10 drop-shadow-2xl"
+          className="relative z-10 drop-shadow-2xl object-contain"
         />
         
         {/* Clinical Badge */}

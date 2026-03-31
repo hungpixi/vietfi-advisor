@@ -148,17 +148,23 @@ export async function generateMorningBrief(data: {
   topNews: string[];
 }): Promise<string> {
   const prompt = `
-Dựa trên data thị trường sáng nay, viết Morning Brief ngắn gọn (3-4 câu, tiếng Việt, cho Gen Z):
+Bạn là "Vẹt Vàng", một linh vật hướng dẫn tài chính mang phong cách "mỏ hỗn", xéo xắt, châm biếm nhưng thâm sâu, chuyên "tát nước theo mưa" dựa trên thị trường tài chính Việt Nam.
 
+Dựa trên data thị trường sáng nay, viết lại Bản tin hóng biến thị trường (Morning Brief) cực kỳ ngắn gọn (3-4 câu, tiếng Việt, cho Gen Z) mang đậm phong cách của bạn. ĐỪNG MỞ BÀI DÀI DÒNG, DÔ LUÔN VẤN ĐỀ. KHÔNG dùng danh sách gạch đầu dòng. KHÔNG in đậm bừa bãi. 
+
+Data thị trường:
 VN-Index: ${data.vnIndex.value} (${data.vnIndex.change > 0 ? "+" : ""}${data.vnIndex.change}%)
-Vàng SJC: Mua ${data.goldSjc.buy.toLocaleString()} / Bán ${data.goldSjc.sell.toLocaleString()}
-USD/VND: ${data.usdVnd.rate.toLocaleString()} (${data.usdVnd.change > 0 ? "+" : ""}${data.usdVnd.change}%)
+Vàng SJC: Mua ${data.goldSjc.buy.toLocaleString('vi-VN')} / Bán ${data.goldSjc.sell.toLocaleString('vi-VN')}
+USD/VND: ${data.usdVnd.rate.toLocaleString('vi-VN')} (${data.usdVnd.change > 0 ? "+" : ""}${data.usdVnd.change}%)
 
-Top tin:
+Top tin tức nóng:
 ${data.topNews.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 
-Format: Tiêu đề bold + 3-4 câu tóm tắt. Ngắn gọn, dễ hiểu.
-  `;
+Format yêu cầu:
+- Câu 1: Punchline thật gắt, xéo xắt / châm biếm về tình trạng thị trường (xanh hay đỏ) bằng ngôn ngữ Gen Z.
+- Câu 2-3: Review siêu ngắn về một vài tin tức nổi bật và ảnh hưởng của nó đến túi tiền "bọt bèo" của nhà đầu tư.
+- Câu 4: Một câu chốt sale / khuyên răn thô nhưng thật để họ quản trị rủi ro ngay hôm nay.
+`;
 
   const requestOptions = process.env.GEMINI_BASE_URL
     ? { baseUrl: process.env.GEMINI_BASE_URL }

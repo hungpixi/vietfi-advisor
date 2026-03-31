@@ -296,6 +296,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       return getScriptedResponse(intent) || null;
     }
 
+    // Edge Case: Zero Income Mỏ Hỗn Roast
+    const ZERO_INCOME_INTENTS = ['ask_invest', 'ask_realestate', 'ask_gold', 'ask_stock', 'ask_crypto', 'compare_gold_stock'];
+    if (ZERO_INCOME_INTENTS.includes(intent)) {
+      if (typeof window !== "undefined") {
+        try {
+          const income = getIncome();
+          if (!income || income <= 0) {
+            return getScriptedResponse('zero_income_roast') || null;
+          }
+        } catch { }
+      }
+    }
+
     return null; // → fallback to AI
   };
 

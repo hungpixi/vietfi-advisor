@@ -8,9 +8,9 @@ import Link from "next/link";
 import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
 import { GoldTracker } from "@/components/portfolio/GoldTracker";
 import { CashflowDNA } from "@/components/portfolio/CashflowDNA";
+import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
 
 /* ─── Types ─── */
-interface AllocationItem { asset: string; percent: number; color: string; }
 interface MarketData {
   vnIndex?: { price: number; changePct: number };
   goldSjc?: { goldVnd: number; changePct: number };
@@ -20,44 +20,7 @@ interface MarketData {
   sentimentScore?: number;
 }
 
-/* ─── Base allocations by risk type ─── */
-const BASE_ALLOCATIONS: Record<string, AllocationItem[]> = {
-  conservative: [
-    { asset: "Tiết kiệm", percent: 50, color: "#00E5FF" },
-    { asset: "Trái phiếu", percent: 20, color: "#AB47BC" },
-    { asset: "Vàng", percent: 20, color: "#E6B84F" },
-    { asset: "Chứng khoán", percent: 10, color: "#22C55E" },
-  ],
-  balanced: [
-    { asset: "Tiết kiệm", percent: 30, color: "#00E5FF" },
-    { asset: "Vàng", percent: 20, color: "#E6B84F" },
-    { asset: "Chứng khoán", percent: 30, color: "#22C55E" },
-    { asset: "Crypto", percent: 10, color: "#AB47BC" },
-    { asset: "BĐS (REIT)", percent: 10, color: "#FF6B35" },
-  ],
-  growth: [
-    { asset: "Tiết kiệm", percent: 15, color: "#00E5FF" },
-    { asset: "Vàng", percent: 10, color: "#E6B84F" },
-    { asset: "Chứng khoán", percent: 40, color: "#22C55E" },
-    { asset: "Crypto", percent: 25, color: "#AB47BC" },
-    { asset: "BĐS (REIT)", percent: 10, color: "#FF6B35" },
-  ],
-};
-
 const riskLabels: Record<string, string> = { conservative: "🛡️ Bảo thủ", balanced: "⚖️ Cân bằng", growth: "🚀 Tăng trưởng" };
-
-/* ─── Dynamic allocation adjusted by market sentiment ─── */
-function adjustAllocation(base: AllocationItem[], fgScore: number): AllocationItem[] {
-  // F&G < 30 (Sợ hãi) → tăng tiết kiệm/vàng, giảm cổ phiếu/crypto
-  // F&G > 70 (Tham lam) → giảm vốn mới vào CK, tăng cash reserve
-  const shift = fgScore <= 30 ? -5 : fgScore >= 70 ? -3 : 0;
-  return base.map(item => {
-    let adj = item.percent;
-    if (item.asset === "Chứng khoán" || item.asset === "Crypto") adj += shift;
-    if (item.asset === "Tiết kiệm" || item.asset === "Vàng") adj -= shift;
-    return { ...item, percent: Math.max(5, Math.min(60, adj)) };
-  });
-}
 
 function generateProjection(capital: number, riskType: string) {
   const rates = { conservative: { base: 0.06, pess: 0.03, opt: 0.08 }, balanced: { base: 0.09, pess: 0.04, opt: 0.14 }, growth: { base: 0.13, pess: 0.02, opt: 0.22 } };

@@ -16,7 +16,7 @@ export type Intent =
   | "motivate" | "complain" | "curse" | "sad" | "bored"
   | "who_are_you" | "help" | "joke"
   | "morning" | "afternoon" | "evening" | "night"
-  | "streak_praise" | "level_up"
+  | "streak_praise" | "level_up" | "zero_income_roast"
   | "unknown";
 
 export interface ScriptedResponseItem {
@@ -48,8 +48,8 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "ask_realestate", patterns: ["mua nhà", "bđs", "bất động sản", "thuê nhà", "nhà ở", "real estate"] },
   { intent: "motivate", patterns: ["motivate", "động viên", "khích lệ", "mệt"] },
   { intent: "complain", patterns: ["app tệ", "tệ quá", "dở", "ghét", "khó dùng", "bug"] },
-  { intent: "curse", patterns: ["đm", "vcl", "vl", "cc", "đ mẹ", "ngu", "khùng"] },
-  { intent: "sad", patterns: ["buồn", "hết tiền", "cháy túi", "phá sản", "nghèo", "xui", "sml"] },
+  { intent: "curse", patterns: ["quạu", "bực", "điên", "khùng", "cáu", "ghét"] },
+  { intent: "sad", patterns: ["buồn", "hết tiền", "cháy túi", "phá sản", "nghèo", "xui", "xu cà na"] },
   { intent: "bored", patterns: ["chán", "nhàm", "buồn ngủ", "rảnh", "ko biết làm gì"] },
   { intent: "who_are_you", patterns: ["mày là ai", "ai đây", "bot à", "vẹt à", "giới thiệu"] },
   { intent: "help", patterns: ["help", "giúp", "hướng dẫn", "cách dùng", "làm sao"] },
@@ -153,15 +153,15 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Nắng nóng bốc khói, nhưng cái ví của mày mỏng đi mới là thứ kinh dị nhất 🔥",
       "Nắng nóng bốc khói, nhưng cái ví của mày mỏng đi mới là thứ kinh dị nhất!"),
     r("afternoon", 3,
-      "Lại thèm Phúc Long 50 cành hả? Hốc cho cố vô rồi tháng bù tiền nhà tụt quần nha con 🧋",
-      "Lại thèm Phúc Long năm mươi cành hả? Uống cho cố vô rồi tháng bù tiền nhà tụt quần nha."),
+      "Lại thèm Phúc Long 50 cành hả? Uống cho cố vô rồi cuối tháng bù tiền nhà xót ví nha 🧋",
+      "Lại thèm Phúc Long năm mươi cành hả? Uống cho cố vô rồi cuối tháng bù tiền nhà xót ví nha."),
   ],
 
   // ── Evening ──
   evening: [
     r("evening", 0,
-      "Tối rồi! Lôi cái bill cả ngày ra đây tao check. Tiêu ngu tao chửi ráng chịu 🌙",
-      "Tối rồi! Lôi cái biên lai cả ngày ra đây tao kiểm tra. Tiêu ngu tao chửi ráng chịu."),
+      "Tối rồi! Lôi cái bill cả ngày ra đây tao check. Tiêu hoang tao la ráng chịu 🌙",
+      "Tối rồi! Lôi cái biên lai cả ngày ra đây tao kiểm tra. Tiêu hoang tao la ráng chịu."),
     r("evening", 1,
       "Buổi tối rảnh rỗi sinh nông nổi, khoá cái app Shopee lại giùm tạo 💧",
       "Buổi tối rảnh rỗi sinh nông nổi, khoá cái gian hàng sốp pi lại giùm tao."),
@@ -464,6 +464,22 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   level_up: [
     rd("level_up", 0, "🎉 LÊN LEVEL! Mày giờ là {levelName} rồi! Tao chúc mừng... nhưng vẫn phải ghi chi tiêu nha!"),
     rd("level_up", 1, "WOW! {levelName}! Mày tiến bộ nhanh dữ! Ví tiền mày cũng vui lắm đó 💰🎊"),
+  ],
+
+  // ── Edge Cases ──
+  zero_income_roast: [
+    r("zero_income_roast", 0, 
+      "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mạy? Đi kiếm tiền trước đi! 🤡🦜",
+      "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mày? Đi kiếm tiền trước đi!"),
+    r("zero_income_roast", 1,
+      "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng vietlott á? Đi làm đi! 💼",
+      "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng số độc đắc á? Đi làm đi!"),
+    r("zero_income_roast", 2,
+      "Thu nhập bằng Không! 0! Tròn trĩnh! Đầu tư bằng nụ cười hả? Lo kiếm việc đi! 😭",
+      "Thu nhập bằng không! Không! Tròn trĩnh! Đầu tư bằng nụ cười hả? Lo kiếm việc đi!"),
+    r("zero_income_roast", 3,
+      "Warren Buffett khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi! 🏃",
+      "Oa ren Bâu phét khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi!")
   ],
 };
 

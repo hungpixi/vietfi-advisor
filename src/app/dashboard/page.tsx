@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { NewsArticle, NewsSentimentLabel } from "@/lib/news/crawler";
-import QuickSetupWizard from "@/components/onboarding/QuickSetupWizard";
+import dynamic from "next/dynamic";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
 import { cn } from "@/lib/utils";
-import { BadgeGrid } from "@/components/gamification/Badges";
-import { getBudgetPots, getExpenses, getIncome } from "@/lib/storage";
+import { getBudgetPots, getExpenses, getIncome, getRiskResult, getMarketCache } from "@/lib/storage";
+import { getGamification, getLevelProgress } from "@/lib/gamification";
+import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
 
 import { motion } from "framer-motion";
 import {
@@ -20,25 +21,22 @@ import {
   BarChart3,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-} from "recharts";
+
+const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
+const PieChart = dynamic(() => import("recharts").then((mod) => mod.PieChart), { ssr: false });
+const Pie = dynamic(() => import("recharts").then((mod) => mod.Pie), { ssr: false });
+const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
+
+const QuickSetupWizard = dynamic(() => import("@/components/onboarding/QuickSetupWizard"), { ssr: false });
+
+import { BadgeGrid } from "@/components/gamification/Badges";
 
 import { MarketSection } from "./components/MarketSection";
 import { DailyQuestSection } from "./components/DailyQuestSection";
 import { NotificationBanner } from "./components/NotificationBanner";
 
-const portfolioData = [
-  { name: "Tiết kiệm", value: 30, color: "#00E5FF" },
-  { name: "Vàng", value: 20, color: "#E6B84F" },
-  { name: "Chứng khoán", value: 25, color: "#22C55E" },
-  { name: "Crypto", value: 10, color: "#AB47BC" },
-  { name: "BĐS (REIT)", value: 15, color: "#FF6B35" },
-];
+// Moved portfolioData calculation into the component using useMemo
 
 interface BriefData {
   date: string;
@@ -125,7 +123,7 @@ const stagger = {
 
 /* ═══════════════════ INLINE COMPONENTS ═══════════════════ */
 
-function PortfolioMini() {
+function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
   const pctFormatter = (value: unknown) => `${value}%`;
   return (
     <motion.div variants={fadeIn} className="glass-card p-5">
@@ -143,16 +141,16 @@ function PortfolioMini() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={portfolioData}
+                data={allocation}
                 cx="50%"
                 cy="50%"
                 innerRadius={28}
                 outerRadius={50}
                 paddingAngle={3}
-                dataKey="value"
+                dataKey="percent"
                 stroke="none"
               >
-                {portfolioData.map((entry, i) => (
+                {allocation.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
@@ -170,13 +168,13 @@ function PortfolioMini() {
           </ResponsiveContainer>
         </div>
         <div className="flex-1 space-y-1.5">
-          {portfolioData.map((item) => (
-            <div key={item.name} className="flex items-center justify-between">
+          {allocation.map((item) => (
+            <div key={item.asset} className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-xs text-white/50">{item.name}</span>
+                <span className="text-xs text-white/50">{item.asset}</span>
               </div>
-              <span className="text-xs font-medium text-white/80">{item.value}%</span>
+              <span className="text-xs font-medium text-white/80">{item.percent}%</span>
             </div>
           ))}
         </div>
@@ -333,34 +331,47 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
   );
 }
 
-function VetVangFloat() {
+function VetVangFloatWidget() {
+  const [mounted, setMounted] = useState(false);
+  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
+
+  useEffect(() => {
+    setGam(getGamification());
+    setMounted(true);
+  }, []);
+
+  const { current, progress } = getLevelProgress(gam.xp);
+
   return (
     <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10">
       <div className="flex items-center gap-2 mb-2">
         <Flame className="w-4 h-4 text-[#E6B84F]" />
         <h3 className="text-sm font-semibold text-white">Vẹt Vàng nói gì?</h3>
         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-mono ml-auto">
-          🔥 Mổ Mode
+          {gam.streak >= 3 ? "🔥 Mổ Mode" : "💛 Khen Mode"}
         </span>
       </div>
       <div className="bg-white/[0.02] rounded-xl p-3 mb-3">
         <p className="text-[13px] text-white/60 italic leading-relaxed">
-          &ldquo;3 ngày không mở app rồi nha, tiền thì vẫn bay — giỏi thật đấy
-          🦜&rdquo;
+          {gam.streak >= 3 
+            ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục xài app đi, tao thề sẽ không mổ cho đến khi mày giàu! 🦜&rdquo;`
+            : `&ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu! Level ${current.name} rồi mà còn lười hả? 🦜&rdquo;`}
         </p>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-white/30">Level 2</span>
+          <span className="text-[10px] text-white/30">Lvl {mounted ? gam.level + 1 : "--"}</span>
           <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
-            <div
+            <motion.div
               className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full"
-              style={{ width: "35%" }}
+              initial={{ width: 0 }}
+              animate={{ width: `${mounted ? progress : 0}%` }}
+              transition={{ duration: 1 }}
             />
           </div>
-          <span className="text-[10px] text-[#E6B84F]">350 XP</span>
+          <span className="text-[10px] text-[#E6B84F]">{mounted ? gam.xp : "--"} XP</span>
         </div>
-        <span className="text-[10px] text-white/20">🐣 Vẹt Teen</span>
+        <span className="text-[10px] text-white/20">{mounted ? current.name : "🐣 Vẹt Teen"}</span>
       </div>
     </motion.div>
   );
@@ -453,6 +464,29 @@ export default function DashboardOverview() {
       setNewsLoading(false);
     }
   };
+
+  // Portfolio allocation calculation
+  const currentAllocation = useMemo(() => {
+    const riskResult = getRiskResult();
+    const marketSnapshot = getMarketCache();
+    
+    // Calculate FG score from cache
+    let fgScore = 50;
+    if (marketSnapshot?.vnIndex) {
+      const vn = marketSnapshot.vnIndex.changePct ?? 0;
+      const gold = marketSnapshot.goldSjc?.changePct ?? 0;
+      fgScore = Math.round(Math.max(0, Math.min(100, 50 + vn * 1.5 - gold * 1.2)));
+    }
+
+    if (!riskResult) {
+      return adjustAllocation(BASE_ALLOCATIONS.balanced, fgScore);
+    }
+
+    const score = riskResult?.score ?? 0;
+    const riskType = score <= 6 ? "conservative" : score <= 10 ? "balanced" : "growth";
+    const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
+    return adjustAllocation(base, fgScore);
+  }, []);
 
   // Init: run once on mount
   useEffect(() => {
@@ -602,8 +636,8 @@ export default function DashboardOverview() {
 
         {/* 2-Column: Portfolio + Vẹt Vàng */}
         <motion.div variants={stagger} className="grid lg:grid-cols-2 gap-3 mb-4">
-          <PortfolioMini />
-          <VetVangFloat />
+          <PortfolioMini allocation={currentAllocation} />
+          <VetVangFloatWidget />
         </motion.div>
 
         {/* News */}

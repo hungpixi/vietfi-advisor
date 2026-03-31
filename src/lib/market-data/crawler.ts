@@ -116,13 +116,12 @@ export function calculateGoldVnd(goldUsd: number, usdVndRate: number): number {
 export function parseSbvExchangeRate(html: string): ExchangeRateData | null {
   const $ = cheerio.load(html)
   const text = $('body').text().replace(/\s+/g, ' ')
-
-  // Pattern: "TỶ GIÁ: 25.085,00 VND/USD" or "TỶ GIÁ: 25.085 VND"
-  const m = text.match(/TỶ\s*GIÁ[:\s]*([\d.]+)/i)
+  // Pattern: "TỶ GIÁ: 25.085,00 VND/USD" or "TỶ GIÁ: 25.085 VND" or "TỶ GIÁ... 25.085"
+  const m = text.match(/TỶ\s*GIÁ.*?([\d.]+)(?:,00)?\s*VND/i) || text.match(/TỶ\s*GIÁ[:\s]*([\d.]+)/i)
   if (!m) return null
 
   const raw = m[1]!
-  // "25.085" → 25085 (dot = thousand separator in SBV formatting)
+  // "25.085" → 25085
   const rate = parseFloat(raw.replace(/\./g, ''))
   if (isNaN(rate) || rate < 20000 || rate > 30000) return null
 
@@ -347,42 +346,42 @@ function parseGiavangGoldPrice(body: unknown): { goldVnd: number; changePct: num
 }
 
 export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null> {
-  try {
-    const resp = await fetchWithCache(GIAVANG_ALL_URL, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-    })
-
-    if (!resp.ok) return null
-
-    const body = await resp.json() as Record<string, unknown>
-
-    const sjc = body?.sjc as Record<string, unknown> | undefined
-    const prices = Array.isArray(sjc?.prices) ? sjc.prices as Array<Record<string, unknown>> : []
-    if (prices.length === 0) return null
-
-    const candidate = prices.find((item) =>
-      typeof item.name === 'string' && item.name.toLowerCase().includes('vàng sjc'),
-    ) || prices[0]
-
-    const sell = candidate?.sell
-    if (typeof sell !== 'number' || !Number.isFinite(sell) || sell <= 0) return null
-
-    const goldVnd = Math.round(sell)
-    const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
-
-    const world = body?.world as Record<string, unknown> | undefined
-    const worldPct = typeof world?.change_pct === 'number' ? Number(world.change_pct) : null
-    const changePct = worldPct !== null && Number.isFinite(worldPct) ? Math.round(worldPct * 10000) / 10000 : 0
-
-    return {
-      goldUsd,
-      goldVnd,
-      changePct,
-      source: 'giaVang /wp-json/giavang/v1/all',
-    }
-  } catch {
-    return null
+  const tryGiaVang = async () => {
+    try {
+      const resp = await fetchWithCache(GIAVANG_ALL_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+      if (!resp.ok) return null
+      const body = await resp.json() as Record<string, unknown>
+      const sjc = body?.sjc as Record<string, unknown> | undefined
+      const prices = Array.isArray(sjc?.prices) ? sjc.prices as Array<Record<string, unknown>> : []
+      if (prices.length === 0) return null
+      const candidate = prices.find((item) =>
+        typeof item.name === 'string' && item.name.toLowerCase().includes('vàng sjc'),
+      ) || prices[0]
+      const sell = candidate?.sell
+      if (typeof sell !== 'number' || !Number.isFinite(sell) || sell <= 0) return null
+      const goldVnd = Math.round(sell)
+      const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
+      const world = body?.world as Record<string, unknown> | undefined
+      const worldPct = typeof world?.change_pct === 'number' ? Number(world.change_pct) : null
+      return { goldUsd, goldVnd, changePct: worldPct !== null ? worldPct : 0, source: 'giaVang' }
+    } catch { return null }
   }
+
+  const tryDoji = async () => {
+    try {
+      const dojiXml = await fetchWithCache('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      }).then(r => r.text())
+      const m = dojiXml.match(/<Row Name="SJC.*?" .*?Sell="(.*?)"/i)
+      if (!m) return null
+      const goldVnd = parseFloat(m[1].replace(/,/g, '')) * 1000000
+      if (goldVnd < 10000000) return null
+      const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
+      return { goldUsd, goldVnd, changePct: 0, source: 'DOJI (Backup)' }
+    } catch { return null }
+  }
+
+  return (await tryGiaVang()) || (await tryDoji())
 }
 
 // ── Silver ───────────────────────────────────────────────────────────────────

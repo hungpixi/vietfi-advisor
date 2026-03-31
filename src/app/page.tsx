@@ -28,7 +28,7 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0F]/80 backdrop-blur-xl border-b border-white/[0.04]">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/assets/icon.png" alt="VietFi" width={32} height={32} className="rounded-lg" />
+          <Image src="/assets/icon.png" alt="VietFi" width={32} height={32} className="rounded-lg object-contain" />
           <span className="text-lg font-bold">
             <span className="text-gradient">VietFi</span>
             <span className="text-white/40 text-sm ml-1">Advisor</span>
@@ -106,7 +106,7 @@ function Hero() {
         >
           <div className="absolute inset-0 bg-[#FFD700]/5 rounded-full blur-[100px]" />
           <div className="relative">
-            <Image src="/assets/mascot.png" alt="Vẹt Vàng - VietFi Mascot" width={400} height={480} className="mx-auto drop-shadow-2xl" />
+            <Image src="/assets/mascot.png" alt="Vẹt Vàng - VietFi Mascot" width={400} height={480} className="mx-auto drop-shadow-2xl object-contain" priority />
             {/* Floating cards */}
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 3 }}
               className="absolute top-8 -left-4 glass-card px-3 py-2 text-xs flex items-center gap-2"
@@ -239,10 +239,10 @@ function VetVangShowcase() {
   ];
 
   const levels = [
-    { name: "🐣 Vẹt Con", xp: "0 XP", desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.", unlock: "🔓 Ghi chi tiêu cơ bản + chia hũ" },
-    { name: "🦜 Vẹt Teen", xp: "500 XP", desc: "Mọc lông vàng, tập nói xéo. Biết quy đổi trà sữa ra ngày lãi tiết kiệm.", unlock: "🔓 Roast card + streak tracker" },
-    { name: "🦜✨ Vẹt Phố", xp: "2,000 XP", desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.", unlock: "🔓 Market insight + outfit vẹt" },
-    { name: "👑 Vẹt Nhà Giàu", xp: "5,000 XP", desc: "Lông vàng kim, đeo chain vàng. \"Tự do tài chính\" — ít nhất trong mắt vẹt.", unlock: "🔓 Full analysis + Vẹt Battle", final: true },
+    { name: "🐣 Vẹt Con", xp: "0 XP", desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.", unlock: "🔓 Ghi chi tiêu cơ bản + chia hũ", image: "/assets/level-1-con.png" },
+    { name: "🦜 Vẹt Teen", xp: "500 XP", desc: "Mọc lông vàng, tập nói xéo. Biết quy đổi trà sữa ra ngày lãi tiết kiệm.", unlock: "🔓 Roast card + streak tracker", image: "/assets/level-2-teen.png" },
+    { name: "🦜✨ Vẹt Phố", xp: "2,000 XP", desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.", unlock: "🔓 Market insight + outfit vẹt", image: "/assets/level-3-truong-thanh.png" },
+    { name: "👑 Vẹt Nhà Giàu", xp: "5,000 XP", desc: "Lông vàng kim, đeo chain vàng. \"Tự do tài chính\" — ít nhất trong mắt vẹt.", unlock: "🔓 Full analysis + Vẹt Battle", final: true, image: "/assets/level-4-dai-gia.png" },
   ];
 
   return (
@@ -294,8 +294,10 @@ function VetVangShowcase() {
         <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {levels.map((l) => (
             <motion.div key={l.name} variants={fadeInUp} className={`glass-card p-4 text-center ${l.final ? "border-[#E6B84F]/20" : ""}`}>
-              <div className="text-3xl mb-2">{l.name.split(" ")[0]}</div>
-              <h4 className="text-sm font-bold text-white mb-0.5">{l.name}</h4>
+              <div className="h-20 w-20 mx-auto mb-3 relative drop-shadow-lg">
+                <Image src={l.image} alt={l.name} fill className="object-contain" />
+              </div>
+              <h4 className="text-sm font-bold text-white mb-0.5">{l.name.split(" ").slice(1).join(" ")}</h4>
               <span className="text-[10px] text-[#E6B84F] font-mono">{l.xp}</span>
               <p className="text-[11px] text-[#8888AA] mt-2 mb-2 leading-relaxed">{l.desc}</p>
               <span className="text-[10px] text-white/30">{l.unlock}</span>

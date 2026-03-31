@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import VetVangChat from "./VetVangChat";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 const ROASTS = [
   "Ê, tháng nay xài lố chưa đó?",
@@ -121,10 +122,11 @@ export default function VetVangFloat() {
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 className="relative z-10 w-20 h-20 transition-transform duration-300 group-hover:scale-110 group-active:scale-95 flex items-center justify-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
               >
-                <img
+                <Image
                   src={getMascotImage()}
                   alt="Vẹt Vàng AI"
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(230,184,79,0.4)]"
+                  fill
+                  className="object-contain filter drop-shadow-[0_0_10px_rgba(230,184,79,0.4)]"
                 />
 
                 {/* Streak badge */}
