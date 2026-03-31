@@ -1,18 +1,16 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
+import { checkLlmRateLimit } from "./llm-limiter";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-let genAI: GoogleGenerativeAI | null = null;
-if (GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-} else {
-  console.warn('GEMINI_API_KEY environment variable is not set; callGemini will throw at runtime')
-}
+const TROLL_LLM_API_KEY = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
+const TROLL_LLM_BASE_URL = "https://chat.trollllm.xyz/v1";
 
-interface GeminiOptions {
+interface GeminiOptions { // Keep interface name for compatibility
   temperature?: number;
   maxTokens?: number;
   retries?: number;
   delayMs?: number;
+  model?: string; // Optional custom model name
 }
 
 const DEFAULT_OPTIONS: GeminiOptions = {
@@ -20,40 +18,58 @@ const DEFAULT_OPTIONS: GeminiOptions = {
   maxTokens: 2048,
   retries: 3,
   delayMs: 1000,
+  model: "gemini-3-flash", // Best price/performance on TrollLLM as confirmed by manual curl
 };
 
-/* ─── Call Gemini with retry + rate limit ─── */
+/* ─── Call LLM (OpenAI Compatible) with native fetch for max compatibility ─── */
 export async function callGemini(
   prompt: string,
   options: GeminiOptions = {}
 ): Promise<string> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  const requestOptions = process.env.GEMINI_BASE_URL
-    ? { baseUrl: process.env.GEMINI_BASE_URL }
-    : undefined;
 
-  if (!genAI) {
-    throw new Error('Gemini API key not configured')
+  if (!TROLL_LLM_API_KEY) {
+    throw new Error('TROLL_LLM_API_KEY (or GEMINI_API_KEY fallback) not configured')
   }
-
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      temperature: opts.temperature,
-      maxOutputTokens: opts.maxTokens,
-    },
-  }, requestOptions);
 
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= (opts.retries || 3); attempt++) {
     try {
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      // Check RPM before each call
+      checkLlmRateLimit();
+
+      const response = await fetch(`${TROLL_LLM_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${TROLL_LLM_API_KEY}`,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        body: JSON.stringify({
+          model: opts.model || "gemini-3-flash",
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: opts.maxTokens,
+          // Note: No temperature for reasoning models
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
+
+      if (!text) {
+        throw new Error('No content received from LLM');
+      }
+
       return text;
     } catch (error) {
       lastError = error as Error;
-      console.error(`Gemini attempt ${attempt} failed:`, lastError.message);
+      console.error(`LLM attempt ${attempt} failed:`, lastError.message);
 
       if (attempt < (opts.retries || 3)) {
         await sleep(opts.delayMs! * attempt); // exponential backoff
@@ -61,10 +77,10 @@ export async function callGemini(
     }
   }
 
-  throw new Error(`Gemini failed after ${opts.retries} retries: ${lastError?.message}`);
+  throw new Error(`LLM call failed after ${opts.retries} retries: ${lastError?.message}`);
 }
 
-/* ─── Call Gemini with JSON output ─── */
+/* ─── Call LLM with JSON output ─── */
 export async function callGeminiJSON<T>(
   prompt: string,
   options: GeminiOptions = {}
@@ -79,7 +95,12 @@ export async function callGeminiJSON<T>(
     .replace(/\s*```$/i, "")
     .trim();
 
-  return JSON.parse(cleaned) as T;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch (err) {
+    console.error("Failed to parse LLM JSON:", text);
+    throw err;
+  }
 }
 
 function sleep(ms: number) {

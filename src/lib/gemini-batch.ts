@@ -12,7 +12,7 @@
  * Pricing: 50% giá standard cho cùng model
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { callGemini } from "./gemini";
 
 interface BatchRequest {
   id: string;        // Unique ID cho mỗi request
@@ -26,23 +26,14 @@ interface BatchResult {
   error?: string;
 }
 
-let _genAI: GoogleGenerativeAI | null = null;
-function getGenAI(): GoogleGenerativeAI {
-  if (!_genAI) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("GEMINI_API_KEY environment variable is required");
-    _genAI = new GoogleGenerativeAI(key);
-  }
-  return _genAI;
-}
-
 /**
  * Process multiple prompts - simulated batch via sequential calls
  * với smart batching (gom nhiều prompt nhỏ vào 1 call lớn)
  *
- * Lý do: Gemini Batch API (file-based) cần Vertex AI.
+ * Lý do: TrollLLM không có Batch API riêng.
  * Workaround: Gom nhiều prompts vào 1 call → giảm overhead + latency.
  * Kết hợp caching → giảm API calls thực tế 70-80%.
+ * Tối ưu: Tuân thủ giới hạn 20 RPM qua gemini.ts wrapper.
  */
 export async function batchProcess(
   requests: BatchRequest[],
@@ -55,21 +46,11 @@ export async function batchProcess(
   } = {}
 ): Promise<BatchResult[]> {
   const {
-    model = "gemini-2.0-flash",
     temperature = 0.5,
     maxTokens = 1024,
     batchSize = 5,
-    delayBetweenMs = 500,
+    delayBetweenMs = 1000, // Căng hơn cho TrollLLM
   } = options;
-
-  const requestOptions = process.env.GEMINI_BASE_URL
-    ? { baseUrl: process.env.GEMINI_BASE_URL }
-    : undefined;
-
-  const geminiModel = getGenAI().getGenerativeModel(
-    { model, generationConfig: { temperature, maxOutputTokens: maxTokens } },
-    requestOptions
-  );
 
   const results: BatchResult[] = [];
 
@@ -86,8 +67,7 @@ export async function batchProcess(
     const fullPrompt = `${systemPrompt}\n\nBạn sẽ nhận ${batch.length} TASK liên tiếp. Trả lời MỖI task bằng format:\n[TASK_ID: <id>]\n<answer>\n[/TASK]\n\n${combinedPrompt}`;
 
     try {
-      const result = await geminiModel.generateContent(fullPrompt);
-      const text = result.response.text();
+      const text = await callGemini(fullPrompt, { temperature, maxTokens });
 
       // Parse kết quả cho từng request
       for (const req of batch) {
@@ -98,12 +78,12 @@ export async function batchProcess(
           text: match ? match[1].trim() : text, // Fallback: trả full text nếu không parse được
         });
       }
-    } catch {
+    } catch (apiError) {
       // Nếu batch call fail, fallback từng cái
       for (const req of batch) {
         try {
-          const result = await geminiModel.generateContent(req.prompt);
-          results.push({ id: req.id, text: result.response.text() });
+          const text = await callGemini(req.prompt, { temperature, maxTokens });
+          results.push({ id: req.id, text });
         } catch (e) {
           results.push({ id: req.id, text: "", error: (e as Error).message });
         }
@@ -166,17 +146,7 @@ Format yêu cầu:
 - Câu 4: Một câu chốt sale / khuyên răn thô nhưng thật để họ quản trị rủi ro ngay hôm nay.
 `;
 
-  const requestOptions = process.env.GEMINI_BASE_URL
-    ? { baseUrl: process.env.GEMINI_BASE_URL }
-    : undefined;
-
-  const model = getGenAI().getGenerativeModel(
-    { model: "gemini-2.0-flash", generationConfig: { temperature: 0.5, maxOutputTokens: 500 } },
-    requestOptions
-  );
-
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  return await callGemini(prompt, { temperature: 0.5, maxTokens: 500 });
 }
 
 // ── Simple in-memory cache with eviction ──────────────────────────

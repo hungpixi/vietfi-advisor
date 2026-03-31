@@ -297,7 +297,6 @@ async function reviewWithAi(signalText: string, currentAsset: string): Promise<A
 
   try {
     const result = await callGeminiJSON<AiSentimentReview>(prompt, {
-      temperature: 0.1,
       maxTokens: 180,
       retries: 2,
       delayMs: 600,

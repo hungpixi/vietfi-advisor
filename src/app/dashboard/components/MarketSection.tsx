@@ -51,7 +51,6 @@ interface MarketThermometerIndicator {
   label: string;
   value: number;
   tone: "fear" | "neutral" | "greed";
-  history: number[];
 }
 
 const DEFAULT_MARKET_CARDS: MarketCardData[] = [
@@ -192,45 +191,31 @@ function buildIndicatorMetrics(
   const fxRate = snapshot?.usdVnd?.rate ?? 25_500;
   const fxPressure = (fxRate - 25_500) / 40;
 
-  const generateMockHistory = (finalValue: number, volatility: number) => {
-    return Array.from({ length: 12 }, (_, i) => {
-      const step = i / 11; // 0 to 1
-      const noise = (Math.random() - 0.5) * volatility;
-      const trend = (finalValue - 20) * step + 15; // move from around 15 to finalValue
-      return Math.max(5, Math.min(95, trend + noise));
-    });
-  };
-
   return [
     {
       label: "Đà giá",
       value: clampMetric(score + vnChange * 10),
       tone: score >= 58 ? "greed" : score <= 42 ? "fear" : "neutral",
-      history: generateMockHistory(clampMetric(score + vnChange * 10), 10),
     },
     {
       label: "Tin tức",
       value: clampMetric(score + vnChange * 7 - goldChange * 5 + 4),
       tone: score >= 55 ? "greed" : score <= 40 ? "fear" : "neutral",
-      history: generateMockHistory(clampMetric(score + vnChange * 7 - goldChange * 5 + 4), 15),
     },
     {
       label: "Độ rộng",
       value: clampMetric(score + vnChange * 14 + btcChange * 2),
       tone: score >= 52 ? "greed" : score <= 38 ? "fear" : "neutral",
-      history: generateMockHistory(clampMetric(score + vnChange * 14 + btcChange * 2), 8),
     },
     {
       label: "Vàng",
       value: clampMetric(50 - goldChange * 14 + score * 0.18),
       tone: goldChange > 0.8 ? "fear" : goldChange < -0.4 ? "greed" : "neutral",
-      history: generateMockHistory(clampMetric(50 - goldChange * 14 + score * 0.18), 12),
     },
     {
       label: "Khối ngoại ròng",
       value: clampMetric(score + vnChange * 8 - fxPressure),
       tone: score >= 57 ? "greed" : score <= 44 ? "fear" : "neutral",
-      history: generateMockHistory(clampMetric(score + vnChange * 8 - fxPressure), 5),
     },
   ];
 }
@@ -466,43 +451,30 @@ export function FGGauge({
           </div>
 
           <div className="min-w-0">
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               {indicators.map((indicator, index) => {
                 const barColor = getIndicatorColor(indicator.tone, zone.color);
-                // Create a mini sparkline path
-                const stepX = 140 / (indicator.history.length - 1);
-                const sparkPath = indicator.history.map((h, i) => {
-                  const x = i * stepX;
-                  const y = 30 - (h / 100) * 26;
-                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-                }).join(" ");
 
                 return (
-                  <div key={indicator.label} className="group relative overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 transition-all hover:bg-white/[0.04]">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white/50 group-hover:text-white/80 transition-colors">
+                  <div key={indicator.label} className="border-b border-white/10 pb-3">
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-white/92">
                         {indicator.label}
                       </span>
-                      <span className="text-lg font-black text-white" style={{ textShadow: `0 0 10px ${barColor}40` }}>
+                      <span className="text-xl font-semibold text-white">
                         {indicator.value}
                       </span>
                     </div>
-                    
-                    <div className="flex h-8 items-end justify-between gap-4">
-                      <svg viewBox="0 0 140 32" className="flex-1 overflow-visible">
-                        <motion.path
-                          initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 1 }}
-                          transition={{ duration: 1.5, delay: index * 0.1 }}
-                          d={sparkPath}
-                          fill="none"
-                          stroke={barColor}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <circle cx="140" cy={30 - (indicator.value / 100) * 26} r="2" fill={barColor} />
-                      </svg>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${indicator.value}%` }}
+                        transition={{ duration: 0.9, delay: index * 0.08 }}
+                        className="h-full rounded-full"
+                        style={{
+                          background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
+                        }}
+                      />
                     </div>
                   </div>
                 );

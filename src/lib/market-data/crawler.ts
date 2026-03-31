@@ -614,9 +614,9 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
 
   try {
     const aiText = await Promise.race([
-      callGemini(prompt, { temperature: 0.3, maxTokens: 180 }),
+      callGemini(prompt, { maxTokens: 180 }),
       new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('AI summary timeout')), 3000),
+        setTimeout(() => reject(new Error('AI summary timeout')), 60000),
       ),
     ])
 

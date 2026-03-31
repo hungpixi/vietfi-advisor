@@ -1,5 +1,6 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
+import { checkLlmRateLimit } from '@/lib/llm-limiter';
 import { parseExpenseWithContext, type ParsedExpense } from '@/lib/expense-parser';
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
@@ -23,18 +24,6 @@ interface AIMessage {
 
 interface RequestBody {
   messages: AIMessage[];
-}
-
-// ── Google AI client (lazy — only created when Gemini is needed) ────
-let _google: ReturnType<typeof createGoogleGenerativeAI> | null = null;
-function getGoogleClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-  _google ??= createGoogleGenerativeAI({
-    apiKey,
-    baseURL: process.env.GEMINI_BASE_URL || undefined,
-  });
-  return _google;
 }
 
 // ── Rate limiting: in-memory token bucket (per-IP) ────────────────
@@ -163,18 +152,35 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── STEP 3: Fallback to Gemini (only when needed) ───────────
-    const googleClient = getGoogleClient();
-    if (!googleClient) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured on the server." }), {
+    // ── STEP 3: Fallback to TrollLLM (OpenAI Compatible) ────────
+    const apiKey = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "TROLL_LLM_API_KEY (or GEMINI_API_KEY fallback) is not configured on the server." }), {
         status: 500, headers: { "Content-Type": "application/json" }
       });
     }
+
+    // RPM check for TrollLLM
+    try {
+      checkLlmRateLimit();
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), {
+        status: 429, headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    const troll = createOpenAI({
+      apiKey,
+      baseURL: "https://chat.trollllm.xyz/v1",
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+
     const result = streamText({
-      model: googleClient("gemini-2.0-flash"),
+      model: troll("gemini-3-flash"),
       system: SYSTEM_PROMPT,
       messages: sanitized,
-      temperature: 0.7,
     });
 
     // Vercel AI SDK v6 returns StreamTextResult with .toDataStreamResponse() / .toTextStreamResponse()
