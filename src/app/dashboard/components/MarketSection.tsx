@@ -51,6 +51,7 @@ interface MarketThermometerIndicator {
   label: string;
   value: number;
   tone: "fear" | "neutral" | "greed";
+  history: number[];
 }
 
 const DEFAULT_MARKET_CARDS: MarketCardData[] = [
@@ -123,8 +124,8 @@ function buildMarketCards(
   const usdChange =
     fx && prevSnapshot?.usdVnd
       ? Number(
-          ((((fx.rate - prevSnapshot.usdVnd.rate) / prevSnapshot.usdVnd.rate) * 100)).toFixed(2),
-        )
+        ((((fx.rate - prevSnapshot.usdVnd.rate) / prevSnapshot.usdVnd.rate) * 100)).toFixed(2),
+      )
       : 0;
 
   return [
@@ -132,9 +133,9 @@ function buildMarketCards(
       label: "VN-Index",
       value: vnIdx
         ? vnIdx.price.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
         : "--",
       change: vnIdx?.changePct ?? 0,
       icon: (vnIdx?.changePct ?? 0) >= 0 ? TrendingUp : TrendingDown,
@@ -155,9 +156,9 @@ function buildMarketCards(
       label: "BTC",
       value: snapshot.btc
         ? `$${snapshot.btc.priceUsd.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
         : "--",
       change: snapshot.btc ? snapshot.btc.changePct24h : 0,
       icon: snapshot.btc
@@ -191,31 +192,45 @@ function buildIndicatorMetrics(
   const fxRate = snapshot?.usdVnd?.rate ?? 25_500;
   const fxPressure = (fxRate - 25_500) / 40;
 
+  const generateMockHistory = (finalValue: number, volatility: number) => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const step = i / 11; // 0 to 1
+      const noise = (Math.random() - 0.5) * volatility;
+      const trend = (finalValue - 20) * step + 15; // move from around 15 to finalValue
+      return Math.max(5, Math.min(95, trend + noise));
+    });
+  };
+
   return [
     {
       label: "Đà giá",
       value: clampMetric(score + vnChange * 10),
       tone: score >= 58 ? "greed" : score <= 42 ? "fear" : "neutral",
+      history: generateMockHistory(clampMetric(score + vnChange * 10), 10),
     },
     {
       label: "Tin tức",
       value: clampMetric(score + vnChange * 7 - goldChange * 5 + 4),
       tone: score >= 55 ? "greed" : score <= 40 ? "fear" : "neutral",
+      history: generateMockHistory(clampMetric(score + vnChange * 7 - goldChange * 5 + 4), 15),
     },
     {
       label: "Độ rộng",
       value: clampMetric(score + vnChange * 14 + btcChange * 2),
       tone: score >= 52 ? "greed" : score <= 38 ? "fear" : "neutral",
+      history: generateMockHistory(clampMetric(score + vnChange * 14 + btcChange * 2), 8),
     },
     {
       label: "Vàng",
       value: clampMetric(50 - goldChange * 14 + score * 0.18),
       tone: goldChange > 0.8 ? "fear" : goldChange < -0.4 ? "greed" : "neutral",
+      history: generateMockHistory(clampMetric(50 - goldChange * 14 + score * 0.18), 12),
     },
     {
       label: "Khối ngoại ròng",
       value: clampMetric(score + vnChange * 8 - fxPressure),
       tone: score >= 57 ? "greed" : score <= 44 ? "fear" : "neutral",
+      history: generateMockHistory(clampMetric(score + vnChange * 8 - fxPressure), 5),
     },
   ];
 }
@@ -329,29 +344,23 @@ export function FGGauge({
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden border border-[#f0cf7a]/35 bg-[radial-gradient(circle_at_top,_rgba(255,219,120,0.18),_transparent_42%),linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-5 shadow-[0_0_0_1px_rgba(240,207,122,0.12),0_18px_70px_rgba(0,0,0,0.4),0_0_55px_rgba(240,207,122,0.08)] md:p-7"
+      className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-4 shadow-xl md:p-5"
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(circle at 22% 38%, ${zone.glow} 0%, transparent 28%), radial-gradient(circle at 78% 76%, rgba(49,224,148,0.14) 0%, transparent 30%)`,
-        }}
-      />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:58px_58px]" />
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(250,220,130,0.9),transparent)] blur-[0.5px]" />
-      <div className="pointer-events-none absolute inset-x-10 bottom-0 h-px bg-[linear-gradient(90deg,transparent,rgba(250,220,130,0.8),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.1] [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:58px_58px]" />
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-white/10" />
+      <div className="pointer-events-none absolute inset-x-10 bottom-0 h-px bg-white/5" />
 
-      <div className="relative z-10 flex flex-col gap-4">
+      <div className="relative z-10 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-2xl font-black tracking-tight text-white md:text-[2.1rem]">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-xl font-black tracking-tight text-white md:text-2xl">
               Nhiệt kế thị trường
             </h3>
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(74,222,128,0.9)]" />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.9)]" />
               Live
             </span>
-            <span className="rounded-xl border border-[#f0cf7a]/20 bg-[#f0cf7a]/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#f6dda0]">
+            <span className="rounded-lg border border-[#f0cf7a]/20 bg-[#f0cf7a]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f6dda0]">
               VN
             </span>
           </div>
@@ -364,231 +373,252 @@ export function FGGauge({
           </Link>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <div className="space-y-5">
-            <div className="relative mx-auto w-full max-w-[340px]">
-              <div className="absolute inset-[18%_10%_22%] rounded-full bg-[radial-gradient(circle,_rgba(250,220,130,0.3),_transparent_65%)] blur-2xl" />
-              <div className="absolute inset-[26%_16%_12%] rounded-full bg-[radial-gradient(circle,_rgba(50,220,140,0.18),_transparent_62%)] blur-2xl" />
+        <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+          <div className="relative mx-auto w-full max-w-[280px]">
+            <div className="absolute inset-[15%_10%_25%] rounded-full bg-[radial-gradient(circle,_rgba(250,220,130,0.25),_transparent_65%)] blur-2xl" />
+            <div className="absolute inset-[24%_16%_14%] rounded-full bg-[radial-gradient(circle,_rgba(50,220,140,0.15),_transparent_62%)] blur-2xl" />
 
-              <svg viewBox="0 0 320 230" className="relative z-10 w-full overflow-visible">
-                <defs>
-                  <linearGradient id="thermoTrack" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#ff5f6d" />
-                    <stop offset="34%" stopColor="#f0cf7a" />
-                    <stop offset="68%" stopColor="#d9ff8f" />
-                    <stop offset="100%" stopColor="#34d399" />
-                  </linearGradient>
-                  <filter id="thermoGlow">
-                    <feGaussianBlur stdDeviation="7" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
+            <svg viewBox="0 0 320 200" className="relative z-10 w-full overflow-visible">
+              {ZONES.map((z, i) => {
+                const radius = 106;
+                const c = 2 * Math.PI * radius;
+                const half = c / 2;
+                const isActive = score >= z.min && (score < z.max || (z.max > 100 && score <= 100));
 
-                <path
-                  d="M 58 182 A 102 102 0 0 1 262 182"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.08)"
-                  strokeWidth="30"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M 58 182 A 102 102 0 0 1 262 182"
-                  fill="none"
-                  stroke="url(#thermoTrack)"
-                  strokeWidth="26"
-                  strokeLinecap="round"
-                  opacity="0.24"
-                />
-                <path
-                  d="M 58 182 A 102 102 0 0 1 262 182"
-                  fill="none"
-                  stroke="url(#thermoTrack)"
-                  strokeWidth="20"
-                  strokeLinecap="round"
-                  strokeDasharray={arcFill}
-                  filter="url(#thermoGlow)"
-                />
-                <line
-                  x1="160"
-                  y1="152"
-                  x2="160"
-                  y2="84"
-                  stroke="rgba(255,243,212,0.75)"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                />
-                <polygon
-                  points="160,58 148,85 172,85"
-                  fill="rgba(255,243,212,0.85)"
-                  filter="url(#thermoGlow)"
-                />
-                <circle cx="160" cy="182" r="74" fill="rgba(8,12,18,0.55)" stroke="rgba(255,255,255,0.08)" />
-              </svg>
+                // Sweep calculation
+                const offset = (z.min / 100) * half;
+                const spanLength = ((z.max - z.min) / 100) * half;
+                const gap = 12; // pixels
+                const dashLength = Math.max(0, spanLength - gap);
 
-              <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center pt-5 text-center">
-                <div className="text-6xl font-black leading-none text-white drop-shadow-[0_0_22px_rgba(255,244,214,0.18)]">
-                  {score}
-                </div>
-                <div className="mt-2 text-lg font-semibold" style={{ color: zone.color }}>
-                  {zone.label}
-                </div>
-                <div className="mt-1 text-[11px] uppercase tracking-[0.28em] text-white/35">
-                  {trendLabel}
-                </div>
+                return (
+                  <circle
+                    key={i}
+                    cx="160"
+                    cy="182"
+                    r={radius}
+                    fill="none"
+                    stroke={z.color}
+                    strokeWidth={isActive ? 22 : 12}
+                    strokeLinecap="round"
+                    strokeDasharray={`${dashLength} ${c}`}
+                    strokeDashoffset={-offset}
+                    transform="rotate(-180 160 182)"
+                    opacity={isActive ? 1 : 0.25}
+                    style={{
+                      transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+                      filter: isActive ? `drop-shadow(0 0 12px ${z.color}40)` : "none"
+                    }}
+                  />
+                );
+              })}
+
+              {/* TÍNH TOÁN VỊ TRÍ MARKER */}
+              {(() => {
+                const radius = 106;
+                const angle = Math.PI - (score / 100) * Math.PI;
+                const markerX = 160 + Math.cos(angle) * radius;
+                const markerY = 182 - Math.sin(angle) * radius;
+
+                return (
+                  <g
+                    style={{
+                      transform: `translate(${markerX}px, ${markerY}px)`,
+                      transition: "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                    }}
+                  >
+                    <circle r={14} fill="#181C27" stroke={zone.glow} strokeWidth={6} />
+                    <circle r={5} fill="white" />
+                  </g>
+                );
+              })()}
+            </svg>
+
+            <div
+              className="pointer-events-none absolute z-20 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
+              style={{ top: '135px', left: '50%' }}
+            >
+              <div className="text-[60px] font-black leading-none tracking-tighter text-white drop-shadow-md">
+                {score}
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[24px] border border-[#f0cf7a]/30 bg-white/[0.04] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_0_35px_rgba(240,207,122,0.08)]">
+            <div
+              className="pointer-events-none absolute z-20 flex -translate-x-1/2 items-center justify-center text-center"
+              style={{ top: '167px', left: '50%' }}
+            >
               <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: `radial-gradient(circle at top left, ${zone.glow}, transparent 42%)`,
-                }}
-              />
-              <div className="relative z-10 flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f0cf7a]/15 text-lg">
-                  🦜
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-white">Vẹt Vàng</div>
-                  <div className="text-sm text-white/35" suppressHydrationWarning>
-                    {localTime ? localTime : "Đang lắng nghe"}
-                  </div>
-                </div>
+                className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest backdrop-blur-md"
+                style={{ color: zone.color }}
+              >
+                {zone.label}
               </div>
-              <p className="relative z-10 mt-4 text-lg leading-relaxed text-white/88">
-                {quote}
-              </p>
-              <div className="relative z-10 mt-3 text-base font-semibold text-[#f6dda0]">
-                → {action}
+            </div>
+
+            <div
+              className="pointer-events-none absolute z-20 flex -translate-x-1/2 items-center justify-center text-center"
+              style={{ top: '200px', left: '50%' }}
+            >
+              <div className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/35">
+                {trendLabel}
               </div>
             </div>
           </div>
 
           <div className="min-w-0">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-2">
               {indicators.map((indicator, index) => {
                 const barColor = getIndicatorColor(indicator.tone, zone.color);
+                // Create a mini sparkline path
+                const stepX = 140 / (indicator.history.length - 1);
+                const sparkPath = indicator.history.map((h, i) => {
+                  const x = i * stepX;
+                  const y = 30 - (h / 100) * 26;
+                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+                }).join(" ");
 
                 return (
-                  <div key={indicator.label} className="border-b border-white/10 pb-4">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <span className="text-lg font-medium text-white/92">
+                  <div key={indicator.label} className="group relative overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 transition-all hover:bg-white/[0.04]">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white/50 group-hover:text-white/80 transition-colors">
                         {indicator.label}
                       </span>
-                      <span className="text-2xl font-semibold text-white">
+                      <span className="text-lg font-black text-white" style={{ textShadow: `0 0 10px ${barColor}40` }}>
                         {indicator.value}
                       </span>
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${indicator.value}%` }}
-                        transition={{ duration: 0.9, delay: index * 0.08 }}
-                        className="h-full rounded-full"
-                        style={{
-                          background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
-                          boxShadow: `0 0 18px ${barColor}80`,
-                        }}
-                      />
+                    
+                    <div className="flex h-8 items-end justify-between gap-4">
+                      <svg viewBox="0 0 140 32" className="flex-1 overflow-visible">
+                        <motion.path
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ duration: 1.5, delay: index * 0.1 }}
+                          d={sparkPath}
+                          fill="none"
+                          stroke={barColor}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="140" cy={30 - (indicator.value / 100) * 26} r="2" fill={barColor} />
+                      </svg>
                     </div>
                   </div>
                 );
               })}
             </div>
+          </div>
+        </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-[1.05fr_1fr] lg:items-end">
-              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-5">
-                <div className="mb-4">
-                  <div className="text-3xl font-black text-[#f6dda0]">Xu hướng 24h</div>
-                  <div className="mt-1 text-sm text-white/40">
-                    {trendLabel} • nhịp tâm lý phiên gần nhất
-                  </div>
-                </div>
-
-                <svg viewBox="0 0 320 108" className="h-[120px] w-full overflow-visible">
-                  <defs>
-                    <linearGradient id="trendStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#3de28b" stopOpacity="0.72" />
-                      <stop offset="100%" stopColor="#63f0ae" stopOpacity="1" />
-                    </linearGradient>
-                    <linearGradient id="trendFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#38d996" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="#38d996" stopOpacity="0.02" />
-                    </linearGradient>
-                  </defs>
-
-                  <path d={trendAreaPath} fill="url(#trendFill)" />
-                  <path
-                    d={trendPath}
-                    fill="none"
-                    stroke="url(#trendStroke)"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    filter="drop-shadow(0 0 10px rgba(61,226,139,0.35))"
-                  />
-
-                  {trendPoints.map((_, index) => {
-                    const x = (320 / Math.max(trendPoints.length - 1, 1)) * index;
-
-                    return (
-                      <line
-                        key={x}
-                        x1={x}
-                        y1="92"
-                        x2={x}
-                        y2="101"
-                        stroke="rgba(255,255,255,0.28)"
-                        strokeWidth={index % 2 === 0 ? 1.8 : 1}
-                      />
-                    );
-                  })}
-                </svg>
-
-                <div className="mt-2 flex items-center justify-between text-sm text-white/42">
-                  <span>9h</span>
-                  <span>12h</span>
-                  <span>15h</span>
-                  <span>Đóng phiên</span>
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-5 shadow-sm transition-all hover:bg-white/[0.05]">
+            <div className="pointer-events-none absolute inset-0 bg-white/[0.01]" />
+            <div className="relative z-10 flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f0cf7a]/15 text-lg shadow-[inset_0_0_10px_rgba(240,207,122,0.1)]">
+                🦜
+              </div>
+              <div>
+                <div className="text-base font-bold text-white">Vẹt Vàng</div>
+                <div className="text-[11px] text-white/35 font-mono" suppressHydrationWarning>
+                  {localTime ? localTime : "Đang lắng nghe"}
                 </div>
               </div>
+            </div>
+            <p className="relative z-10 mt-4 text-[15px] leading-relaxed text-white/80">
+              {quote}
+            </p>
+            <div className="relative z-10 mt-auto pt-4 text-sm font-semibold text-[#f6dda0]">
+              → {action}
+            </div>
+          </div>
 
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="mb-2 text-xs uppercase tracking-[0.22em] text-white/35">
-                    Tình trạng
-                  </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <div>
-                      <div className="text-3xl font-black text-white">{zone.label}</div>
-                      <div className="mt-1 text-sm text-white/45">
-                        VN-Index{" "}
-                        {snapshot?.vnIndex
-                          ? `${vnChange > 0 ? "+" : ""}${vnChange.toFixed(2)}%`
-                          : "đang đồng pha với chỉ số"}
-                      </div>
-                    </div>
-                    <div
-                      className="rounded-full px-3 py-1 text-sm font-semibold"
-                      style={{ color: zone.color, backgroundColor: `${zone.color}18` }}
-                    >
-                      {score}/100
-                    </div>
+          <div className="relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-5 shadow-sm transition-all hover:bg-white/[0.05]">
+            <div className="mb-4">
+              <div className="text-lg font-black text-[#f6dda0] uppercase tracking-wider">Xu hướng 24h</div>
+              <div className="mt-0.5 text-[11px] text-white/40">
+                {trendLabel} • nhịp tâm lý
+              </div>
+            </div>
+
+            <div className="relative flex-1 flex items-center justify-center">
+              <svg viewBox="0 0 320 108" className="h-[74px] w-full overflow-visible">
+                <defs>
+                  <linearGradient id="trendStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3de28b" stopOpacity="0.72" />
+                    <stop offset="100%" stopColor="#63f0ae" stopOpacity="1" />
+                  </linearGradient>
+                  <linearGradient id="trendFill" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#38d996" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#38d996" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+
+                <path d={trendAreaPath} fill="url(#trendFill)" />
+                <path
+                  d={trendPath}
+                  fill="none"
+                  stroke="url(#trendStroke)"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+
+                {trendPoints.map((_, index) => {
+                  const x = (320 / Math.max(trendPoints.length - 1, 1)) * index;
+
+                  return (
+                    <line
+                      key={x}
+                      x1={x}
+                      y1="92"
+                      x2={x}
+                      y2="101"
+                      stroke="rgba(255,255,255,0.28)"
+                      strokeWidth={index % 2 === 0 ? 1.8 : 1}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between text-[10px] text-white/30 font-mono">
+              <span>9h</span>
+              <span>12h</span>
+              <span>15h</span>
+              <span>Đóng</span>
+            </div>
+          </div>
+
+          <div className="relative flex flex-col gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 shadow-sm transition-all hover:bg-white/[0.05]">
+            <div className="flex-1 rounded-xl bg-white/[0.04] p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+              <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/35">
+                Tình trạng
+              </div>
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-xl font-black text-white">{zone.label}</div>
+                  <div className="mt-0.5 text-[11px] text-white/45">
+                    VN-Index{" "}
+                    {snapshot?.vnIndex
+                      ? `${vnChange > 0 ? "+" : ""}${vnChange.toFixed(2)}%`
+                      : "đang đồng pha"}
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="mb-2 text-xs uppercase tracking-[0.22em] text-white/35">
-                    Vẹt chốt nhanh
-                  </div>
-                  <div className="text-base leading-relaxed text-white/74">
-                    {action}. Nếu mày thấy bảng điện nhấp nháy quá hấp dẫn, hít sâu 3 giây rồi
-                    mới bấm.
-                  </div>
+                <div
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{ color: zone.color, backgroundColor: `${zone.color}18` }}
+                >
+                  {score}/100
                 </div>
+              </div>
+            </div>
+
+            <div className="flex-1 rounded-xl bg-white/[0.04] p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+              <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-white/35">
+                Vẹt chốt nhanh
+              </div>
+              <div className="text-[13px] leading-relaxed text-white/70 italic">
+                "{action}"
               </div>
             </div>
           </div>
