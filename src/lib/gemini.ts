@@ -1,8 +1,11 @@
+import { google } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { checkLlmRateLimit } from "./llm-limiter";
 
-const TROLL_LLM_API_KEY = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
+const AI_PROVIDER = process.env.AI_PROVIDER || "trollllm";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const TROLL_LLM_API_KEY = process.env.TROLL_LLM_API_KEY || GEMINI_API_KEY;
 const TROLL_LLM_BASE_URL = "https://chat.trollllm.xyz/v1";
 
 interface GeminiOptions { // Keep interface name for compatibility
@@ -15,28 +18,63 @@ interface GeminiOptions { // Keep interface name for compatibility
 
 const DEFAULT_OPTIONS: GeminiOptions = {
   temperature: 0.7,
-  maxTokens: 2048,
+  maxTokens: 5000, // Compact but sufficient for thought + content
   retries: 3,
   delayMs: 1000,
-  model: "gemini-3-flash", // Best price/performance on TrollLLM as confirmed by manual curl
+  // Default models based on provider
+  model: AI_PROVIDER === "trollllm" ? "gemini-3-flash" : "gemini-1.5-flash",
 };
 
-/* ─── Call LLM (OpenAI Compatible) with native fetch for max compatibility ─── */
+/* ─── Call LLM (Automatic Switch based on AI_PROVIDER) ─── */
 export async function callGemini(
   prompt: string,
   options: GeminiOptions = {}
 ): Promise<string> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-
-  if (!TROLL_LLM_API_KEY) {
-    throw new Error('TROLL_LLM_API_KEY (or GEMINI_API_KEY fallback) not configured')
+  if (AI_PROVIDER === "trollllm") {
+    return callTrollLLM(prompt, options);
+  } else {
+    return callGoogleGemini(prompt, options);
   }
+}
+
+/* ─── Native Gemini (Google) ─── */
+async function callGoogleGemini(
+  prompt: string,
+  options: GeminiOptions = {}
+): Promise<string> {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   let lastError: Error | null = null;
-
   for (let attempt = 1; attempt <= (opts.retries || 3); attempt++) {
     try {
-      // Check RPM before each call
+      const { text } = await generateText({
+        model: google(opts.model || "gemini-1.5-flash"),
+        prompt,
+        temperature: opts.temperature,
+        ...({ maxTokens: opts.maxTokens } as any),
+      });
+      return text;
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Gemini attempt ${attempt} failed:`, lastError.message);
+      if (attempt < (opts.retries || 3)) await sleep(opts.delayMs! * attempt);
+    }
+  }
+  throw lastError || new Error("Failed to call Google Gemini");
+}
+
+/* ─── TrollLLM (OpenAI Compatible) with native fetch ─── */
+async function callTrollLLM(
+  prompt: string,
+  options: GeminiOptions = {}
+): Promise<string> {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  if (!TROLL_LLM_API_KEY) throw new Error("TROLL_LLM_API_KEY not configured");
+
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= (opts.retries || 3); attempt++) {
+    try {
       checkLlmRateLimit();
 
       const response = await fetch(`${TROLL_LLM_BASE_URL}/chat/completions`, {
@@ -50,37 +88,32 @@ export async function callGemini(
           model: opts.model || "gemini-3-flash",
           messages: [{ role: 'user', content: prompt }],
           max_tokens: opts.maxTokens,
-          // Note: No temperature for reasoning models
+          // No temperature for reasoning models on TrollLLM
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
       const text = data.choices?.[0]?.message?.content;
-
       if (!text) {
-        throw new Error('No content received from LLM');
+        console.error('TrollLLM Response without content:', JSON.stringify(data));
+        throw new Error('No content received from TrollLLM');
       }
-
       return text;
     } catch (error) {
       lastError = error as Error;
-      console.error(`LLM attempt ${attempt} failed:`, lastError.message);
-
-      if (attempt < (opts.retries || 3)) {
-        await sleep(opts.delayMs! * attempt); // exponential backoff
-      }
+      console.error(`TrollLLM attempt ${attempt} failed:`, lastError.message);
+      if (attempt < (opts.retries || 3)) await sleep(opts.delayMs! * attempt);
     }
   }
-
-  throw new Error(`LLM call failed after ${opts.retries} retries: ${lastError?.message}`);
+  throw lastError || new Error("Failed to call TrollLLM");
 }
 
-/* ─── Call LLM with JSON output ─── */
+/* ─── Shared Utilities ─── */
 export async function callGeminiJSON<T>(
   prompt: string,
   options: GeminiOptions = {}
@@ -88,7 +121,6 @@ export async function callGeminiJSON<T>(
   const jsonPrompt = `${prompt}\n\nRespond ONLY with valid JSON, no markdown, no explanation.`;
   const text = await callGemini(jsonPrompt, options);
 
-  // Strip markdown code fences if present
   const cleaned = text
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")

@@ -171,9 +171,9 @@ function sleep(ms: number) {
 }
 
 function normalizeDate(raw: string): string {
-  if (!raw) return new Date().toISOString()
+  if (!raw) return new Date(0).toISOString() // Epoch 1970 — definitely stale
   const dt = new Date(raw)
-  if (Number.isNaN(dt.getTime())) return new Date().toISOString()
+  if (Number.isNaN(dt.getTime())) return new Date(0).toISOString()
   return dt.toISOString()
 }
 
@@ -297,7 +297,7 @@ async function reviewWithAi(signalText: string, currentAsset: string): Promise<A
 
   try {
     const result = await callGeminiJSON<AiSentimentReview>(prompt, {
-      maxTokens: 180,
+      maxTokens: 2048, // Increased from 180 for reasoning models
       retries: 2,
       delayMs: 600,
     })
@@ -420,6 +420,12 @@ function parseRssItems(xml: string, section: string, limit: number, maxChars: nu
         : ''
 
       if (!title || !link) return null
+
+      // Filter out stale news (older than 30 days) to prevent "Iran/USA" news hauntings
+      const pubDate = new Date(published)
+      const now = new Date()
+      const daysOld = (now.getTime() - pubDate.getTime()) / (1000 * 3600 * 24)
+      if (daysOld > 30) return null
 
       const source = (() => {
         try {

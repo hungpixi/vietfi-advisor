@@ -12,7 +12,7 @@
  * Pricing: 50% giá standard cho cùng model
  */
 
-import { callGemini } from "./gemini";
+import { callGemini, callGeminiJSON } from "./gemini";
 
 interface BatchRequest {
   id: string;        // Unique ID cho mỗi request
@@ -47,7 +47,7 @@ export async function batchProcess(
 ): Promise<BatchResult[]> {
   const {
     temperature = 0.5,
-    maxTokens = 1024,
+    maxTokens = 5000,
     batchSize = 5,
     delayBetweenMs = 1000, // Căng hơn cho TrollLLM
   } = options;
@@ -121,32 +121,46 @@ export async function batchSummarizeNews(
  * Generate Morning Brief — tổng hợp 1 ngày thành 1 đoạn ngắn
  * Chạy 1 lần/ngày qua cron job
  */
+export interface MorningBriefResponse {
+  summary: string;
+  takeaways: { emoji: string; asset: string; text: string }[];
+}
+
 export async function generateMorningBrief(data: {
   vnIndex: { value: number; change: number };
   goldSjc: { buy: number; sell: number };
   usdVnd: { rate: number; change: number };
   topNews: string[];
-}): Promise<string> {
+}): Promise<MorningBriefResponse> {
   const prompt = `
-Bạn là "Vẹt Vàng", một linh vật hướng dẫn tài chính mang phong cách "mỏ hỗn", xéo xắt, châm biếm nhưng thâm sâu, chuyên "tát nước theo mưa" dựa trên thị trường tài chính Việt Nam.
+Bạn là "Vẹt Vàng", một linh vật hướng dẫn tài chính mang phong cách "mỏ hỗn", xéo xắt, châm biếm nhưng thâm sâu.
 
-Dựa trên data thị trường sáng nay, viết lại Bản tin hóng biến thị trường (Morning Brief) cực kỳ ngắn gọn (3-4 câu, tiếng Việt, cho Gen Z) mang đậm phong cách của bạn. ĐỪNG MỞ BÀI DÀI DÒNG, DÔ LUÔN VẤN ĐỀ. KHÔNG dùng danh sách gạch đầu dòng. KHÔNG in đậm bừa bãi. 
+Dựa trên data thị trường dưới đây, hãy thực hiện 2 nhiệm vụ:
+1. Viết một đoạn "Morning Brief" (3-4 câu, tiếng Việt, Gen Z).
+2. Viết 4 điểm nhấn chính (Takeaways) dựa trên top tin tức nóng, mỗi điểm nhấn gồm emoji, loại tài sản và 1 câu tóm tắt cực ngắn bắng giọng văn của bạn.
 
 Data thị trường:
-VN-Index: ${data.vnIndex.value} (${data.vnIndex.change > 0 ? "+" : ""}${data.vnIndex.change}%)
-Vàng SJC: Mua ${data.goldSjc.buy.toLocaleString('vi-VN')} / Bán ${data.goldSjc.sell.toLocaleString('vi-VN')}
-USD/VND: ${data.usdVnd.rate.toLocaleString('vi-VN')} (${data.usdVnd.change > 0 ? "+" : ""}${data.usdVnd.change}%)
+VN-Index: ${data.vnIndex.value} điểm (${data.vnIndex.change > 0 ? "+" : ""}${data.vnIndex.change}%)
+Vàng SJC: ${data.goldSjc.sell.toLocaleString('vi-VN')} đ/lượng
+USD/VND: ${data.usdVnd.rate.toLocaleString('vi-VN')}
 
-Top tin tức nóng:
+Tin tức nóng hiện có:
 ${data.topNews.map((n, i) => `${i + 1}. ${n}`).join("\n")}
 
-Format yêu cầu:
-- Câu 1: Punchline thật gắt, xéo xắt / châm biếm về tình trạng thị trường (xanh hay đỏ) bằng ngôn ngữ Gen Z.
-- Câu 2-3: Review siêu ngắn về một vài tin tức nổi bật và ảnh hưởng của nó đến túi tiền "bọt bèo" của nhà đầu tư.
-- Câu 4: Một câu chốt sale / khuyên răn thô nhưng thật để họ quản trị rủi ro ngay hôm nay.
+YÊU CẦU OUTPUT JSON THUẦN (không markdown):
+{
+  "summary": "Nội dung bản tin 3-4 câu mỏ hỗn của bạn",
+  "takeaways": [
+    { "emoji": "🔴/🟢/🟡", "asset": "Chứng khoán/Vàng/Vĩ mô/Tiết kiệm/Crypto", "text": "Câu tóm tắt tin tức bằng giọng văn của bạn" }
+  ]
+}
+
+NGUYÊN TẮC: 
+- Tuyệt đối không dùng lại nguyên văn tiêu đề báo rác. Hãy dùng kiến thức của bạn để viết lại cho sang chảnh / xéo xắt.
+- Nếu tin tức có vẻ cũ hoặc không liên quan, hãy "mắng" người dùng một cách duyên dáng.
 `;
 
-  return await callGemini(prompt, { temperature: 0.5, maxTokens: 500 });
+  return await callGeminiJSON<MorningBriefResponse>(prompt, { temperature: 0.5, maxTokens: 4096 });
 }
 
 // ── Simple in-memory cache with eviction ──────────────────────────

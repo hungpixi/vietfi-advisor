@@ -1,6 +1,6 @@
 import { crawlMarketData, type MarketSnapshot } from '@/lib/market-data/crawler'
 import { crawlNews, type NewsArticle } from '@/lib/news/crawler'
-import { generateMorningBrief } from '@/lib/gemini-batch'
+import { generateMorningBrief, type MorningBriefResponse } from '@/lib/gemini-batch'
 
 export interface MorningBriefTakeaway {
   emoji: string
@@ -49,40 +49,44 @@ function formatTakeaways(articles: NewsArticle[]): MorningBriefTakeaway[] {
   }))
 }
 
-function normalizeMorningBrief(raw: string, market: MarketSnapshot, articles: NewsArticle[], source: 'gemini' | 'heuristic'): MorningBriefData {
+function normalizeMorningBrief(aiRes: MorningBriefResponse, market: MarketSnapshot, articles: NewsArticle[], source: 'gemini' | 'heuristic'): MorningBriefData {
   const now = new Date()
-  const summary = raw.trim().replace(/\s+/g, ' ').slice(0, 600)
-
+  
   return {
     date: `Hôm nay, ${now.toLocaleDateString('vi-VN')}`,
     title: 'Morning Brief AI',
-    summary: summary || 'Morning Brief đang cập nhật.',
-    raw: raw.trim(),
+    summary: aiRes.summary,
+    raw: JSON.stringify(aiRes),
     source,
-    takeaways: formatTakeaways(articles),
+    takeaways: aiRes.takeaways,
   }
 }
 
 function buildSimulatedGeminiBrief(marketSnapshot: MarketSnapshot, newsSnapshot: { articles: NewsArticle[] }): MorningBriefData {
   const top = newsSnapshot.articles.slice(0, 4)
-  const vnIndex = marketSnapshot.vnIndex?.changePct || 0;
+  const vnIndex = marketSnapshot.vnIndex?.price || 0;
+  const vnChange = marketSnapshot.vnIndex?.changePct || 0;
+  const goldPrice = marketSnapshot.goldSjc?.goldVnd?.toLocaleString('vi-VN') || '---';
   
-  let moodPrompt = vnIndex >= 0 ? "sắc xanh tích cực" : "áp lực điều chỉnh";
-  let promptText = `Thị trường mở cửa trong ${moodPrompt}, VN-Index biến động ${vnIndex}%. `;
+  let moodPrompt = vnChange >= 0 ? "sắc xanh tích cực" : "áp lực điều chỉnh";
+  let promptText = `[Bản tin Dự phòng] Thị trường hôm nay vận động trong ${moodPrompt}, VN-Index hiện đạt ${vnIndex.toFixed(2)} điểm (${vnChange >= 0 ? '+' : ''}${vnChange}%). `;
+  
+  if (marketSnapshot.goldSjc) {
+    promptText += `Giá vàng SJC đang neo ở mức ${goldPrice} đ/lượng. `;
+  }
+
   if (top.length > 0) {
-    promptText += `Tâm điểm chú ý hôm nay đổ dồn vào tin tức: "${top[0].title}". `;
+    promptText += `Tin tức đáng chú ý: "${top[0].title}". `;
   }
-  if (top.length > 1) {
-    promptText += `Bên cạnh đó, nhóm tin tức xoay quanh "${top[1].title.toLowerCase()}" cũng đang là diễn biến đáng được các nhà đầu tư quan tâm. `;
-  }
-  promptText += "Khuyến nghị từ Vẹt Vàng: Đừng Fomo lúc này. Hãy quản trị rủi ro chặt chẽ và luôn theo dõi khối lượng giao dịch trước khi đưa ra bất kỳ quyết định giải ngân nào.";
+  
+  promptText += "Vẹt Vàng khuyên bạn: Trong lúc AI đang 'bảo trì' não bộ, hãy bám sát danh mục và đừng để cảm xúc dẫn dắt túi tiền!";
 
   return {
     date: `Hôm nay, ${new Date().toLocaleDateString('vi-VN')}`,
-    title: 'Bản tin sáng AI (Simulated)',
+    title: 'Morning Brief (Dữ liệu thực)',
     summary: promptText,
     raw: promptText,
-    source: 'gemini', // Fake it till you make it cho demo startup!
+    source: 'heuristic', // Correctly mark as heuristic
     takeaways: formatTakeaways(newsSnapshot.articles),
   }
 }
@@ -101,7 +105,7 @@ export async function buildMorningBrief(): Promise<MorningBriefData> {
   const topNewsTitles = newsSnapshot.articles.slice(0, 4).map((item, index) => `${index + 1}. ${item.title}`)
 
   try {
-    const briefText = await generateMorningBrief({
+    const aiResponse = await generateMorningBrief({
       vnIndex: {
         value: marketSnapshot.vnIndex?.price ?? 0,
         change: marketSnapshot.vnIndex?.changePct ?? 0,
@@ -117,7 +121,7 @@ export async function buildMorningBrief(): Promise<MorningBriefData> {
       topNews: topNewsTitles,
     })
 
-    return normalizeMorningBrief(briefText, marketSnapshot, newsSnapshot.articles, 'gemini')
+    return normalizeMorningBrief(aiResponse, marketSnapshot, newsSnapshot.articles, 'gemini')
   } catch (err) {
     console.error('[morning-brief] Gemini generation failed, using simulated Gemini brief for smooth demo:', err)
     return buildSimulatedGeminiBrief(marketSnapshot, newsSnapshot)

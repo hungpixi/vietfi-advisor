@@ -1,3 +1,4 @@
+import { google } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { checkLlmRateLimit } from '@/lib/llm-limiter';
@@ -152,15 +153,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── STEP 3: Fallback to TrollLLM (OpenAI Compatible) ────────
-    const apiKey = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
+    // ── STEP 3: Fallback to AI Provider (Google or TrollLLM) ──
+    const AI_PROVIDER = process.env.AI_PROVIDER || "trollllm";
+    const apiKey = AI_PROVIDER === "trollllm" 
+      ? (process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY)
+      : process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "TROLL_LLM_API_KEY (or GEMINI_API_KEY fallback) is not configured on the server." }), {
+      return new Response(JSON.stringify({ error: `${AI_PROVIDER === "trollllm" ? "TROLL_LLM_API_KEY" : "GEMINI_API_KEY"} is not configured.` }), {
         status: 500, headers: { "Content-Type": "application/json" }
       });
     }
 
-    // RPM check for TrollLLM
+    // RPM check logic (currently shared, though Gemini has its own limits)
     try {
       checkLlmRateLimit();
     } catch (e) {
@@ -169,16 +174,22 @@ export async function POST(req: Request) {
       });
     }
 
-    const troll = createOpenAI({
-      apiKey,
-      baseURL: "https://chat.trollllm.xyz/v1",
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    let model;
+    if (AI_PROVIDER === "trollllm") {
+      const troll = createOpenAI({
+        apiKey,
+        baseURL: "https://chat.trollllm.xyz/v1",
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      model = troll("gemini-3-flash");
+    } else {
+      model = google("gemini-1.5-flash");
+    }
 
     const result = streamText({
-      model: troll("gemini-3-flash"),
+      model,
       system: SYSTEM_PROMPT,
       messages: sanitized,
     });

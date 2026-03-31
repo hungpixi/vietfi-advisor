@@ -278,7 +278,7 @@ export default function SentimentPage() {
           </div>
 
           {/* Chart */}
-          <div className="h-[320px]">
+          <div className="h-[320px] w-full min-w-0 relative">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
