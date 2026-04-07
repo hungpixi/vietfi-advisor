@@ -4,7 +4,7 @@
 
 Repo nay khong con deploy qua Vercel. Production duoc tu dong deploy tu GitHub Actions sang host Vinahost ma khong lo thong tin server cho collaborator.
 
-## Tai sao khong dung FTP static
+## Tai sao khong dung static hosting thuong
 
 App hien tai la Next.js co runtime server:
 
@@ -18,15 +18,15 @@ Vi vay khong the chi upload file static nhu Astro site.
 
 ## Kieu deploy duoc ho tro
 
-Dung cPanel Node.js App hoac mot Node runtime tuong duong tren Vinahost.
+Dung cPanel Node.js App, nhung deploy bang FTP.
 
 Yeu cau toi thieu tren host:
 
-1. Co SSH access.
-2. Co Node.js app runtime.
-3. App root da duoc tao san, vi du: `~/vietfi`
-4. Startup file trong cPanel dat la `server.cjs`
-5. Sau moi lan deploy chi can `touch tmp/restart.txt`
+1. Co Node.js app runtime trong cPanel.
+2. App root da duoc tao san, vi du: `~/vietfi`
+3. Startup file trong cPanel dat la `server.js`
+4. Co FTP account upload duoc vao app root.
+5. Passenger restart bang `tmp/restart.txt`
 
 ## GitHub Actions
 
@@ -35,41 +35,34 @@ Yeu cau toi thieu tren host:
 Workflow `CI` se chay:
 
 1. `npm ci`
-2. `npm run lint`
-3. `npm run test:run`
-4. `npm run build`
+2. `npm run build`
 
 ### Deploy
 
 Workflow `Deploy VietFi To Vinahost` se:
 
-1. Package source code
-2. Upload qua SSH
-3. Giai nen vao app dir
-4. Ghi `.env.production` tu GitHub Secret
-5. `npm ci`
-6. `npm run build`
-7. restart Node app
+1. Build Next.js tren GitHub Actions
+2. Tao bundle `standalone`
+3. Ghi `.env.production` tu GitHub Secret
+4. Upload bundle qua FTP vao app root
+5. Upload `tmp/restart.txt` de Node app tu restart
 
 ## Secrets can tao trong repo
 
-Tat ca phai la GitHub Secrets, khong dung Variables cho server info.
+Tat ca phai la GitHub Secrets.
 
-- `DEPLOY_HOST`
-- `DEPLOY_PORT`
-- `DEPLOY_USER`
-- `DEPLOY_SSH_KEY`
-- `DEPLOY_APP_DIR`
-- `DEPLOY_TMP_DIR`
+- `FTP_SERVER`
+- `FTP_USERNAME`
+- `FTP_PASSWORD`
+- `FTP_SERVER_DIR`
 - `APP_ENV_PRODUCTION`
 
 ## Gia tri goi y
 
 Neu app root tren cPanel la `~/vietfi`:
 
-- `DEPLOY_PORT=22`
-- `DEPLOY_APP_DIR=/home/<cpanel-user>/vietfi`
-- `DEPLOY_TMP_DIR=/home/<cpanel-user>/tmp`
+- `FTP_SERVER=phamphunguyenhung.com`
+- `FTP_SERVER_DIR=./vietfi/`
 
 `APP_ENV_PRODUCTION` phai la noi dung day du cua file `.env.production`.
 
@@ -80,13 +73,14 @@ Collaborator co the push code va mo PR, nhung khong doc duoc GitHub Secrets.
 Khuyen nghi them:
 
 1. Chi auto deploy khi merge vao `master`
-2. Dung `production` environment tren GitHub
+2. Dung `Production` environment tren GitHub
 3. Neu can, bat required reviewers cho environment production
 
 ## Setup cPanel can lam 1 lan
 
 1. Tao Node.js app cho subdomain `vietfi.phamphunguyenhung.com`
-2. Chon app root dung voi `DEPLOY_APP_DIR`
-3. Chon startup file `server.cjs`
+2. Chon app root dung voi folder subdomain, vi du `vietfi`
+3. Chon startup file `server.js`
 4. Dat Node version khop voi workflow, uu tien Node 20
-5. Sau khi setup xong, de GitHub Actions lo phan cap nhat code
+5. Tao hoac sua app environment vars neu cPanel bat buoc
+6. Sau khi setup xong, de GitHub Actions lo phan cap nhat code

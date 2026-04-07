@@ -1,0 +1,81 @@
+name: Deploy VietFi To Vinahost
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment secrets
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+          APP_ENV_PRODUCTION: ${{ secrets.APP_ENV_PRODUCTION }}
+        run: |
+          for key in FTP_SERVER FTP_USERNAME FTP_PASSWORD FTP_SERVER_DIR APP_ENV_PRODUCTION; do
+            if [ -z "${!key}" ]; then
+              echo "Missing required production secret: $key" >&2
+              exit 1
+            fi
+          done
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          AI_PROVIDER: trollllm
+          TROLL_LLM_API_KEY: test-key
+          GEMINI_API_KEY: test-key
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          CRON_SECRET: test-cron-secret
+          ENABLE_NEWS_AI_REVIEW: "0"
+
+      - name: Prepare FTP payload
+        shell: bash
+        run: |
+          rm -rf deploy
+          mkdir -p deploy/.next
+          mkdir -p deploy/tmp
+          cp -R .next/standalone/. deploy/
+          cp -R .next/static deploy/.next/static
+          cp -R public deploy/public
+          printf "%s" "${{ secrets.APP_ENV_PRODUCTION }}" > deploy/.env.production
+          touch deploy/tmp/restart.txt
+
+      - name: Deploy standalone bundle via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./deploy/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          dangerous-clean-slate: false
+
+      - name: Deployment summary
+        run: echo "Deployed to https://vietfi.phamphunguyenhung.com"
