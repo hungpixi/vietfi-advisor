@@ -1,0 +1,378 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775550494003,
+  "projectRoot": "D:\\vietfi-advisor",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.1.7",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "@playwright/test",
+        "version": "1.58.2",
+        "category": "testing"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "test": "vitest",
+      "test:run": "vitest run",
+      "test:e2e": "playwright test",
+      "test:e2e:ui": "playwright test --ui",
+      "test:e2e:headed": "playwright test --headed",
+      "test:e2e:debug": "playwright test --debug"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "scripts",
+      "src",
+      "tests"
+    ],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "android": {
+      "path": "android",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775550493966,
+      "keyFiles": []
+    },
+    "design-exports": {
+      "path": "design-exports",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1775550493966,
+      "keyFiles": [
+        "9nb0s.png",
+        "AL84F.png",
+        "ge27S.png",
+        "IuBLF.png",
+        "K66sZ.png"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1775550493973,
+      "keyFiles": [
+        "wda2026-report-sections-vietfi.md"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 9,
+      "lastAccessed": 1775550493974,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "manifest.json",
+        "next.svg",
+        "quotes.json"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 6,
+      "lastAccessed": 1775550493974,
+      "keyFiles": [
+        "debug_clone.py",
+        "generate-tts-bank.ts",
+        "generate_audio.py",
+        "list_voices.py",
+        "test_clone.py"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 1,
+      "lastAccessed": 1775550493974,
+      "keyFiles": [
+        "proxy.ts"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1775550493975,
+      "keyFiles": []
+    },
+    "ui-prototype": {
+      "path": "ui-prototype",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1775550493975,
+      "keyFiles": [
+        "index.html",
+        "quotes.json",
+        "script.js",
+        "style.css",
+        "vet-demo.html"
+      ]
+    },
+    "vietfi-appwrite": {
+      "path": "vietfi-appwrite",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775550493976,
+      "keyFiles": [
+        "README.md"
+      ]
+    },
+    "voice_ref": {
+      "path": "voice_ref",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1775550493976,
+      "keyFiles": [
+        "zinzin.vi.vtt"
+      ]
+    },
+    "android\\app": {
+      "path": "android\\app",
+      "purpose": "Application code",
+      "fileCount": 0,
+      "lastAccessed": 1775550493977,
+      "keyFiles": []
+    },
+    "docs\\assets": {
+      "path": "docs\\assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1775550493977,
+      "keyFiles": [
+        "vietfi-onboarding-flow.png",
+        "vietfi-system-architecture.png"
+      ]
+    },
+    "public\\assets": {
+      "path": "public\\assets",
+      "purpose": "Static assets",
+      "fileCount": 10,
+      "lastAccessed": 1775550493980,
+      "keyFiles": [
+        "icon-192.png",
+        "icon-512.png",
+        "icon.png"
+      ]
+    },
+    "public\\docs": {
+      "path": "public\\docs",
+      "purpose": "Documentation",
+      "fileCount": 57,
+      "lastAccessed": 1775550493982,
+      "keyFiles": [
+        "audit_budget_1773931000033.png",
+        "audit_cpi_retry_1773931015040.png",
+        "audit_dashboard_1773930999275.png"
+      ]
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1775550493982,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "layout.tsx"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1775550493983,
+      "keyFiles": []
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 17,
+      "lastAccessed": 1775550493984,
+      "keyFiles": [
+        "expense-parser.ts",
+        "gamification.ts",
+        "gemini-batch.ts"
+      ]
+    },
+    "src\\test": {
+      "path": "src\\test",
+      "purpose": "Test files",
+      "fileCount": 1,
+      "lastAccessed": 1775550493984,
+      "keyFiles": [
+        "setup.ts"
+      ]
+    },
+    "ui-prototype\\assets": {
+      "path": "ui-prototype\\assets",
+      "purpose": "Static assets",
+      "fileCount": 8,
+      "lastAccessed": 1775550493986,
+      "keyFiles": [
+        "icon.png",
+        "level-1-con.png",
+        "level-2-teen.png"
+      ]
+    },
+    "vietfi-appwrite\\docs": {
+      "path": "vietfi-appwrite\\docs",
+      "purpose": "Documentation",
+      "fileCount": 3,
+      "lastAccessed": 1775550493987,
+      "keyFiles": [
+        "appwrite-clone-plan.md",
+        "appwrite-schema.md",
+        "design-spec.md"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\app\\dashboard\\page.tsx",
+      "accessCount": 34,
+      "lastAccessed": 1775557197708,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\page.tsx",
+      "accessCount": 26,
+      "lastAccessed": 1775556919476,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1775559451922,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 6,
+      "lastAccessed": 1775556526683,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 5,
+      "lastAccessed": 1775556871088,
+      "type": "directory"
+    },
+    {
+      "path": "next.config.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775556870864,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1775556889098,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\layout.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775556948169,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\globals.css",
+      "accessCount": 1,
+      "lastAccessed": 1775551367043,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\vetvang-persona.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775551367414,
+      "type": "file"
+    },
+    {
+      "path": "public\\assets",
+      "accessCount": 1,
+      "lastAccessed": 1775551448419,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\dashboard\\debt\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775556535743,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\budget\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775556535860,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

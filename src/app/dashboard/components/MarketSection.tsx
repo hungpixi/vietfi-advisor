@@ -71,33 +71,33 @@ const stagger = {
 };
 
 const ZONES: ThermometerZone[] = [
-  { label: "Cực kỳ sợ hãi", color: "#FF4D6D", glow: "rgba(255, 77, 109, 0.36)", min: 0, max: 20 },
-  { label: "Sợ hãi", color: "#FF8A5B", glow: "rgba(255, 138, 91, 0.28)", min: 20, max: 40 },
-  { label: "Trung lập", color: "#F1D17A", glow: "rgba(241, 209, 122, 0.28)", min: 40, max: 60 },
-  { label: "Tham lam", color: "#4ADE80", glow: "rgba(74, 222, 128, 0.26)", min: 60, max: 80 },
-  { label: "Cực kỳ tham lam", color: "#2DD4BF", glow: "rgba(45, 212, 191, 0.34)", min: 80, max: 101 },
+  { label: "Cực kỳ sợ hãi", color: "#EF4444", glow: "rgba(239, 68, 68, 0.3)", min: 0, max: 20 },
+  { label: "Sợ hãi", color: "#F97316", glow: "rgba(249, 115, 22, 0.2)", min: 20, max: 40 },
+  { label: "Trung lập", color: "#F1D17A", glow: "rgba(241, 209, 122, 0.2)", min: 40, max: 60 },
+  { label: "Tham lam", color: "#22C55E", glow: "rgba(34, 197, 94, 0.2)", min: 60, max: 80 },
+  { label: "Cực kỳ tham lam", color: "#10B981", glow: "rgba(16, 185, 129, 0.3)", min: 80, max: 101 },
 ];
 
 const VERTEX_QUOTES: Record<string, { quote: string; action: string }> = {
   extreme_fear: {
-    quote: "Thị trường đang run, mày mà bình tĩnh thì đang có lợi thế.",
-    action: "Canh gom từng nhịp, đừng all-in như phim",
+    quote: "Thị trường trong trạng thái bán tháo diện rộng.",
+    action: "Theo dõi dòng tiền bắt đáy",
   },
   fear: {
-    quote: "Không khí hơi rén, nhưng tiền khôn luôn thích lúc đám đông chùn tay.",
-    action: "Ưu tiên cổ phiếu khỏe, giải ngân chậm",
+    quote: "Áp lực bán gia tăng, tâm lý chung thận trọng.",
+    action: "Ưu tiên quản trị rủi ro",
   },
   neutral: {
-    quote: "Yên bình trước bão. Đừng vội, đừng hoảng.",
-    action: "Follow for opportunity",
+    quote: "Thị trường đang duy trì mốc trung lập. Dấu hiệu tích lũy chờ xu hướng mới.",
+    action: "Quan sát thanh khoản",
   },
   greed: {
-    quote: "Nóng lên rồi đó. Hưng phấn quá là dễ mua đúng đỉnh lắm nghe.",
-    action: "Canh chốt bớt, giữ đầu lạnh",
+    quote: "Lực cầu cải thiện, tâm lý thị trường tích cực.",
+    action: "Chú ý rủi ro phân hóa",
   },
   extreme_greed: {
-    quote: "FOMO bốc khói luôn rồi. Lúc ai cũng tự tin là lúc phải nghi ngờ.",
-    action: "Khóa lãi trước khi thị trường khóa mày",
+    quote: "Thị trường hưng phấn cao độ, rủi ro điều chỉnh gia tăng.",
+    action: "Cân nhắc chốt lời từng phần",
   },
 };
 
@@ -220,50 +220,10 @@ function buildIndicatorMetrics(
   ];
 }
 
-function buildTrendPoints(score: number) {
-  return Array.from({ length: 8 }, (_, index) => {
-    const wave = Math.sin(index * 0.9 + score / 18) * 8;
-    const drift = index * 3.5;
-    const base = score - 10 + drift + wave;
-
-    return Math.max(20, Math.min(86, Math.round(base)));
-  });
-}
-
-function buildTrendPath(points: number[], width: number, height: number) {
-  if (points.length === 0) return "";
-
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const spread = Math.max(max - min, 1);
-  const stepX = width / Math.max(points.length - 1, 1);
-
-  return points
-    .map((point, index) => {
-      const x = index * stepX;
-      const y = height - ((point - min) / spread) * (height - 10) - 5;
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
-}
-
-function describeTrend(points: number[]) {
-  if (points.length < 2) return "Giữ nhịp";
-
-  const change = points[points.length - 1] - points[0];
-
-  if (change >= 8) return "Đang ấm lên";
-  if (change <= -8) return "Hạ nhiệt";
-  return "Sideway tỉnh táo";
-}
-
-function getIndicatorColor(
-  tone: MarketThermometerIndicator["tone"],
-  zoneColor: string,
-) {
-  if (tone === "fear") return "#FF8A80";
-  if (tone === "greed") return "#34D399";
-  return zoneColor;
+function getIndicatorColor(value: number) {
+  if (value > 55) return "#22C55E"; // green-500
+  if (value < 45) return "#EF4444"; // red-500
+  return "#F1D17A"; // zone-neutral/yellow
 }
 
 export function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
@@ -313,168 +273,154 @@ export function FGGauge({
 }) {
   const zone = ZONES.find((item) => score >= item.min && score < item.max) ?? ZONES[2];
   const { quote, action } = VERTEX_QUOTES[getVertexZoneKey(score)];
-  const localTime = usePersistentTime();
   const indicators = useMemo(() => buildIndicatorMetrics(score, snapshot), [score, snapshot]);
-  const trendPoints = useMemo(() => buildTrendPoints(score), [score]);
-  const trendPath = useMemo(() => buildTrendPath(trendPoints, 320, 108), [trendPoints]);
-  const trendAreaPath = `${trendPath} L 320 108 L 0 108 Z`;
-  const trendLabel = useMemo(() => describeTrend(trendPoints), [trendPoints]);
-  const vnChange = snapshot?.vnIndex?.changePct ?? 0;
-  const arcFill = useMemo(() => {
-    const radius = 102;
-    const circumference = Math.PI * radius;
-    return `${(score / 100) * circumference} ${circumference}`;
-  }, [score]);
 
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-4 shadow-xl"
+      className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-5 shadow-xl"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <h3 className="text-base font-bold tracking-tight text-white">
             Nhiệt kế thị trường
           </h3>
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]" />
-            Live
+            LIVE
           </span>
-          <span className="rounded border border-[#f0cf7a]/20 bg-[#f0cf7a]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#f6dda0]">
+          <span className="rounded-full border border-[#f0cf7a]/20 bg-[#f0cf7a]/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f6dda0]">
             VN
           </span>
         </div>
         <Link
           href="/dashboard/sentiment"
-          className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-[#f6dda0]"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-[#f6dda0]"
         >
           Chi tiết <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
 
-      {/* Body: left=compact gauge+sparkline | right=metric bars */}
-      <div className="flex gap-4">
-        {/* Left: mini gauge + trend sparkline stacked */}
-        <div className="flex w-44 flex-shrink-0 flex-col items-center">
-          {/* Compact arc gauge */}
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Left: 180-degree semi-circle gauge */}
+        <div className="relative flex w-full md:w-64 flex-shrink-0 flex-col items-center justify-center p-2">
+          {/* Main Semi-circle Gauge */}
           <svg viewBox="0 0 160 100" className="w-full overflow-visible">
+            {/* Background Arc - Track */}
+            <path
+              d="M 20 60 A 60 60 0 0 1 140 60"
+              fill="none"
+              stroke="white"
+              strokeWidth="14"
+              strokeLinecap="round"
+              opacity="0.05"
+            />
+
+            {/* Color Segments */}
             {ZONES.map((z, i) => {
-              const radius = 72;
-              const c = Math.PI * radius;
+              const radius = 60;
+              const angleStart = -180 + (z.min / 100) * 180;
+              const angleEnd = -180 + (z.max / 100) * 180;
+
+              const startRad = (angleStart * Math.PI) / 180;
+              const endRad = (angleEnd * Math.PI) / 180;
+              const x1 = 80 + radius * Math.cos(startRad);
+              const y1 = 60 + radius * Math.sin(startRad);
+              const x2 = 80 + radius * Math.cos(endRad);
+              const y2 = 60 + radius * Math.sin(endRad);
+
               const isActive = score >= z.min && (score < z.max || (z.max > 100 && score <= 100));
-              const offset = (z.min / 100) * c;
-              const spanLength = ((z.max - z.min) / 100) * c;
-              const dashLength = Math.max(0, spanLength - 4);
+
               return (
-                <circle
+                <path
                   key={i}
-                  cx="80" cy="90" r={radius}
+                  d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
                   fill="none"
                   stroke={z.color}
-                  strokeWidth={isActive ? 14 : 8}
+                  strokeWidth={isActive ? 18 : 12}
                   strokeLinecap="round"
-                  strokeDasharray={`${dashLength} ${c}`}
-                  strokeDashoffset={-offset}
-                  transform="rotate(-180 80 90)"
-                  opacity={isActive ? 1 : 0.22}
+                  opacity={isActive ? 1 : 0.25}
                   style={{
                     transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-                    filter: isActive ? `drop-shadow(0 0 8px ${z.color}50)` : "none"
+                    filter: isActive ? `drop-shadow(0 0 12px ${z.color}40)` : "none"
                   }}
                 />
               );
             })}
 
-            {/* Needle marker */}
+            {/* Needle indicator */}
             {(() => {
-              const radius = 72;
-              const angle = Math.PI - (score / 100) * Math.PI;
-              const mx = 80 + Math.cos(angle) * radius;
-              const my = 90 - Math.sin(angle) * radius;
+              const rotation = (score / 100) * 180 - 180;
               return (
-                <g style={{
-                  transform: `translate(${mx}px, ${my}px)`,
-                  transition: "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                }}>
-                  <circle r={10} fill="#0F1120" stroke={zone.glow} strokeWidth={4} />
-                  <circle r={4} fill="white" />
+                <g
+                  style={{
+                    transformOrigin: "80px 60px",
+                    transform: `rotate(${rotation}deg)`,
+                    transition: "transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                  }}
+                >
+                  <polygon
+                    points="80,58 80,62 142,60"
+                    fill="white"
+                    stroke="#1E293B"
+                    strokeWidth="0.5"
+                    className="shadow-xl"
+                  />
+                  <circle cx="80" cy="60" r="5" fill="#1E293B" stroke="white" strokeWidth="2" />
                 </g>
               );
             })()}
           </svg>
 
-          {/* Score in arc */}
-          <div className="relative -mt-14 flex flex-col items-center">
-            <span className="text-[44px] font-black leading-none tracking-tighter text-white">{score}</span>
+          {/* Integrated Score & Label - Positioned below pivot to avoid overlap */}
+          <div className="absolute top-[68%] flex flex-col items-center">
+            <span className="text-[52px] font-black leading-none tracking-tighter text-white drop-shadow-2xl">{score}</span>
             <span
-              className="mt-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest backdrop-blur"
+              className="mt-1 text-[11px] font-black uppercase tracking-[0.25em]"
               style={{ color: zone.color }}
             >
               {zone.label}
             </span>
-            <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] text-white/25">
-              {trendLabel}
-            </span>
           </div>
-
-          {/* Sparkline */}
-          <svg viewBox="0 0 176 44" className="mt-2 w-full overflow-visible">
-            <defs>
-              <linearGradient id={`sg-${score}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={zone.color} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={zone.color} stopOpacity="1" />
-              </linearGradient>
-            </defs>
-            <path
-              d={(() => {
-                const pts = trendPoints;
-                const w = 176, h = 44;
-                const stepX = w / (pts.length - 1);
-                return pts.map((p, i) => {
-                  const x = i * stepX;
-                  const y = h - ((p - 20) / 66) * (h - 6) - 3;
-                  return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-                }).join(" ");
-              })()}
-              fill="none"
-              stroke={`url(#sg-${score})`}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
         </div>
 
         {/* Right: 5 metric bars */}
-        <div className="flex flex-1 flex-col justify-around gap-2">
+        <div className="flex flex-1 flex-col justify-center gap-4">
           {indicators.map((indicator, index) => {
-            const barColor = getIndicatorColor(indicator.tone, zone.color);
+            const barColor = getIndicatorColor(indicator.value);
             return (
-              <div key={indicator.label} className="flex items-center gap-2.5">
-                <span className="w-20 flex-shrink-0 text-[11px] text-white/50 font-medium">{indicator.label}</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.07]">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${indicator.value}%` }}
-                    transition={{ duration: 0.8, delay: index * 0.06 }}
-                    className="h-full rounded-full"
-                    style={{ background: barColor }}
-                  />
+              <div key={indicator.label} className="flex items-center gap-4">
+                <span className="w-28 flex-shrink-0 text-[12px] text-white/80 font-semibold tracking-tight">{indicator.label}</span>
+                <div className="flex flex-1 items-center gap-4">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${indicator.value}%` }}
+                      transition={{ duration: 1, delay: index * 0.08, ease: "circOut" }}
+                      className="h-full rounded-full shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+                      style={{ background: barColor }}
+                    />
+                  </div>
+                  <span className="w-6 flex-shrink-0 text-right text-[12px] font-bold text-white font-mono">
+                    {indicator.value}
+                  </span>
                 </div>
-                <span className="w-6 flex-shrink-0 text-right text-[11px] font-semibold text-white/70">
-                  {indicator.value}
-                </span>
               </div>
             );
           })}
 
-          {/* Vẹt Vàng quote — inline compact */}
-          <div className="mt-1 flex items-start gap-2 rounded-xl border border-[#f0cf7a]/15 bg-[#f0cf7a]/5 p-2.5">
-            <span className="flex-shrink-0 text-sm">🦜</span>
-            <div>
-              <p className="text-[11px] leading-relaxed text-white/65 italic">"{quote}"</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-[#f6dda0]">→ {action}</p>
+          {/* Professional Insight Box */}
+          <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 shadow-inner">
+            <div className="flex items-start gap-2.5">
+              <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
+              </div>
+              <p className="text-[13px] font-medium leading-relaxed text-white/90">{quote}</p>
+            </div>
+            <div className="flex items-center gap-2 pl-7">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">{action}</p>
             </div>
           </div>
         </div>
