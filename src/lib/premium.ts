@@ -48,6 +48,17 @@ function save(state: PremiumState) {
 
 export function subscribePremium(promoCode?: string): PremiumState {
   if (isServer()) return DEFAULT_STATE;
+
+  // Validate promo code before activating premium
+  if (promoCode) {
+    const codes = (process.env.NEXT_PUBLIC_VIETFI_PROMO_CODES ?? "")
+      .split(",").map(c => c.trim().toUpperCase()).filter(Boolean);
+    if (!codes.includes(promoCode.toUpperCase())) {
+      // Invalid code — return current state without activating
+      return getPremiumState();
+    }
+  }
+
   const state: PremiumState = {
     active: true,
     tier: "Vẹt Vàng VIP",

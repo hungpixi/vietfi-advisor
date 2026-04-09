@@ -125,14 +125,14 @@ export default function PortfolioPage() {
   // ── Fetch dynamic backtest and projection ──
   useEffect(() => {
     fetch(`/api/portfolio/backtest?capital=${capital}&riskType=${riskType}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => setBacktestData(d))
-      .catch(() => { });
+      .catch(() => { setBacktestData(null); });
 
     fetch(`/api/portfolio/projection?capital=${capital}&riskType=${riskType}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => setProjectionData(d))
-      .catch(() => { });
+      .catch(() => { setProjectionData(null); });
   }, [capital, riskType]);
 
   // ── Dynamic allocation based on market sentiment ──
@@ -224,7 +224,7 @@ export default function PortfolioPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-xs font-bold text-white/80">{item.percent}%</span>
-                    <span className="text-[10px] text-white/25 ml-1.5">{((capital * item.percent) / 100 / 1000000).toFixed(1)}tr</span>
+                    <span className="text-[10px] text-white/25 ml-1.5">{capital > 0 && item.percent != null ? ((capital * item.percent) / 100 / 1000000).toFixed(1) : "0"}tr</span>
                   </div>
                 </div>
               ))}
@@ -339,7 +339,7 @@ export default function PortfolioPage() {
         </p>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={backtestData?.history.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
+            <AreaChart data={backtestData?.history?.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
               year: d.year,
               value: Math.round(d.portfolioValue / 1000000),
             })) || []}>
@@ -359,19 +359,19 @@ export default function PortfolioPage() {
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-[11px] text-white/40">Giá trị hiện tại ({new Date().getFullYear()})</span>
             <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? Math.round(backtestData.currentValue / 1000000) : '--'} triệu
+              {backtestData?.currentValue != null ? Math.round(backtestData.currentValue / 1000000) : '--'} triệu
             </span>
           </div>
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-[11px] text-white/40">Lợi nhuận gộp</span>
             <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? `+${Math.round((backtestData.currentValue / capital - 1) * 100)}%` : '--'}
+              {backtestData?.currentValue != null ? `+${Math.round((backtestData.currentValue / capital - 1) * 100)}%` : '--'}
             </span>
           </div>
           <div className="flex items-center justify-between mt-1.5">
             <span className="text-[11px] text-white/40">CAGR thực tế</span>
             <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? `${backtestData.cagr}%/năm` : '--'}
+              {backtestData?.cagr != null ? `${backtestData.cagr}%/năm` : '--'}
             </span>
           </div>
         </div>

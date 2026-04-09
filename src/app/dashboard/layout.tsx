@@ -40,6 +40,7 @@ import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 import { checkMarketAlerts } from "@/lib/market-alert";
 import { getBudgetPots, getDebts, getOnboardingState, getLessonsDone, getStreakFreeze as storageGetStreak, setStreakFreeze } from "@/lib/storage";
 import { syncPremiumFromSupabase } from "@/lib/premium";
+import { flushAnalyticsQueue } from "@/lib/affiliate/analytics";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -110,6 +111,15 @@ function GamificationBar() {
 
   // Hydration-safe VIP badge — check premium status after mount
   useEffect(() => { setPremiumMounted(true); }, []);
+
+  // Flush analytics queue to backend on app load
+  useEffect(() => {
+    if (!mounted) return;
+    const queue = flushAnalyticsQueue();
+    if (queue.length > 0) {
+      fetch("/api/analytics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(queue) }).catch(() => {});
+    }
+  }, [mounted]);
 
   const { current, next, progress, xpToNext } = getLevelProgress(gam.xp);
   const currentXp = mounted ? gam.xp : 0;

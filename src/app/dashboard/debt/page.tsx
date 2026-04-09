@@ -49,7 +49,7 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } }
 
 
 export default function DebtPage() {
-  const [debts, setDebts] = useState<UIDebt[]>(defaultDebts);
+  const [debts, setDebts] = useState<UIDebt[]>([]);
   const [monthlyIncome, setMonthlyIncome] = useState(12000000);
   const [strategy, setStrategy] = useState<"snowball" | "avalanche">("snowball");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -106,7 +106,8 @@ export default function DebtPage() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const analysis = analyzeDTI(debts, monthlyIncome);
+  const validIncome = monthlyIncome > 0 ? monthlyIncome : 1;
+  const analysis = analyzeDTI(debts, validIncome);
   const { totalDebt, dtiRatio, dtiLevel, dtiColor, totalMonthlyMin, totalHiddenInterest } = analysis;
   const dtiLabel = dtiLevel === "safe" ? "An toàn" : dtiLevel === "warning" ? "Cảnh giác" : "Nguy hiểm";
 
