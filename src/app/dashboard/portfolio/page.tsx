@@ -46,6 +46,10 @@ export default function PortfolioPage() {
   const [riskType, setRiskType] = useState("balanced");
   const [hasRiskDNA, setHasRiskDNA] = useState(false);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [backtestData, setBacktestData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [projectionData, setProjectionData] = useState<any>(null);
   const [aiInsight, setAiInsight] = useState<string>("");
   const [aiLoading, setAiLoading] = useState(false);
   const [userContext, setUserContext] = useState<string>("");
@@ -92,8 +96,21 @@ export default function PortfolioPage() {
     fetch("/api/market-data", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setMarketData(data); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
+
+  // ── Fetch dynamic backtest and projection ──
+  useEffect(() => {
+    fetch(`/api/portfolio/backtest?capital=${capital}&riskType=${riskType}`)
+      .then(r => r.json())
+      .then(d => setBacktestData(d))
+      .catch(() => { });
+
+    fetch(`/api/portfolio/projection?capital=${capital}&riskType=${riskType}`)
+      .then(r => r.json())
+      .then(d => setProjectionData(d))
+      .catch(() => { });
+  }, [capital, riskType]);
 
   // ── Dynamic allocation based on market sentiment ──
   const fgScore = marketData?.sentimentScore ?? 50;
@@ -101,7 +118,7 @@ export default function PortfolioPage() {
     const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
     return adjustAllocation(base, fgScore);
   }, [riskType, fgScore]);
-  const projection = generateProjection(capital, riskType);
+  const projection = projectionData?.data || generateProjection(capital, riskType);
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
@@ -138,11 +155,10 @@ export default function PortfolioPage() {
                 <button
                   key={val}
                   onClick={() => setRiskType(val)}
-                  className={`flex-1 py-2.5 text-xs font-medium rounded-lg transition-all ${
-                    riskType === val
-                      ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20"
-                      : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:border-white/10"
-                  }`}
+                  className={`flex-1 py-2.5 text-xs font-medium rounded-lg transition-all ${riskType === val
+                    ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20"
+                    : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:border-white/10"
+                    }`}
                 >
                   {label}
                 </button>
@@ -300,18 +316,10 @@ export default function PortfolioPage() {
         </p>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={(() => {
-              const returns: Record<string, number[]> = {
-                conservative: [1, 1.05, 1.02, 1.08, 1.14, 1.21],
-                balanced:     [1, 1.12, 1.06, 1.15, 1.28, 1.42],
-                growth:       [1, 1.25, 1.08, 1.22, 1.45, 1.68],
-              };
-              const r = returns[riskType] || returns.balanced;
-              return r.map((m, i) => ({
-                year: `${2021 + i}`,
-                value: Math.round((capital * m) / 1000000),
-              }));
-            })()}>
+            <AreaChart data={backtestData?.history.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
+              year: d.year,
+              value: Math.round(d.portfolioValue / 1000000),
+            })) || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />
@@ -326,15 +334,21 @@ export default function PortfolioPage() {
             <span className="text-xs font-medium text-white/60">{(capital / 1000000).toFixed(0)} triệu</span>
           </div>
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[11px] text-white/40">Giá trị hiện tại (2026)</span>
+            <span className="text-[11px] text-white/40">Giá trị hiện tại ({new Date().getFullYear()})</span>
             <span className="text-xs font-bold text-[#22C55E]">
-              {Math.round((capital * (riskType === "conservative" ? 1.21 : riskType === "balanced" ? 1.42 : 1.68)) / 1000000)} triệu
+              {backtestData ? Math.round(backtestData.currentValue / 1000000) : '--'} triệu
             </span>
           </div>
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[11px] text-white/40">Lợi nhuận</span>
+            <span className="text-[11px] text-white/40">Lợi nhuận gộp</span>
             <span className="text-xs font-bold text-[#22C55E]">
-              +{riskType === "conservative" ? "21" : riskType === "balanced" ? "42" : "68"}%
+              {backtestData ? `+${Math.round((backtestData.currentValue / capital - 1) * 100)}%` : '--'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="text-[11px] text-white/40">CAGR thực tế</span>
+            <span className="text-xs font-bold text-[#22C55E]">
+              {backtestData ? `${backtestData.cagr}%/năm` : '--'}
             </span>
           </div>
         </div>
@@ -350,9 +364,9 @@ export default function PortfolioPage() {
               <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />
               <Tooltip contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }} formatter={(v: unknown) => `${formatVND(v as number)}`} />
-              <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={1.5} name="Lạc quan" />
-              <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.1} strokeWidth={2} name="Cơ sở" />
-              <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.05} strokeWidth={1.5} name="Bi quan" />
+              <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[0] || "Bull"} />
+              <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.1} strokeWidth={2} name={projectionData?.scenarios?.[1] || "Base"} />
+              <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[2] || "Bear"} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

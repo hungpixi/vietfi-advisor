@@ -189,6 +189,67 @@ export function getMarketAlert(): MarketAlertCache | null {
 export function setMarketAlert(cache: MarketAlertCache): void {
   setItem(MARKET_ALERT_KEY, cache);
 }
+export interface SentimentHistoryEntry {
+  date: string; // YYYY-MM-DD
+  score: number;
+  overallZone: string;
+  topNews?: string[]; // New: store key news titles for this day
+}
+
+export interface SentimentDaily {
+  date: string; // YYYY-MM-DD
+  score: number;
+  vnindex: number | null;
+  goldPrice: number | null;
+  overallZone: string;
+  assetSentiment: Array<{ asset: string; score: number; trend: "up" | "down" | "neutral" }>;
+  articleCount: number;
+  topNews?: string[];
+}
+
+export interface SentimentHistory {
+  entries: SentimentHistoryEntry[];
+  yearlyHigh: { date: string; score: number } | null;
+  yearlyLow: { date: string; score: number } | null;
+}
+
+const SENTIMENT_HISTORY_KEY = "vietfi_sentiment_history";
+
+export function getSentimentHistory(): SentimentHistory {
+  return getItem<SentimentHistory>(SENTIMENT_HISTORY_KEY, { entries: [], yearlyHigh: null, yearlyLow: null });
+}
+
+export function setSentimentHistory(history: SentimentHistory): void {
+  setItem(SENTIMENT_HISTORY_KEY, history);
+}
+
+export function pushSentimentDay(entry: SentimentHistoryEntry): void {
+  const existing = getSentimentHistory();
+  const todayKey = entry.date.slice(0, 10);
+  // Replace if today already exists, otherwise append
+  const existingToday = existing.entries.findIndex((e) => e.date.slice(0, 10) === todayKey);
+  let entries: SentimentHistoryEntry[];
+  if (existingToday !== -1) {
+    entries = existing.entries.map((e, i) => (i === existingToday ? entry : e));
+  } else {
+    entries = [...existing.entries, entry];
+  }
+  // Keep last 365 days
+  if (entries.length > 365) {
+    entries = entries.slice(-365);
+  }
+  // Update yearly extremes
+  const allScores = entries.map((e) => e.score);
+  const maxScore = Math.max(...allScores);
+  const minScore = Math.min(...allScores);
+  const yearlyHigh = existing.entries.find((e) => e.score === maxScore) ?? existing.yearlyHigh;
+  const yearlyLow = existing.entries.find((e) => e.score === minScore) ?? existing.yearlyLow;
+  // Recalculate extremes from current entries (not historical)
+  const maxEntry = entries.find((e) => e.score === maxScore);
+  const minEntry = entries.find((e) => e.score === minScore);
+  setSentimentHistory({ entries, yearlyHigh: maxEntry ? { date: maxEntry.date, score: maxEntry.score } : null, yearlyLow: minEntry ? { date: minEntry.date, score: minEntry.score } : null });
+}
+
 /* ─── Notification Dismissed ─── */
 
 const NOTIF_DISMISSED_KEY = "vietfi_notif_dismissed";
@@ -309,6 +370,28 @@ export function addGoldPurchase(data: Omit<GoldPurchase, "id">): void {
 export function deleteGoldPurchase(id: string): void {
   const current = getGoldPurchases();
   setGoldPurchases(current.filter((g) => g.id !== id));
+}
+
+/* ─── Ledger Entries ─── */
+
+export interface LedgerEntry {
+  id: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+  note: string;
+  date: string; // ISO date string YYYY-MM-DD
+  createdAt: string; // ISO datetime string
+}
+
+const LEDGER_KEY = "vietfi_ledger";
+
+export function getLedgerEntries(): LedgerEntry[] {
+  return getItem<LedgerEntry[]>(LEDGER_KEY, []);
+}
+
+export function setLedgerEntries(entries: LedgerEntry[]): void {
+  setItem(LEDGER_KEY, entries);
 }
 
 /* ─── Clear All User Data ─── */

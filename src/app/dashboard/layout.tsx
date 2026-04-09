@@ -52,6 +52,7 @@ const navGroups = [
     label: "QUẢN LÝ TÀI CHÍNH",
     items: [
       { href: "/dashboard/budget", label: "Quỹ Chi tiêu", icon: Wallet },
+      { href: "/dashboard/ledger", label: "Sổ Ghi", icon: BookOpen },
       { href: "/dashboard/debt", label: "Quỹ Nợ", icon: CreditCard },
       { href: "/dashboard/personal-cpi", label: "Lạm phát của tôi", icon: Calculator },
     ],

@@ -51,11 +51,17 @@ export async function getMarketDataResponse(
       return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
     }
 
-    // No cache yet: fetch first time.
-    const snapshot = await crawl()
+    // No cache yet: fetch first time with global timeout.
+    const snapshot = await Promise.race([
+      crawl(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Crawl timeout')), 10000),
+      ),
+    ])
     cache = { snapshot, fetchedAt: Date.now() }
     return NextResponse.json({ ...snapshot, stale: false }, { status: 200 })
-  } catch {
+  } catch (error) {
+    console.error('Market data fetch error:', error)
     if (cache) {
       // no fresh data, but return stale cache if exists
       return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })

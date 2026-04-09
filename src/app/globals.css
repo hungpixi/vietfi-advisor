@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @layer base {
@@ -5,17 +6,22 @@
     --color-primary: #FFD700;
     --color-primary-hover: #FFC107;
     --color-accent: #00E5FF;
-    --color-success: #00E676;
-    --color-danger: #FF5252;
-    --color-warning: #FFAB40;
+    --color-success: #22C55E;
+    --color-danger: #EF4444;
+    --color-warning: #F59E0B;
     --color-bg: #0A0A0F;
     --color-bg-card: #12121A;
     --color-bg-card-hover: #1A1A25;
     --color-border: #2A2A3A;
-    --color-text: #F0F0F5;
-    --color-text-secondary: #8888AA;
+    --color-text: #F8FAFC;
+    --color-text-secondary: #94A3B8;
     --color-gradient-start: #FFD700;
     --color-gradient-end: #FF6B35;
+
+    /* Font Tokens */
+    --font-heading: 'Fira Sans', sans-serif;
+    --font-body: 'Fira Sans', sans-serif;
+    --font-mono: 'Fira Code', monospace;
   }
 }
 
@@ -34,7 +40,7 @@
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body), system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -110,6 +116,7 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -117,14 +124,22 @@
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Custom scrollbar */

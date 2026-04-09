@@ -17,6 +17,7 @@ export type Intent =
   | "who_are_you" | "help" | "joke"
   | "morning" | "afternoon" | "evening" | "night"
   | "streak_praise" | "level_up" | "zero_income_roast"
+  | "ledger_empty"
   | "unknown";
 
 export interface ScriptedResponseItem {
@@ -53,6 +54,7 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "bored", patterns: ["chán", "nhàm", "buồn ngủ", "rảnh", "ko biết làm gì"] },
   { intent: "who_are_you", patterns: ["mày là ai", "ai đây", "bot à", "vẹt à", "giới thiệu"] },
   { intent: "help", patterns: ["help", "giúp", "hướng dẫn", "cách dùng", "làm sao"] },
+  { intent: "ledger_empty", patterns: ["sổ thu chi trống", "chưa có giao dịch"] },
   { intent: "joke", patterns: ["kể chuyện cười", "joke", "funny", "hài", "cười"] },
 ];
 
@@ -480,6 +482,25 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
     r("zero_income_roast", 3,
       "Warren Buffett khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi! 🏃",
       "Oa ren Bâu phét khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi!")
+  ],
+
+  // ── Ledger Empty ──
+  ledger_empty: [
+    r("ledger_empty", 0,
+      "Ơ, cuối cùng bạn cũng bắt đầu! Mình tin ở bạn mà~ 🐤",
+      "Ơ, cuối cùng bạn cũng bắt đầu! Mình tin ở bạn mà!"),
+    r("ledger_empty", 1,
+      "Chưa có gì trong sổ thu chi. Bắt đầu ghi lại từng đồng tiêu xài đi! 🦜",
+      "Chưa có gì trong sổ thu chi. Bắt đầu ghi lại từng đồng tiêu xài đi!"),
+    r("ledger_empty", 2,
+      "Sổ trống nè. Có mình ở đây hỗ trợ mà, bắt đầu thôi! 💪",
+      "Sổ trống nè. Có mình ở đây hỗ trợ mà, bắt đầu thôi!"),
+    r("ledger_empty", 3,
+      "Không có thu chi gì hết. Hay là tiền tự sinh ra từ trời? 🐦",
+      "Không có thu chi gì hết. Hay là tiền tự sinh ra từ trời?"),
+    r("ledger_empty", 4,
+      "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!",
+      "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!"),
   ],
 };
 

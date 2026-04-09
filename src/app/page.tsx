@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring } from "framer-motion";
 import {
   ArrowRight,
   ChevronDown,
@@ -24,6 +24,50 @@ import Image from "next/image";
    Typography: Inter (body) + Space Grotesk (headings) + JetBrains Mono (mono/stats)
    Color: Deep space dark + Gold primary (#FFD700) + Cyan accent (#00E5FF)
 ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── 3D Tilt Hook ─── */
+function useTilt<T extends HTMLElement>(maxRotate = 14) {
+  const ref = useRef<T>(null);
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+  const springX = useSpring(rotateX, { stiffness: 180, damping: 28 });
+  const springY = useSpring(rotateY, { stiffness: 180, damping: 28 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onMove = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+      const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+      rotateY.set(dx * maxRotate);
+      rotateX.set(-dy * maxRotate);
+    };
+    const onLeave = () => { rotateX.set(0); rotateY.set(0); };
+    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      el.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+    };
+  }, [maxRotate, rotateX, rotateY]);
+
+  return { ref, rotateX: springX, rotateY: springY };
+}
+
+/* ─── Tilt Card Wrapper ─── */
+function TiltCard({ children, className = "", maxRotate = 12 }: { children: React.ReactNode; className?: string; maxRotate?: number }) {
+  const { ref, rotateX, rotateY } = useTilt<HTMLDivElement>(maxRotate);
+  return (
+    <motion.div
+      ref={ref}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 /* ─── Shared Animation Variants ─── */
 const EASE_SMOOTH = [0.25, 0.46, 0.45, 0.94] as const;
@@ -358,7 +402,7 @@ function Hero() {
             className="relative hidden lg:block"
           >
             {/* Dashboard UI mockup — clean glass card */}
-            <div className="relative z-10 glass-card p-5 rounded-2xl border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+            <TiltCard className="relative z-10 glass-card p-5 rounded-2xl border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]" maxRotate={10}>
               {/* Mockup header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -398,7 +442,7 @@ function Hero() {
                   </div>
                 ))}
               </div>
-            </div>
+            </TiltCard>
 
             {/* Vẹt Vàng mascot — bottom right, smaller */}
             <motion.div
@@ -493,14 +537,14 @@ function Features() {
         {/* 2-col: mockup left, pillars right */}
         <div className="grid lg:grid-cols-[1.15fr_1fr] gap-12 items-start">
           {/* Left: App mockup */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative"
-          >
+          <TiltCard maxRotate={10} className="relative">
             {/* Main dashboard card */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
             <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
@@ -544,6 +588,7 @@ function Features() {
                 ))}
               </div>
             </div>
+            </motion.div>
 
             {/* Overlay: DTI card */}
             <motion.div
@@ -570,18 +615,21 @@ function Features() {
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </TiltCard>
 
           {/* Right: 3 pillars */}
           <div className="space-y-4 pt-4">
             {pillars.map((p, i) => (
-              <motion.div
+              <TiltCard
                 key={p.title}
+                maxRotate={8}
+                className="glass-card p-6 border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 group cursor-default"
+              >
+              <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="glass-card p-6 border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 group cursor-default"
               >
                 <div className="flex items-start gap-4">
                   {/* Number + Icon */}
@@ -615,6 +663,7 @@ function Features() {
                   </motion.div>
                 </div>
               </motion.div>
+              </TiltCard>
             ))}
 
             {/* CTA */}
