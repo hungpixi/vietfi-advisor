@@ -5,7 +5,9 @@ if sys.stdout and hasattr(sys.stdout, 'buffer'):
 
 from vieneu import Vieneu
 
-VOICE_DIR = r"d:\Cá nhân\Vọc vạch\Cuộc thi\vietfi-advisor\voice_ref"
+from pathlib import Path
+ROOT_DIR = Path(__file__).parent.parent
+VOICE_DIR = str(ROOT_DIR / "voice_ref")
 
 tts = Vieneu()
 print("Model loaded\n")

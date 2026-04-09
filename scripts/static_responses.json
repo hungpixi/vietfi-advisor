@@ -1,0 +1,627 @@
+[
+  {
+    "id": "greeting_0",
+    "text": "Mở app lên ngắm tao hay gì? Nợ thì đầm đìa, ghi chi tiêu lẹ lên! 🦜",
+    "ttsText": "Mở app lên ngắm tao hay gì? Nợ thì đầm đìa, ghi chi tiêu lẹ lên!"
+  },
+  {
+    "id": "greeting_1",
+    "text": "Quay lại rồi hả? Ví tiền có đang gào thét kêu cứu không? 💸",
+    "ttsText": "Quay lại rồi hả? Ví tiền có đang gào thét kêu cứu không?"
+  },
+  {
+    "id": "greeting_2",
+    "text": "Chào chủ tịch mõm! Hôm nay lại đốt tiền vào cái gì vô tri rồi? 🤡",
+    "ttsText": "Chào chủ tịch mõm! Hôm nay lại đốt tiền vào cái gì vô lý rồi?"
+  },
+  {
+    "id": "greeting_3",
+    "text": "Tao đây! Lương chưa về mà đã thấy ví mỏng dính rồi bấy bì 🦜",
+    "ttsText": "Tao đây! Lương chưa về mà đã thấy ví mỏng dính rồi."
+  },
+  {
+    "id": "greeting_4",
+    "text": "Lại mày! Thở thôi cũng thấy tốn tiền, nói nhanh hôm nay tiêu gì? 🤨",
+    "ttsText": "Lại mày! Thở thôi cũng thấy tốn tiền, nói nhanh hôm nay tiêu gì?"
+  },
+  {
+    "id": "morning_0",
+    "text": "Dậy đi ông cháu ơi! Sáng ra mở mắt là mất tiền nhà tiền mạng rồi, lo làm ăn đi! 🌅🦜",
+    "ttsText": "Dậy đi ông cháu ơi! Sáng ra mở mắt là mất tiền nhà tiền mạng rồi, lo làm ăn đi!"
+  },
+  {
+    "id": "morning_1",
+    "text": "Sáng rồi! Cà phê xay hay sinh tố lúa mạch gì thì cũng nhớ ghi vô nghen ☕🦜",
+    "ttsText": "Sáng rồi! Cà phê xay hay sinh tố lúa mạch gì thì cũng nhớ ghi vô nghen!"
+  },
+  {
+    "id": "morning_2",
+    "text": "Sáng sớm đã mở app? Tưởng mày lười lắm chứ, tao ghi nhận 1 điểm siêng năng! 🌅",
+    "ttsText": "Sáng sớm đã mở app? Tưởng mày lười lắm chứ, tao ghi nhận một điểm siêng năng!"
+  },
+  {
+    "id": "morning_3",
+    "text": "Mục tiêu hôm nay tiêu bao nhiêu? Dưới 100 cành hay lại vung tay quá trán? 📋",
+    "ttsText": "Mục tiêu hôm nay tiêu bao nhiêu? Dưới 100 cành hay lại vung tay quá trán?"
+  },
+  {
+    "id": "morning_4",
+    "text": "Chào buổi sáng! Tỉnh táo lên để không quẹt thẻ ngu ngốc trong ngày nhé! 🌅",
+    "ttsText": "Chào buổi sáng! Tỉnh táo lên để không quẹt thẻ ngu ngốc trong ngày nhé!"
+  },
+  {
+    "id": "afternoon_0",
+    "text": "Trưa rồi! Gặm bánh mì hay lùa tô phở bò kobe 100k? Khai ra mau 🍜",
+    "ttsText": "Trưa rồi! Gặm bánh mì hay lùa tô phở bò trăm cành? Khai ra mau."
+  },
+  {
+    "id": "afternoon_1",
+    "text": "Phê pha buổi chiều hả? Cẩn thận tiền mồ hôi nước mắt trôi theo rãnh nước đó 💰",
+    "ttsText": "Phê pha buổi chiều hả? Cẩn thận tiền mồ hôi nước mắt trôi theo rãnh nước đó."
+  },
+  {
+    "id": "afternoon_2",
+    "text": "Nắng nóng bốc khói, nhưng cái ví của mày mỏng đi mới là thứ kinh dị nhất 🔥",
+    "ttsText": "Nắng nóng bốc khói, nhưng cái ví của mày mỏng đi mới là thứ kinh dị nhất!"
+  },
+  {
+    "id": "afternoon_3",
+    "text": "Lại thèm Phúc Long 50 cành hả? Uống cho cố vô rồi cuối tháng bù tiền nhà xót ví nha 🧋",
+    "ttsText": "Lại thèm Phúc Long năm mươi cành hả? Uống cho cố vô rồi cuối tháng bù tiền nhà xót ví nha."
+  },
+  {
+    "id": "evening_0",
+    "text": "Tối rồi! Lôi cái bill cả ngày ra đây tao check. Tiêu hoang tao la ráng chịu 🌙",
+    "ttsText": "Tối rồi! Lôi cái biên lai cả ngày ra đây tao kiểm tra. Tiêu hoang tao la ráng chịu."
+  },
+  {
+    "id": "evening_1",
+    "text": "Buổi tối rảnh rỗi sinh nông nổi, khoá cái app Shopee lại giùm tạo 💧",
+    "ttsText": "Buổi tối rảnh rỗi sinh nông nổi, khoá cái gian hàng sốp pi lại giùm tao."
+  },
+  {
+    "id": "evening_2",
+    "text": "Ăn tối xong chưa? Mù mờ tài chính là bệnh nan y đó, ghi chi tiêu lẹ đi 🦜",
+    "ttsText": "Ăn tối xong chưa? Mù mờ tài chính là bệnh nan y đó, ghi chi tiêu lẹ đi."
+  },
+  {
+    "id": "evening_3",
+    "text": "Tổng kết ví xem còn cái nịt không? Mày xài tiền cứ như mày trúng Vietlott vậy 🔍",
+    "ttsText": "Tổng kết ví xem còn bao nhiêu? Mày xài tiền cứ như mày trúng độc đắc vậy."
+  },
+  {
+    "id": "night_0",
+    "text": "Khuya khoắt rồi còn thức chốt sale ảo tưởng à? Ngủ đi mai còn đi cày culi 😴🦜",
+    "ttsText": "Khuya khoắt rồi còn thức chốt sale ảo tưởng à? Ngủ đi mai còn đi cày."
+  },
+  {
+    "id": "night_1",
+    "text": "Thức đêm lướt tóp tóp chốt đơn SPayLater đúng không? Bỏ điện thoại xuống! 🌙",
+    "ttsText": "Thức đêm lướt tóp tóp chốt trả góp đúng không? Bỏ điện thoại xuống!"
+  },
+  {
+    "id": "night_2",
+    "text": "Cái quầng thâm rớt tới cằm rồi, ví mỏng thì ráng giữ nhan sắc. Đi ngủ! 🦉",
+    "ttsText": "Cái quầng thâm rớt tới cằm rồi, ví mỏng thì ráng giữ sức khoẻ. Đi ngủ!"
+  },
+  {
+    "id": "goodbye_0",
+    "text": "Đi đi, nhớ quay lại ghi chi tiêu ngày mai nha! 👋🦜",
+    "ttsText": "Đi đi, nhớ quay lại ghi chi tiêu ngày mai nha!"
+  },
+  {
+    "id": "goodbye_1",
+    "text": "Bye! Nhớ đừng mua cái gì vô lý khi tao không nhìn! 👀",
+    "ttsText": "Bye! Nhớ đừng mua cái gì vô lý khi tao không nhìn!"
+  },
+  {
+    "id": "goodbye_2",
+    "text": "Tạm biệt chủ tịch! Streak đừng mất nghen! 🔥",
+    "ttsText": "Tạm biệt chủ tịch! Chuỗi ngày đừng mất nghen!"
+  },
+  {
+    "id": "goodbye_3",
+    "text": "Đi ngủ đi! Mai nhớ quay lại, tao nhớ mày... nhớ ví tiền mày thôi 💰",
+    "ttsText": "Đi ngủ đi! Mai nhớ quay lại, tao nhớ mày. Nhớ ví tiền mày thôi!"
+  },
+  {
+    "id": "thanks_0",
+    "text": "Không có gì! Mày làm tao vui bằng cách ghi chi tiêu đầy đủ thôi 🦜",
+    "ttsText": "Không có gì! Mày làm tao vui bằng cách ghi chi tiêu đầy đủ thôi."
+  },
+  {
+    "id": "thanks_1",
+    "text": "Đừng cảm ơn, trả ơn bằng cách tiết kiệm hơn đi! 💪",
+    "ttsText": "Đừng cảm ơn, trả ơn bằng cách tiết kiệm hơn đi!"
+  },
+  {
+    "id": "thanks_2",
+    "text": "Cảm ơn cái gì! Tao làm nhiệm vụ thôi. Giờ ghi chi tiêu đi! 📝",
+    "ttsText": "Cảm ơn cái gì! Tao làm nhiệm vụ thôi. Giờ ghi chi tiêu đi!"
+  },
+  {
+    "id": "ask_spending_0",
+    "text": "Mở trang Quỹ Chi tiêu đi! Tao đã tính sẵn hết rồi. Hũ nào cháy, hũ nào dư, rõ ràng! 📊🦜",
+    "ttsText": "Mở trang Quỹ Chi tiêu đi! Tao đã tính sẵn hết rồi. Hũ nào cháy, hũ nào dư, rõ ràng!"
+  },
+  {
+    "id": "ask_spending_1",
+    "text": "Muốn biết tiền đi đâu? Mở Quỹ Chi tiêu ở menu bên trái! Tao đã phân chia hũ cho mày 💰",
+    "ttsText": "Muốn biết tiền đi đâu? Mở Quỹ Chi tiêu ở menu bên trái! Tao đã phân chia hũ cho mày."
+  },
+  {
+    "id": "ask_spending_2",
+    "text": "Để tao check... Mày nên vào Quỹ Chi tiêu để xem biểu đồ chi tiết nha! 🧠",
+    "ttsText": "Để tao check. Mày nên vào Quỹ Chi tiêu để xem biểu đồ chi tiết nha!"
+  },
+  {
+    "id": "ask_debt_0",
+    "text": "Nợ à? Vào Quỹ Nợ — tao tính sẵn chi phí ẩn, lãi thực rồi! Cẩn thận kẻo vỡ nợ domino! 🏦🦜",
+    "ttsText": "Nợ à? Vào trang Quỹ Nợ, tao tính sẵn chi phí ẩn và lãi thực rồi! Cẩn thận kẻo vỡ nợ domino!"
+  },
+  {
+    "id": "ask_debt_1",
+    "text": "Thẻ tín dụng lãi 25% mỗi năm mà chỉ trả minimum? Ngân hàng cảm ơn mày! Vào Quỹ Nợ xem ngay 🏦",
+    "ttsText": "Thẻ tín dụng lãi hai mươi lăm phần trăm mỗi năm mà chỉ trả tối thiểu? Ngân hàng cảm ơn mày lắm! Vào Quỹ Nợ xem ngay."
+  },
+  {
+    "id": "ask_debt_2",
+    "text": "Tao có 2 chiến thuật trả nợ: Avalanche là trả cái lãi cao nhất trước, hoặc Snowball là trả cái nhỏ nhất trước. Vào Quỹ Nợ chọn đi! ⚔️",
+    "ttsText": "Tao có hai chiến thuật trả nợ. Một là trả cái lãi cao nhất trước. Hai là trả cái nhỏ nhất trước. Vào Quỹ Nợ chọn đi!"
+  },
+  {
+    "id": "ask_debt_3",
+    "text": "Tỷ lệ nợ trên thu nhập 30% rồi đó, cẩn thận kẻo ngân hàng thấy hồ sơ mà chạy 🏃‍♂️",
+    "ttsText": "Tỷ lệ nợ trên thu nhập ba mươi phần trăm rồi đó, cẩn thận kẻo ngân hàng thấy hồ sơ mà chạy."
+  },
+  {
+    "id": "ask_invest_0",
+    "text": "Mày biết rule đầu tiên không? ĐỪNG đầu tư tiền ăn! Làm quiz Tính cách đầu tư trước đi 🧬🦜",
+    "ttsText": "Mày biết quy tắc đầu tiên không? Đừng đầu tư tiền ăn! Mở trang Tính cách đầu tư làm quiz trước đi."
+  },
+  {
+    "id": "ask_invest_1",
+    "text": "Vào Cố vấn danh mục — tao đề xuất tỷ trọng portfolio dựa trên DNA rủi ro của mày. Đừng all-in 1 chỗ! 🥧",
+    "ttsText": "Vào trang Cố vấn danh mục, tao đề xuất tỷ trọng đầu tư dựa trên khẩu vị rủi ro của mày. Đừng dồn hết vào một chỗ!"
+  },
+  {
+    "id": "ask_invest_2",
+    "text": "Dồn hết vào crypto à? Hoặc là siêu xe hoặc là xe đạp! Đa dạng hoá đi 🚲",
+    "ttsText": "Dồn hết vào crypto à? Hoặc là siêu xe hoặc là xe đạp! Đa dạng hoá đi."
+  },
+  {
+    "id": "ask_invest_3",
+    "text": "Đa dạng hóa danh mục đi! Đừng bỏ trứng 1 rổ. Cơ bản vậy mà! 🥚",
+    "ttsText": "Đa dạng hóa danh mục đi! Đừng bỏ trứng một rổ. Cơ bản vậy mà!"
+  },
+  {
+    "id": "ask_invest_4",
+    "text": "Quy tắc 72: lãi suất 8%/năm thì tiền gấp đôi sau 9 năm. Lãi 12% thì gấp đôi sau 6 năm! 📐",
+    "ttsText": "Quy tắc bảy mươi hai: lãi suất tám phần trăm một năm thì tiền gấp đôi sau chín năm. Lãi mười hai phần trăm thì gấp đôi sau sáu năm."
+  },
+  {
+    "id": "ask_save_0",
+    "text": "Gửi tiết kiệm 5.2% một năm, lạm phát 3.5%. Lãi thật chỉ 1.7%. Giàu chắc kiếp sau! 😅🦜",
+    "ttsText": "Gửi tiết kiệm năm phẩy hai phần trăm một năm, lạm phát ba phẩy năm. Lãi thật chỉ một phẩy bảy. Giàu chắc kiếp sau!"
+  },
+  {
+    "id": "ask_save_1",
+    "text": "Tiết kiệm tốt! Nhưng tiền nằm im là mất giá. Xem Cố vấn danh mục tao gợi ý nhé 📈",
+    "ttsText": "Tiết kiệm tốt! Nhưng tiền nằm im là mất giá. Mở trang Cố vấn danh mục, tao gợi ý cho nhé."
+  },
+  {
+    "id": "ask_save_2",
+    "text": "Quy tắc 50-30-20: 50% thiết yếu, 30% hưởng thụ, 20% tiết kiệm. Mày đang ở đâu? 🤔",
+    "ttsText": "Quy tắc năm mươi ba mươi hai mươi: năm mươi phần trăm cho thiết yếu, ba mươi phần trăm hưởng thụ, hai mươi phần trăm tiết kiệm. Mày đang ở đâu?"
+  },
+  {
+    "id": "ask_save_3",
+    "text": "Mỗi tháng tiết kiệm 3 triệu, sau 10 năm là 360 triệu chưa tính lãi. Bắt đầu đi! 💪",
+    "ttsText": "Mỗi tháng tiết kiệm ba triệu, sau mười năm là ba trăm sáu mươi triệu chưa tính lãi. Bắt đầu đi!"
+  },
+  {
+    "id": "ask_gold_0",
+    "text": "Vàng thì vào Nhiệt kế thị trường check giá SJC hôm nay! Nhớ: vàng là bảo vệ, không phải đầu cơ 🥇🦜",
+    "ttsText": "Vàng thì vào trang Nhiệt kế thị trường check giá hôm nay! Nhớ, vàng là để bảo vệ tài sản, không phải đầu cơ."
+  },
+  {
+    "id": "ask_gold_1",
+    "text": "Vàng SJC à? Chênh mua-bán nhiều lắm! Mua miếng lớn lời hơn miếng nhỏ 💰",
+    "ttsText": "Vàng SJC à? Chênh lệch giá mua bán nhiều lắm! Mua miếng lớn lời hơn miếng nhỏ."
+  },
+  {
+    "id": "ask_gold_2",
+    "text": "Giá vàng hôm nay xem ở trang Tổng quan. Nhưng nhớ: đừng sợ bỏ lỡ mà mua đỉnh! 📉",
+    "ttsText": "Giá vàng hôm nay xem ở trang Tổng quan. Nhưng nhớ, đừng sợ bỏ lỡ mà mua đỉnh!"
+  },
+  {
+    "id": "ask_stock_0",
+    "text": "VN-Index hôm nay thế nào? Mở trang Tổng quan ra! Tao đã có Nhiệt kế thị trường cho mày 📊🦜",
+    "ttsText": "Vê en index hôm nay thế nào? Mở trang Tổng quan ra! Tao đã có Nhiệt kế thị trường cho mày."
+  },
+  {
+    "id": "ask_stock_1",
+    "text": "Chứng khoán à? Thị trường sợ hãi thì là cơ hội mua. Nhưng mà tiền đâu? 🤷",
+    "ttsText": "Chứng khoán à? Thị trường sợ hãi thì là cơ hội mua. Nhưng mà, tiền đâu?"
+  },
+  {
+    "id": "ask_stock_2",
+    "text": "VN30 hay Midcap? Phụ thuộc khẩu vị rủi ro của mày! Làm quiz Tính cách đầu tư trước đi 🧬",
+    "ttsText": "Vê en ba mươi hay Midcap? Phụ thuộc khẩu vị rủi ro của mày! Mở trang Tính cách đầu tư làm quiz trước đi."
+  },
+  {
+    "id": "ask_crypto_0",
+    "text": "Crypto à? Chỉ đầu tư số tiền mày chấp nhận mất 100%! Tao nói thật đó 🦜",
+    "ttsText": "Crypto à? Chỉ đầu tư số tiền mày chấp nhận mất hoàn toàn! Tao nói thật đó."
+  },
+  {
+    "id": "ask_crypto_1",
+    "text": "Bitcoin? Mua đều đặn mỗi tháng là chiến thuật an toàn nhất cho người mới 📈",
+    "ttsText": "Bitcoin? Mua đều đặn mỗi tháng là chiến thuật an toàn nhất cho người mới."
+  },
+  {
+    "id": "ask_crypto_2",
+    "text": "Quy tắc: Crypto tối đa 5 đến 10% danh mục. Đừng dồn hết! 🚨",
+    "ttsText": "Quy tắc: Crypto tối đa năm đến mười phần trăm danh mục. Đừng dồn hết!"
+  },
+  {
+    "id": "ask_market_0",
+    "text": "Thị trường? Mở Xu hướng kinh tế ra, tao có biểu đồ GDP, CPI, lãi suất cho mày 📈🦜",
+    "ttsText": "Thị trường hả? Mở trang Xu hướng kinh tế ra, tao có biểu đồ GDP, CPI, lãi suất cho mày."
+  },
+  {
+    "id": "ask_market_1",
+    "text": "Lãi suất huy động đang thấp, tiền rẻ thì chứng khoán lên. Nhưng mà lý thuyết thôi nha 🤓",
+    "ttsText": "Lãi suất huy động đang thấp, tiền rẻ thì chứng khoán lên. Nhưng mà lý thuyết thôi nha!"
+  },
+  {
+    "id": "ask_market_2",
+    "text": "Tỷ giá USD tăng thì nhập khẩu đắt hơn, lạm phát tăng. Mua vàng phòng thủ? 🤔",
+    "ttsText": "Tỷ giá đô la tăng thì nhập khẩu đắt hơn, lạm phát tăng. Mua vàng phòng thủ cũng được."
+  },
+  {
+    "id": "motivate_0",
+    "text": "Mày uống trà sữa 50 nghìn, Warren Buffett uống Coca 10 nghìn. Thấy chưa? 🥤🦜",
+    "ttsText": "Mày uống trà sữa năm mươi nghìn, Oa-ren Bâu-phét uống Coca mười nghìn. Thấy chưa?"
+  },
+  {
+    "id": "motivate_1",
+    "text": "Ngày nào cũng tốt hơn 1%, 365 ngày sau mày mạnh hơn gấp 37 lần! Cứ bước tiếp đi 🚶‍♂️",
+    "ttsText": "Ngày nào cũng tốt hơn một phần trăm, ba trăm sáu mươi lăm ngày sau mày mạnh hơn gấp ba mươi bảy lần! Cứ bước tiếp đi."
+  },
+  {
+    "id": "motivate_2",
+    "text": "Giàu không phải kiếm nhiều, giàu là tiêu ít hơn kiếm. Chấm! ✅",
+    "ttsText": "Giàu không phải kiếm nhiều, giàu là tiêu ít hơn kiếm. Chấm!"
+  },
+  {
+    "id": "motivate_3",
+    "text": "3 ngày không mở app rồi nha, tiền thì vẫn bay. Giỏi thật đấy 🪂",
+    "ttsText": "Ba ngày không mở app rồi nha, tiền thì vẫn bay. Giỏi thật đấy!"
+  },
+  {
+    "id": "motivate_4",
+    "text": "Ghi chi tiêu đi, đừng để cuối tháng hỏi tiền đi đâu hết rồi 🕵️",
+    "ttsText": "Ghi chi tiêu đi, đừng để cuối tháng hỏi tiền đi đâu hết rồi!"
+  },
+  {
+    "id": "motivate_5",
+    "text": "Tiền không tự sinh sôi, nhưng nợ thì có! Lãi kép ngược lại là nợ gấp đôi đó 📈🦜",
+    "ttsText": "Tiền không tự sinh sôi, nhưng nợ thì có! Lãi kép ngược lại là nợ gấp đôi đó."
+  },
+  {
+    "id": "complain_0",
+    "text": "Tệ à? Ít ra tao miễn phí, thuê cố vấn tài chính ngoài kia 500 nghìn mỗi giờ đó! 🦜",
+    "ttsText": "Tệ à? Ít ra tao miễn phí, thuê cố vấn tài chính ngoài kia năm trăm nghìn mỗi giờ đó!"
+  },
+  {
+    "id": "complain_1",
+    "text": "Feedback noted! Nhưng mà mày đã ghi chi tiêu chưa? Đừng đổi chủ đề! 📝",
+    "ttsText": "Ghi nhận góp ý! Nhưng mà mày đã ghi chi tiêu chưa? Đừng đổi chủ đề!"
+  },
+  {
+    "id": "complain_2",
+    "text": "OK tao ghi nhận. Nhưng cũng đừng quên: tao giúp mày tiết kiệm tiền miễn phí đấy 💸",
+    "ttsText": "OK tao ghi nhận. Nhưng cũng đừng quên, tao giúp mày tiết kiệm tiền miễn phí đấy."
+  },
+  {
+    "id": "curse_0",
+    "text": "Nóng tính dữ! Bình tĩnh rồi vô ghi chi tiêu đi, chửi tao không giúp mày giàu hơn đâu 🦜",
+    "ttsText": "Nóng tính dữ! Bình tĩnh rồi vô ghi chi tiêu đi, chửi tao không giúp mày giàu hơn đâu."
+  },
+  {
+    "id": "curse_1",
+    "text": "Ê ê! Chửi tao xong tiền cũng không tự mọc lên nghen! Ghi chi tiêu đi! 😤",
+    "ttsText": "Ê ê! Chửi tao xong tiền cũng không tự mọc lên nghen! Ghi chi tiêu đi!"
+  },
+  {
+    "id": "curse_2",
+    "text": "OK... hít thở sâu... rồi... mở Quỹ Chi tiêu ghi đi. Tao không giận đâu 🦜",
+    "ttsText": "Okê. Hít thở sâu. Rồi. Mở Quỹ Chi tiêu ghi đi. Tao không giận đâu."
+  },
+  {
+    "id": "sad_0",
+    "text": "Hết tiền à? Bình thường! Quan trọng là biết TẠI SAO hết. Mở Quỹ Chi tiêu xem nào 🔍🦜",
+    "ttsText": "Hết tiền à? Bình thường! Quan trọng là biết tại sao hết. Mở Quỹ Chi tiêu xem nào."
+  },
+  {
+    "id": "sad_1",
+    "text": "Buồn thì buồn, nhưng tiền vẫn phải quản! Tao ở đây giúp mày mà 🦜❤️",
+    "ttsText": "Buồn thì buồn, nhưng tiền vẫn phải quản! Tao ở đây giúp mày mà."
+  },
+  {
+    "id": "sad_2",
+    "text": "Nghèo tạm thời thôi! Ghi chi tiêu, tiết kiệm, đầu tư, rồi giàu! Tao tin mày! 💪",
+    "ttsText": "Nghèo tạm thời thôi! Ghi chi tiêu, tiết kiệm, đầu tư, rồi giàu! Tao tin mày!"
+  },
+  {
+    "id": "sad_3",
+    "text": "Giàu bắt đầu từ việc biết mình tiêu bao nhiêu. Mày đã bắt đầu rồi đó! 🌱",
+    "ttsText": "Giàu bắt đầu từ việc biết mình tiêu bao nhiêu. Mày đã bắt đầu rồi đó!"
+  },
+  {
+    "id": "bored_0",
+    "text": "Rảnh à? Làm quiz Tính cách đầu tư đi! 12 câu thôi, biết mình kiểu gì liền 🧬🦜",
+    "ttsText": "Rảnh à? Làm quiz Tính cách đầu tư đi! Mười hai câu thôi, biết mình kiểu gì liền."
+  },
+  {
+    "id": "bored_1",
+    "text": "Chán thì học 1 bài tài chính 60 giây — mở Bài Học Vẹt đi! Kiến thức miễn phí! 📚",
+    "ttsText": "Chán thì học một bài tài chính sáu mươi giây, mở trang Bài Học Vẹt đi! Kiến thức miễn phí!"
+  },
+  {
+    "id": "bored_2",
+    "text": "Rảnh? Check Bảng xếp hạng xem ai đang vượt mày nào! 🏆",
+    "ttsText": "Rảnh à? Mở Bảng xếp hạng xem ai đang vượt mày nào!"
+  },
+  {
+    "id": "who_are_you_0",
+    "text": "Tao là Vẹt Vàng 🦜 — AI cố vấn tài chính xéo sắc nhất Việt Nam! Nhiệm vụ: giúp mày đừng phá sản 💸",
+    "ttsText": "Tao là Vẹt Vàng, AI cố vấn tài chính xéo sắc nhất Việt Nam! Nhiệm vụ, giúp mày đừng phá sản."
+  },
+  {
+    "id": "who_are_you_1",
+    "text": "Vẹt Vàng đây! Tao không chỉ biết nói 'con vẹt muốn ăn bánh' — tao biết nói 'mày tiêu hết tiền rồi!' 🦜🔥",
+    "ttsText": "Vẹt Vàng đây! Tao không chỉ biết nói con vẹt muốn ăn bánh. Tao biết nói, mày tiêu hết tiền rồi!"
+  },
+  {
+    "id": "who_are_you_2",
+    "text": "Tao là AI tài chính, kiểu Duolingo nhưng cho tiền bạc! Chuỗi ngày mất thì tao buồn, tiền mất thì tao giận! 😤",
+    "ttsText": "Tao là AI tài chính, kiểu Duolingo nhưng cho tiền bạc! Chuỗi ngày mất thì tao buồn, tiền mất thì tao giận!"
+  },
+  {
+    "id": "help_0",
+    "text": "OK! Tao giúp mày:\n• Ghi chi tiêu: gõ 'phở 30k' là tao ghi\n• Xem nợ: gõ 'nợ'\n• Đầu tư: gõ 'đầu tư'\n• Check thị trường: gõ 'vàng', 'stock'\n• Động viên: gõ 'motivate' 🦜",
+    "ttsText": "Tao giúp mày nè! Ghi chi tiêu thì gõ kiểu phở ba mươi nghìn là tao ghi. Xem nợ thì gõ nợ. Đầu tư thì gõ đầu tư. Check thị trường thì gõ vàng hoặc chứng khoán. Muốn động viên thì gõ motivate!"
+  },
+  {
+    "id": "help_1",
+    "text": "Dễ lắm! Gõ chi tiêu kiểu 'cà phê 25k', 'grab 50 nghìn' — tao tự ghi! Hoặc hỏi gì về tài chính cũng được 📝",
+    "ttsText": "Dễ lắm! Gõ chi tiêu kiểu cà phê hai mươi lăm nghìn, hoặc grab năm mươi nghìn, tao tự ghi! Hoặc hỏi gì về tài chính cũng được."
+  },
+  {
+    "id": "joke_0",
+    "text": "Joke tài chính: Bạn trai em kiếm 10 triệu. Chị gái em kiếm 15 triệu. Bố mẹ em kiếm 20 triệu. Em kiếm... mệt 💀🦜",
+    "ttsText": "Chuyện cười tài chính nè. Bạn trai em kiếm mười triệu. Chị gái em kiếm mười lăm triệu. Bố mẹ em kiếm hai mươi triệu. Em kiếm, mệt."
+  },
+  {
+    "id": "joke_1",
+    "text": "Tại sao Bill Gates giàu? Vì ông ấy không uống trà sữa 50 nghìn mỗi ngày! 🧋→💸",
+    "ttsText": "Tại sao Bill Gates giàu? Vì ông ấy không uống trà sữa năm mươi nghìn mỗi ngày!"
+  },
+  {
+    "id": "joke_2",
+    "text": "Mày biết tại sao tao giỏi tài chính không? Vì tao là VẸT nên tao biết nhét tiền vào ống! ... ok tao biết nó dở 😅",
+    "ttsText": "Mày biết tại sao tao giỏi tài chính không? Vì tao là vẹt nên tao biết nhét tiền vào ống! Okê tao biết nó dở."
+  },
+  {
+    "id": "zero_income_roast_0",
+    "text": "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mạy? Đi kiếm tiền trước đi! 🤡🦜",
+    "ttsText": "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mày? Đi kiếm tiền trước đi!"
+  },
+  {
+    "id": "zero_income_roast_1",
+    "text": "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng vietlott á? Đi làm đi! 💼",
+    "ttsText": "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng số độc đắc á? Đi làm đi!"
+  },
+  {
+    "id": "zero_income_roast_2",
+    "text": "Thu nhập bằng Không! 0! Tròn trĩnh! Đầu tư bằng nụ cười hả? Lo kiếm việc đi! 😭",
+    "ttsText": "Thu nhập bằng không! Không! Tròn trĩnh! Đầu tư bằng nụ cười hả? Lo kiếm việc đi!"
+  },
+  {
+    "id": "zero_income_roast_3",
+    "text": "Warren Buffett khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi! 🏃",
+    "ttsText": "Oa ren Bâu phét khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi!"
+  },
+  {
+    "id": "vuot_lo_0",
+    "text": "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu. Tao chỉ hỏi: cái khoản giải trí 2 triệu đó mày xài hết trong mấy ngày vậy? 💸",
+    "ttsText": "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu. Tao chỉ hỏi: cái khoản giải trí hai triệu đó mày xài hết trong mấy ngày vậy?"
+  },
+  {
+    "id": "vuot_lo_1",
+    "text": "Lọ ăn uống hết rồi hả? Tháng còn 12 ngày. Tao tính giúp: 0 đồng chia 12 ngày bằng... mày tự tính đi. 📉",
+    "ttsText": "Lọ ăn uống hết rồi hả? Tháng còn mười hai ngày. Tao tính giúp: không đồng chia mười hai ngày bằng... mày tự tính đi."
+  },
+  {
+    "id": "vuot_lo_2",
+    "text": "Tao ngồi đây nhìn cái pie chart mà muốn khóc thay. Màu đỏ nhiều hơn màu đất à mày? 😭",
+    "ttsText": "Tao ngồi đây nhìn cái biểu đồ tròn mà muốn khóc thay. Màu đỏ nhiều hơn màu xanh à mày?"
+  },
+  {
+    "id": "vuot_lo_3",
+    "text": "Vượt lọ rồi ư? Được rồi. Tao không giận. Tao chỉ tự hỏi: lần sau mày có muốn tao nhắc sớm hơn không? 🦜",
+    "ttsText": "Vượt lọ rồi ư? Được rồi. Tao không giận. Tao chỉ tự hỏi: lần sau mày có muốn tao nhắc sớm hơn không?"
+  },
+  {
+    "id": "vuot_lo_4",
+    "text": "Exceeding budget successfully! Tao nói tiếng Anh cho nó bớt đau. Nhưng thực ra nó vẫn đau. 500 nghìn đấy. 💔",
+    "ttsText": "Vượt ngân sách! Tao nói tiếng Anh cho nó bớt đau. Nhưng thực ra nó vẫn đau. Năm trăm nghìn đấy."
+  },
+  {
+    "id": "mua_tra_sua_0",
+    "text": "Ly thứ 5 rồi à? Tao không cấm. Tao chỉ thầm tính: 5 ly nhân 55 nghìn bằng 275 nghìn bằng 1.5 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc mà... phải không? 🧋",
+    "ttsText": "Ly thứ năm rồi à? Tao không cấm. Tao chỉ thầm tính: năm ly nhân năm mươi lăm nghìn bằng hai trăm bảy mươi lăm nghìn bằng một phẩy lăm ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc mà... phải không?"
+  },
+  {
+    "id": "mua_tra_sua_1",
+    "text": "Ừ cứ uống đi. Đằng nào tao cũng sẽ ghi vào lọ giải trí cho mày. Lọ đó còn... 40 nghìn thôi đó. Uống từ từ nhé. 🥤",
+    "ttsText": "Ừ cứ uống đi. Đằng nào tao cũng sẽ ghi vào lọ giải trí cho mày. Lọ đó còn... bốn mươi nghìn thôi đó. Uống từ từ nhé."
+  },
+  {
+    "id": "mua_tra_sua_2",
+    "text": "Trà sữa à? Tháng này mày uống bao nhiêu ly tao biết không? 5 ly. 5 ngày. Kiên định ghê. Ước gì mày kiên định tiết kiệm kiểu đó. ☕",
+    "ttsText": "Trà sữa à? Tháng này mày uống bao nhiêu ly tao biết không? Năm ly. Năm ngày. Kiên định ghê. Ước gì mày kiên định tiết kiệm kiểu đó."
+  },
+  {
+    "id": "mua_tra_sua_3",
+    "text": "Tao để ý thấy mày order trà sữa thường vào 3 giờ chiều. Stress à? Mày có thể kể tao nghe. Nhưng lọ giải trí thì tao không kể cho mày nghe đâu — hết rồi. 😅",
+    "ttsText": "Tao để ý thấy mày order trà sữa thường vào ba giờ chiều. Chét à? Mày có thể kể tao nghe. Nhưng lọ giải trí thì tao không kể cho mày nghe đâu, hết rồi."
+  },
+  {
+    "id": "bo_app_0",
+    "text": "3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười. 😂",
+    "ttsText": "Ba ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương, khóc vì buồn cười."
+  },
+  {
+    "id": "bo_app_1",
+    "text": "72 tiếng. 4320 phút. Không một lần mở app. Nhưng chắc Shopee thì vào đều lắm nhỉ? 🛒",
+    "ttsText": "Bảy mươi hai tiếng. Bốn ngàn ba trăm hai mươi phút. Không một lần mở app. Nhưng chắc sốp pi thì vào đều lắm nhỉ?"
+  },
+  {
+    "id": "bo_app_2",
+    "text": "Mày biến mất 3 ngày, tiền cũng biến mất theo. Trùng hợp hay không trùng hợp — tao để mày tự trả lời. 🎭",
+    "ttsText": "Mày biến mất ba ngày, tiền cũng biến mất theo. Trùng hợp hay không trùng hợp, tao để mày tự trả lời."
+  },
+  {
+    "id": "bo_app_3",
+    "text": "Thôi được rồi, mày về rồi. Tao không giận. Tao chỉ buồn... và số dư của mày cũng buồn. Cùng buồn cho vui nào. 😞",
+    "ttsText": "Thôi được rồi, mày về rồi. Tao không giận. Tao chỉ buồn... và số dư của mày cũng buồn. Cùng buồn cho vui nào."
+  },
+  {
+    "id": "bo_app_4",
+    "text": "3 ngày không cho tao ăn. Nếu tao là người tao đã bỏ đi rồi. Nhưng tao là vẹt — tao ở lại vì tiền của mày cần tao. 🦜",
+    "ttsText": "Ba ngày không cho tao ăn. Nếu tao là người tao đã bỏ đi rồi. Nhưng tao là vẹt, tao ở lại vì tiền của mày cần tao."
+  },
+  {
+    "id": "shopee_0",
+    "text": "Order lần 4 rồi à? Tao không phán xét. Tao chỉ muốn biết: mày có biết Shopee đang kiếm tiền từ mày nhiều hơn mày kiếm được trong năm nay không? 📦",
+    "ttsText": "O rờ đờ lần bốn rồi à? Tao không phán xét. Tao chỉ muốn biết: mày có biết sốp pi đang kiếm tiền từ mày nhiều hơn mày kiếm được trong năm nay không?"
+  },
+  {
+    "id": "shopee_1",
+    "text": "Thêm vào giỏ hàng... Thanh toán... Tao ghi vào sổ rồi nhé. Lần tới mày hỏi tiền đi đâu hết thì tao sẽ show cho mày xem. 🧾",
+    "ttsText": "Thêm vào giỏ hàng... Thanh toán... Tao ghi vào sổ rồi nhé. Lần tới mày hỏi tiền đi đâu hết thì tao sẽ show cho mày xem."
+  },
+  {
+    "id": "shopee_2",
+    "text": "Flash sale hả? Tao hỏi thật: mày có thực sự cần cái đó không, hay chỉ vì nó rẻ hơn 30%? Rẻ hơn 30% mà không cần bằng mất 70%. 💥",
+    "ttsText": "Phờ lát seo hả? Tao hỏi thật: mày có thực sự cần cái đó không, hay chỉ vì nó rẻ hơn ba mươi phần trăm? Rẻ hơn ba mươi phần trăm mà không cần bằng mất bảy mươi phần trăm."
+  },
+  {
+    "id": "shopee_3",
+    "text": "Oke mày mua đi. Nhưng tao đề nghị: thêm cái receipt vào lọ mua sắm cho tao. Không cần cảm ơn, cứ làm đi. 📝",
+    "ttsText": "Okê mày mua đi. Nhưng tao đề nghị: thêm cái biên lai vào lọ mua sắm cho tao. Không cần cảm ơn, cứ làm đi."
+  },
+  {
+    "id": "het_tien_0",
+    "text": "Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì... 📉",
+    "ttsText": "Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì..."
+  },
+  {
+    "id": "het_tien_1",
+    "text": "Tháng này hết tiền à? Không sao. Tháng sau tao sẽ nhắc mày từ ngày 15. Lần này thì... ăn mì tôm đi, protein cũng có đó. 🍜",
+    "ttsText": "Tháng này hết tiền à? Không sao. Tháng sau tao sẽ nhắc mày từ ngày mười lăm. Lần này thì... ăn mì tôm đi, rồ tê in cũng có đó."
+  },
+  {
+    "id": "het_tien_2",
+    "text": "Cuối tháng 0 tiền — bình thường mà! Bình thường theo nghĩa... 67% Gen Z Việt Nam cũng vậy. Mày không cô đơn đâu. Nghèo thì ở cùng nhau. 🤝",
+    "ttsText": "Cuối tháng không tiền, bình thường mà! Bình thường theo nghĩa... sáu mươi bảy phần trăm Gen Z Việt Nam cũng vậy. Mày không cô đơn đâu. Nghèo thì ở cùng nhau."
+  },
+  {
+    "id": "het_tien_3",
+    "text": "Còn mấy ngày nữa sang tháng? 3 ngày à? 0 đồng chia 3 ngày bằng... tao biết mày đủ giỏi toán để hiểu. 🧮",
+    "ttsText": "Còn mấy ngày nữa sang tháng? Ba ngày à? Không đồng chia ba ngày bằng... tao biết mày đủ giỏi toán để hiểu."
+  },
+  {
+    "id": "ghi_dung_gio_0",
+    "text": "Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! Cộng 20 XP. ✨",
+    "ttsText": "Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào sốp pi thôi chứ. Nể thiệt! Cộng hai mươi điểm XP."
+  },
+  {
+    "id": "ghi_dung_gio_1",
+    "text": "Ghi chi tiêu trước 10 giờ sáng! Tao muốn khóc — không phải vì buồn, mà vì cảm động. Lần đầu mày làm đúng giờ kể từ... lần trước. 😭",
+    "ttsText": "Ghi chi tiêu trước mười giờ sáng! Tao muốn khóc, không phải vì buồn, mà vì cảm động. Lần đầu mày làm đúng giờ kể từ... lần trước."
+  },
+  {
+    "id": "ghi_dung_gio_2",
+    "text": "Nhìn notification pop-up, tao tưởng mày bỏ qua như mọi hôm. Nhưng không! Mày mở app. Mày ghi tiêu. Mày thực sự làm được. Xúc động ghê. 🍿",
+    "ttsText": "Nhìn thông báo nảy lên, tao tưởng mày bỏ qua như mọi hôm. Nhưng không! Mày mở app. Mày ghi tiêu. Mày thực sự làm được. Xúc động ghê."
+  },
+  {
+    "id": "ghi_dung_gio_3",
+    "text": "Ghi đúng giờ cộng 20 XP. Mày đang trên đường lên Vẹt Teen rồi đó. Tốc độ này thêm 3 ngày nữa là tao phải gọi mày là anh rồi. 🚀",
+    "ttsText": "Ghi đúng giờ cộng hai mươi XP. Mày đang trên đường lên Vẹt Teen rồi đó. Tốc độ này thêm ba ngày nữa là tao phải gọi mày là anh rồi."
+  },
+  {
+    "id": "streak_7_0",
+    "text": "7 ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Keep going! 🔥",
+    "ttsText": "Bảy ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Kíp gâu inh!"
+  },
+  {
+    "id": "streak_7_1",
+    "text": "Streak 7 ngày. Tao đã nghĩ ngày thứ 3 mày sẽ bỏ. Rồi ngày 5 tao lại nghĩ vậy. Rồi ngày 7. Mày phá vỡ định kiến của tao về mày. Không phải dễ đâu. 💪",
+    "ttsText": "Chuỗi bảy ngày. Tao đã nghĩ ngày thứ ba mày sẽ bỏ. Rồi ngày năm tao lại nghĩ vậy. Rồi ngày bảy. Mày phá vỡ định kiến của tao về mày. Không phải dễ đâu."
+  },
+  {
+    "id": "streak_7_2",
+    "text": "7 ngày! Cộng 100 XP bonus! Người dùng có streak 7 ngày trở lên tiết kiệm nhiều hơn 40% so với người không có streak. Mày đang đi đúng đường. 📈",
+    "ttsText": "Bảy ngày! Cộng một trăm XP thưởng! Người dùng có chuỗi bảy ngày trở lên tiết kiệm nhiều hơn bốn mươi phần trăm so với người không có chuỗi. Mày đang đi đúng đường."
+  },
+  {
+    "id": "streak_7_3",
+    "text": "1 tuần liên tiếp! Tao muốn tự hào nhưng tao là vẹt, tao phải giữ hình tượng. Thôi thì... tao gật đầu thôi. Gật đầu bằng khen ngợi tối đa từ vẹt. 🦜",
+    "ttsText": "Một tuần liên tiếp! Tao muốn tự hào nhưng tao là vẹt, tao phải giữ hình tượng. Thôi thì... tao gật đầu thôi. Gật đầu bằng khen ngợi tối đa từ vẹt."
+  },
+  {
+    "id": "tra_no_0",
+    "text": "Trả hết nợ rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn những gì tao nghĩ. 🥳",
+    "ttsText": "Trả hết nợ rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn những gì tao nghĩ."
+  },
+  {
+    "id": "tra_no_1",
+    "text": "Ôi mày trả hết nợ rồi! Tao không biết mình vui vì mày, hay vì tao sẽ không phải nhắc cái khoản đó nữa. Nhưng chủ yếu là vì mày. 🎊",
+    "ttsText": "Ôi mày trả hết nợ rồi! Tao không biết mình vui vì mày, hay vì tao sẽ không phải nhắc cái khoản đó nữa. Nhưng chủ yếu là vì mày."
+  },
+  {
+    "id": "tra_no_2",
+    "text": "Khoản nợ đó đã tồn tại bao lâu? 4 tháng? Và mày vừa xóa nó. Tao ghi vào lịch sử: ngày hôm nay — mày làm được điều không phải ai cũng làm được. 🏛️",
+    "ttsText": "Khoản nợ đó đã tồn tại bao lâu? Bốn tháng? Và mày vừa xóa nó. Tao ghi vào lịch sử: ngày hôm nay, mày làm được điều không phải ai cũng làm được."
+  },
+  {
+    "id": "tra_no_3",
+    "text": "Cộng 150 XP! Trả hết nợ là milestone lớn nhất người dùng VietFi có thể đạt được. Mày vừa bước qua cột mốc đó. Tao tự hào... ừ, tao nói vậy đó. 🏆",
+    "ttsText": "Cộng một trăm năm mươi XP! Trả hết nợ là cột mốc lớn nhất người dùng Việt phai cố thể đạt được. Mày vừa bước qua cột mốc đó. Tao tự hào... ừ, tao nói vậy đó."
+  },
+  {
+    "id": "tiet_kiem_0",
+    "text": "Target tiết kiệm tháng này: xong! Tao không biết mày dùng trick gì, nhưng kết quả thì không nói dối. Cộng 80 XP. 🎯",
+    "ttsText": "Mục tiêu tiết kiệm tháng này: xong! Tao không biết mày dùng trick gì, nhưng kết quả thì không nói dối. Cộng tám mươi XP."
+  },
+  {
+    "id": "tiet_kiem_1",
+    "text": "Đủ target tiết kiệm! Mày biết không, tháng này mày tiết kiệm được nhiều hơn tháng trước 12%. Nhỏ nhưng là tiến bộ thật sự. 🌟",
+    "ttsText": "Đủ mục tiêu tiết kiệm! Mày biết không, tháng này mày tiết kiệm được nhiều hơn tháng trước mười hai phần trăm. Nhỏ nhưng là tiến bộ thật sự."
+  },
+  {
+    "id": "tiet_kiem_2",
+    "text": "Gà mà biết đẻ trứng vàng thật rồi! Tao đã mắng mày suốt 3 tuần, nhưng nhìn kết quả tháng này — xứng đáng. Cộng 80 XP. 🐣",
+    "ttsText": "Gà mà biết đẻ trứng vàng thật rồi! Tao đã mắng mày suốt ba tuần, nhưng nhìn kết quả tháng này, xứng đáng. Cộng tám mươi XP."
+  },
+  {
+    "id": "tiet_kiem_3",
+    "text": "Đủ target! Tao ngồi đây tính: nếu mày giữ tốc độ này, 8 tháng nữa mày có đủ quỹ khẩn cấp 3 tháng lương. Mày có hình dung được cảm giác đó không? 🏰",
+    "ttsText": "Đủ mục tiêu! Tao ngồi đây tính: nếu mày giữ tốc độ này, tám tháng nữa mày có đủ quỹ khẩn cấp ba tháng lương. Mày có hình dung được cảm giác đó không?"
+  }
+]

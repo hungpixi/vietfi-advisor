@@ -5,7 +5,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 from pathlib import Path
 from vieneu import Vieneu
 
-OUT_DIR = Path(r"d:\Cá nhân\Vọc vạch\Cuộc thi\vietfi-advisor\voice_ref\presets")
+ROOT_DIR = Path(__file__).parent.parent
+OUT_DIR = ROOT_DIR / "voice_ref" / "presets"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TEXT = "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu, tao chỉ hỏi thôi."

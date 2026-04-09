@@ -17,7 +17,12 @@ export type Intent =
   | "who_are_you" | "help" | "joke"
   | "morning" | "afternoon" | "evening" | "night"
   | "streak_praise" | "level_up" | "zero_income_roast"
+<<<<<<< HEAD
   | "ledger_empty"
+=======
+  | "vuot_lo" | "mua_tra_sua" | "bo_app" | "shopee" | "het_tien"
+  | "ghi_dung_gio" | "streak_7" | "tra_no" | "tiet_kiem"
+>>>>>>> 6771142 (feat(tts): pre-render 125 voices for VetVang & cleanup)
   | "unknown";
 
 export interface ScriptedResponseItem {
@@ -470,7 +475,7 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
 
   // ── Edge Cases ──
   zero_income_roast: [
-    r("zero_income_roast", 0, 
+    r("zero_income_roast", 0,
       "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mạy? Đi kiếm tiền trước đi! 🤡🦜",
       "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mày? Đi kiếm tiền trước đi!"),
     r("zero_income_roast", 1,
@@ -483,6 +488,7 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Warren Buffett khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi! 🏃",
       "Oa ren Bâu phét khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi!")
   ],
+<<<<<<< HEAD
 
   // ── Ledger Empty ──
   ledger_empty: [
@@ -502,6 +508,149 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!",
       "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!"),
   ],
+=======
+  // ── Thêm từ quotes.json ──
+  vuot_lo: [
+    r("vuot_lo", 0,
+      "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu. Tao chỉ hỏi: cái khoản giải trí 2 triệu đó mày xài hết trong mấy ngày vậy? 💸",
+      "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu. Tao chỉ hỏi: cái khoản giải trí hai triệu đó mày xài hết trong mấy ngày vậy?"),
+    r("vuot_lo", 1,
+      "Lọ ăn uống hết rồi hả? Tháng còn 12 ngày. Tao tính giúp: 0 đồng chia 12 ngày bằng... mày tự tính đi. 📉",
+      "Lọ ăn uống hết rồi hả? Tháng còn mười hai ngày. Tao tính giúp: không đồng chia mười hai ngày bằng... mày tự tính đi."),
+    r("vuot_lo", 2,
+      "Tao ngồi đây nhìn cái pie chart mà muốn khóc thay. Màu đỏ nhiều hơn màu đất à mày? 😭",
+      "Tao ngồi đây nhìn cái biểu đồ tròn mà muốn khóc thay. Màu đỏ nhiều hơn màu xanh à mày?"),
+    r("vuot_lo", 3,
+      "Vượt lọ rồi ư? Được rồi. Tao không giận. Tao chỉ tự hỏi: lần sau mày có muốn tao nhắc sớm hơn không? 🦜",
+      "Vượt lọ rồi ư? Được rồi. Tao không giận. Tao chỉ tự hỏi: lần sau mày có muốn tao nhắc sớm hơn không?"),
+    r("vuot_lo", 4,
+      "Exceeding budget successfully! Tao nói tiếng Anh cho nó bớt đau. Nhưng thực ra nó vẫn đau. 500 nghìn đấy. 💔",
+      "Vượt ngân sách! Tao nói tiếng Anh cho nó bớt đau. Nhưng thực ra nó vẫn đau. Năm trăm nghìn đấy.")
+  ],
+
+  mua_tra_sua: [
+    r("mua_tra_sua", 0,
+      "Ly thứ 5 rồi à? Tao không cấm. Tao chỉ thầm tính: 5 ly nhân 55 nghìn bằng 275 nghìn bằng 1.5 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc mà... phải không? 🧋",
+      "Ly thứ năm rồi à? Tao không cấm. Tao chỉ thầm tính: năm ly nhân năm mươi lăm nghìn bằng hai trăm bảy mươi lăm nghìn bằng một phẩy lăm ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc mà... phải không?"),
+    r("mua_tra_sua", 1,
+      "Ừ cứ uống đi. Đằng nào tao cũng sẽ ghi vào lọ giải trí cho mày. Lọ đó còn... 40 nghìn thôi đó. Uống từ từ nhé. 🥤",
+      "Ừ cứ uống đi. Đằng nào tao cũng sẽ ghi vào lọ giải trí cho mày. Lọ đó còn... bốn mươi nghìn thôi đó. Uống từ từ nhé."),
+    r("mua_tra_sua", 2,
+      "Trà sữa à? Tháng này mày uống bao nhiêu ly tao biết không? 5 ly. 5 ngày. Kiên định ghê. Ước gì mày kiên định tiết kiệm kiểu đó. ☕",
+      "Trà sữa à? Tháng này mày uống bao nhiêu ly tao biết không? Năm ly. Năm ngày. Kiên định ghê. Ước gì mày kiên định tiết kiệm kiểu đó."),
+    r("mua_tra_sua", 3,
+      "Tao để ý thấy mày order trà sữa thường vào 3 giờ chiều. Stress à? Mày có thể kể tao nghe. Nhưng lọ giải trí thì tao không kể cho mày nghe đâu — hết rồi. 😅",
+      "Tao để ý thấy mày order trà sữa thường vào ba giờ chiều. Chét à? Mày có thể kể tao nghe. Nhưng lọ giải trí thì tao không kể cho mày nghe đâu, hết rồi.")
+  ],
+
+  bo_app: [
+    r("bo_app", 0,
+      "3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười. 😂",
+      "Ba ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương, khóc vì buồn cười."),
+    r("bo_app", 1,
+      "72 tiếng. 4320 phút. Không một lần mở app. Nhưng chắc Shopee thì vào đều lắm nhỉ? 🛒",
+      "Bảy mươi hai tiếng. Bốn ngàn ba trăm hai mươi phút. Không một lần mở app. Nhưng chắc sốp pi thì vào đều lắm nhỉ?"),
+    r("bo_app", 2,
+      "Mày biến mất 3 ngày, tiền cũng biến mất theo. Trùng hợp hay không trùng hợp — tao để mày tự trả lời. 🎭",
+      "Mày biến mất ba ngày, tiền cũng biến mất theo. Trùng hợp hay không trùng hợp, tao để mày tự trả lời."),
+    r("bo_app", 3,
+      "Thôi được rồi, mày về rồi. Tao không giận. Tao chỉ buồn... và số dư của mày cũng buồn. Cùng buồn cho vui nào. 😞",
+      "Thôi được rồi, mày về rồi. Tao không giận. Tao chỉ buồn... và số dư của mày cũng buồn. Cùng buồn cho vui nào."),
+    r("bo_app", 4,
+      "3 ngày không cho tao ăn. Nếu tao là người tao đã bỏ đi rồi. Nhưng tao là vẹt — tao ở lại vì tiền của mày cần tao. 🦜",
+      "Ba ngày không cho tao ăn. Nếu tao là người tao đã bỏ đi rồi. Nhưng tao là vẹt, tao ở lại vì tiền của mày cần tao.")
+  ],
+
+  shopee: [
+    r("shopee", 0,
+      "Order lần 4 rồi à? Tao không phán xét. Tao chỉ muốn biết: mày có biết Shopee đang kiếm tiền từ mày nhiều hơn mày kiếm được trong năm nay không? 📦",
+      "O rờ đờ lần bốn rồi à? Tao không phán xét. Tao chỉ muốn biết: mày có biết sốp pi đang kiếm tiền từ mày nhiều hơn mày kiếm được trong năm nay không?"),
+    r("shopee", 1,
+      "Thêm vào giỏ hàng... Thanh toán... Tao ghi vào sổ rồi nhé. Lần tới mày hỏi tiền đi đâu hết thì tao sẽ show cho mày xem. 🧾",
+      "Thêm vào giỏ hàng... Thanh toán... Tao ghi vào sổ rồi nhé. Lần tới mày hỏi tiền đi đâu hết thì tao sẽ show cho mày xem."),
+    r("shopee", 2,
+      "Flash sale hả? Tao hỏi thật: mày có thực sự cần cái đó không, hay chỉ vì nó rẻ hơn 30%? Rẻ hơn 30% mà không cần bằng mất 70%. 💥",
+      "Phờ lát seo hả? Tao hỏi thật: mày có thực sự cần cái đó không, hay chỉ vì nó rẻ hơn ba mươi phần trăm? Rẻ hơn ba mươi phần trăm mà không cần bằng mất bảy mươi phần trăm."),
+    r("shopee", 3,
+      "Oke mày mua đi. Nhưng tao đề nghị: thêm cái receipt vào lọ mua sắm cho tao. Không cần cảm ơn, cứ làm đi. 📝",
+      "Okê mày mua đi. Nhưng tao đề nghị: thêm cái biên lai vào lọ mua sắm cho tao. Không cần cảm ơn, cứ làm đi.")
+  ],
+
+  het_tien: [
+    r("het_tien", 0,
+      "Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì... 📉",
+      "Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì..."),
+    r("het_tien", 1,
+      "Tháng này hết tiền à? Không sao. Tháng sau tao sẽ nhắc mày từ ngày 15. Lần này thì... ăn mì tôm đi, protein cũng có đó. 🍜",
+      "Tháng này hết tiền à? Không sao. Tháng sau tao sẽ nhắc mày từ ngày mười lăm. Lần này thì... ăn mì tôm đi, rồ tê in cũng có đó."),
+    r("het_tien", 2,
+      "Cuối tháng 0 tiền — bình thường mà! Bình thường theo nghĩa... 67% Gen Z Việt Nam cũng vậy. Mày không cô đơn đâu. Nghèo thì ở cùng nhau. 🤝",
+      "Cuối tháng không tiền, bình thường mà! Bình thường theo nghĩa... sáu mươi bảy phần trăm Gen Z Việt Nam cũng vậy. Mày không cô đơn đâu. Nghèo thì ở cùng nhau."),
+    r("het_tien", 3,
+      "Còn mấy ngày nữa sang tháng? 3 ngày à? 0 đồng chia 3 ngày bằng... tao biết mày đủ giỏi toán để hiểu. 🧮",
+      "Còn mấy ngày nữa sang tháng? Ba ngày à? Không đồng chia ba ngày bằng... tao biết mày đủ giỏi toán để hiểu.")
+  ],
+
+  ghi_dung_gio: [
+    r("ghi_dung_gio", 0,
+      "Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! Cộng 20 XP. ✨",
+      "Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào sốp pi thôi chứ. Nể thiệt! Cộng hai mươi điểm XP."),
+    r("ghi_dung_gio", 1,
+      "Ghi chi tiêu trước 10 giờ sáng! Tao muốn khóc — không phải vì buồn, mà vì cảm động. Lần đầu mày làm đúng giờ kể từ... lần trước. 😭",
+      "Ghi chi tiêu trước mười giờ sáng! Tao muốn khóc, không phải vì buồn, mà vì cảm động. Lần đầu mày làm đúng giờ kể từ... lần trước."),
+    r("ghi_dung_gio", 2,
+      "Nhìn notification pop-up, tao tưởng mày bỏ qua như mọi hôm. Nhưng không! Mày mở app. Mày ghi tiêu. Mày thực sự làm được. Xúc động ghê. 🍿",
+      "Nhìn thông báo nảy lên, tao tưởng mày bỏ qua như mọi hôm. Nhưng không! Mày mở app. Mày ghi tiêu. Mày thực sự làm được. Xúc động ghê."),
+    r("ghi_dung_gio", 3,
+      "Ghi đúng giờ cộng 20 XP. Mày đang trên đường lên Vẹt Teen rồi đó. Tốc độ này thêm 3 ngày nữa là tao phải gọi mày là anh rồi. 🚀",
+      "Ghi đúng giờ cộng hai mươi XP. Mày đang trên đường lên Vẹt Teen rồi đó. Tốc độ này thêm ba ngày nữa là tao phải gọi mày là anh rồi.")
+  ],
+
+  streak_7: [
+    r("streak_7", 0,
+      "7 ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Keep going! 🔥",
+      "Bảy ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Kíp gâu inh!"),
+    r("streak_7", 1,
+      "Streak 7 ngày. Tao đã nghĩ ngày thứ 3 mày sẽ bỏ. Rồi ngày 5 tao lại nghĩ vậy. Rồi ngày 7. Mày phá vỡ định kiến của tao về mày. Không phải dễ đâu. 💪",
+      "Chuỗi bảy ngày. Tao đã nghĩ ngày thứ ba mày sẽ bỏ. Rồi ngày năm tao lại nghĩ vậy. Rồi ngày bảy. Mày phá vỡ định kiến của tao về mày. Không phải dễ đâu."),
+    r("streak_7", 2,
+      "7 ngày! Cộng 100 XP bonus! Người dùng có streak 7 ngày trở lên tiết kiệm nhiều hơn 40% so với người không có streak. Mày đang đi đúng đường. 📈",
+      "Bảy ngày! Cộng một trăm XP thưởng! Người dùng có chuỗi bảy ngày trở lên tiết kiệm nhiều hơn bốn mươi phần trăm so với người không có chuỗi. Mày đang đi đúng đường."),
+    r("streak_7", 3,
+      "1 tuần liên tiếp! Tao muốn tự hào nhưng tao là vẹt, tao phải giữ hình tượng. Thôi thì... tao gật đầu thôi. Gật đầu bằng khen ngợi tối đa từ vẹt. 🦜",
+      "Một tuần liên tiếp! Tao muốn tự hào nhưng tao là vẹt, tao phải giữ hình tượng. Thôi thì... tao gật đầu thôi. Gật đầu bằng khen ngợi tối đa từ vẹt.")
+  ],
+
+  tra_no: [
+    r("tra_no", 0,
+      "Trả hết nợ rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn những gì tao nghĩ. 🥳",
+      "Trả hết nợ rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn những gì tao nghĩ."),
+    r("tra_no", 1,
+      "Ôi mày trả hết nợ rồi! Tao không biết mình vui vì mày, hay vì tao sẽ không phải nhắc cái khoản đó nữa. Nhưng chủ yếu là vì mày. 🎊",
+      "Ôi mày trả hết nợ rồi! Tao không biết mình vui vì mày, hay vì tao sẽ không phải nhắc cái khoản đó nữa. Nhưng chủ yếu là vì mày."),
+    r("tra_no", 2,
+      "Khoản nợ đó đã tồn tại bao lâu? 4 tháng? Và mày vừa xóa nó. Tao ghi vào lịch sử: ngày hôm nay — mày làm được điều không phải ai cũng làm được. 🏛️",
+      "Khoản nợ đó đã tồn tại bao lâu? Bốn tháng? Và mày vừa xóa nó. Tao ghi vào lịch sử: ngày hôm nay, mày làm được điều không phải ai cũng làm được."),
+    r("tra_no", 3,
+      "Cộng 150 XP! Trả hết nợ là milestone lớn nhất người dùng VietFi có thể đạt được. Mày vừa bước qua cột mốc đó. Tao tự hào... ừ, tao nói vậy đó. 🏆",
+      "Cộng một trăm năm mươi XP! Trả hết nợ là cột mốc lớn nhất người dùng Việt phai cố thể đạt được. Mày vừa bước qua cột mốc đó. Tao tự hào... ừ, tao nói vậy đó.")
+  ],
+
+  tiet_kiem: [
+    r("tiet_kiem", 0,
+      "Target tiết kiệm tháng này: xong! Tao không biết mày dùng trick gì, nhưng kết quả thì không nói dối. Cộng 80 XP. 🎯",
+      "Mục tiêu tiết kiệm tháng này: xong! Tao không biết mày dùng trick gì, nhưng kết quả thì không nói dối. Cộng tám mươi XP."),
+    r("tiet_kiem", 1,
+      "Đủ target tiết kiệm! Mày biết không, tháng này mày tiết kiệm được nhiều hơn tháng trước 12%. Nhỏ nhưng là tiến bộ thật sự. 🌟",
+      "Đủ mục tiêu tiết kiệm! Mày biết không, tháng này mày tiết kiệm được nhiều hơn tháng trước mười hai phần trăm. Nhỏ nhưng là tiến bộ thật sự."),
+    r("tiet_kiem", 2,
+      "Gà mà biết đẻ trứng vàng thật rồi! Tao đã mắng mày suốt 3 tuần, nhưng nhìn kết quả tháng này — xứng đáng. Cộng 80 XP. 🐣",
+      "Gà mà biết đẻ trứng vàng thật rồi! Tao đã mắng mày suốt ba tuần, nhưng nhìn kết quả tháng này, xứng đáng. Cộng tám mươi XP."),
+    r("tiet_kiem", 3,
+      "Đủ target! Tao ngồi đây tính: nếu mày giữ tốc độ này, 8 tháng nữa mày có đủ quỹ khẩn cấp 3 tháng lương. Mày có hình dung được cảm giác đó không? 🏰",
+      "Đủ mục tiêu! Tao ngồi đây tính: nếu mày giữ tốc độ này, tám tháng nữa mày có đủ quỹ khẩn cấp ba tháng lương. Mày có hình dung được cảm giác đó không?")
+  ]
+>>>>>>> 6771142 (feat(tts): pre-render 125 voices for VetVang & cleanup)
 };
 
 // ── Response Generator ──────────────────────────────────────────
