@@ -141,6 +141,12 @@ async function fetchWithCache(url: string, options: RequestInit = {}, timeoutMs 
 }
 
 const CAFEF_MSHDATA_URL = 'https://msh-appdata.cafef.vn/rest-api/api/v1/StockMarket'
+const COINGECKO_BTC_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
+const GIAVANG_ALL_URL = 'https://giavang.com.vn/wp-json/giavang/v1/all'
+const YAHOO_SILVER_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/SI=F?interval=1d&range=2d'
+const SBV_HOMEPAGE = 'https://sbv.gov.vn/'
+const OPEN_ER_API = 'https://open.er-api.com/v6/latest/USD'
+const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
 
 export async function fetchVnIndex(): Promise<VnIndexData | null> {
   try {
@@ -205,8 +211,6 @@ export async function fetchBtc(): Promise<CryptoData | null> {
   }
 }
 // ── Gold SJC ─────────────────────────────────────────────────────────────────
-
-const GIAVANG_ALL_URL = 'https://giavang.com.vn/wp-json/giavang/v1/all'
 
 function normalizeGoldSeries(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -384,10 +388,6 @@ export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null>
   return (await tryGiaVang()) || (await tryDoji())
 }
 
-// ── Silver ───────────────────────────────────────────────────────────────────
-
-const YAHOO_SILVER_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/SI=F?interval=1d&range=2d'
-
 export async function fetchSilver(usdVndRate: number): Promise<SilverData | null> {
   try {
     const resp = await fetchWithCache(YAHOO_SILVER_URL, {
@@ -399,7 +399,7 @@ export async function fetchSilver(usdVndRate: number): Promise<SilverData | null
     const json = await resp.json() as Record<string, unknown>
     const chart = json.chart as Record<string, unknown> | undefined
     const result = Array.isArray(chart?.result) ? (chart.result[0] as Record<string, unknown>) : undefined
-    
+
     if (!result || !result.meta) return null
     const meta = result.meta as Record<string, unknown>
 
@@ -422,15 +422,6 @@ export async function fetchSilver(usdVndRate: number): Promise<SilverData | null
     return null
   }
 }
-
-// ── Bitcoin (BTC) ─────────────────────────────────────────────────────────────
-
-const COINGECKO_BTC_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
-
-// ── USD/VND ───────────────────────────────────────────────────────────────────
-
-const SBV_HOMEPAGE = 'https://sbv.gov.vn/'
-const OPEN_ER_API = 'https://open.er-api.com/v6/latest/USD'
 
 export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
   // Method 1: SBV homepage
@@ -466,10 +457,6 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
 
   return null
 }
-
-// ── News RSS ──────────────────────────────────────────────────────────────────
-
-const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
 
 export async function fetchNews(): Promise<NewsItem[]> {
   try {
@@ -512,16 +499,16 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       next: { revalidate: 600 }
     }).then(r => r.text())
-    
+
     let dojiSjcBuy = 0, dojiSjcSell = 0
     let dojiRingBuy = 0, dojiRingSell = 0
-    
+
     const matches = [...dojiXml.matchAll(/<Row Name="(.*?)" .*?Buy="(.*?)" Sell="(.*?)"/g)]
     for (const m of matches) {
       const name = m[1]
       const buy = parseFloat(m[2].replace(/,/g, '')) * 1000000
       const sell = parseFloat(m[3].replace(/,/g, '')) * 1000000
-      
+
       if (name.includes('SJC') && dojiSjcBuy === 0 && buy > 10000000) {
         dojiSjcBuy = buy; dojiSjcSell = sell
       }
@@ -531,7 +518,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
     }
     if (dojiSjcBuy > 0) brands['DOJI_SJC'] = { buy: dojiSjcBuy, sell: dojiSjcSell }
     if (dojiRingBuy > 0) brands['DOJI_NHAN'] = { buy: dojiRingBuy, sell: dojiRingSell }
-  } catch {}
+  } catch { }
 
   // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
   const fetchWebgia = async (brandCode: string, urlId: string) => {
@@ -540,27 +527,27 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
         headers: { 'User-Agent': 'Mozilla/5.0' },
         next: { revalidate: 600 }
       }).then(r => r.text())
-      
+
       const $ = cheerio.load(html)
       let ringBuy = 0, ringSell = 0
       let sjcBuy = 0, sjcSell = 0
-      
+
       $('table tbody tr').each((_, el) => {
         const name = $(el).find('td').first().text().trim().toLowerCase()
         const buyStr = $(el).find('td').eq(1).text().replace(/\D/g, '')
         const sellStr = $(el).find('td').eq(2).text().replace(/\D/g, '')
         if (!buyStr) return
-        
+
         let buy = parseInt(buyStr, 10)
         let sell = parseInt(sellStr, 10)
-        
+
         // Cố gắng chuẩn hóa về giá 1 lượng (~80,000,000)
         // Nếu giá trị < 10,000,000 -> khả năng là giá 1 chỉ -> nhân 10
         if (buy > 100000 && buy < 10000000) buy *= 10
         if (sell > 100000 && sell < 10000000) sell *= 10
-        
+
         if (buy < 10000000 || buy > 150000000) return // Bỏ qua nếu giá vô lý
-        
+
         if ((name.includes('nhẫn') || name.includes('vàng rồng') || name.includes('trơn') || name.includes('9999')) && ringBuy === 0) {
           ringBuy = buy; ringSell = sell
         }
@@ -568,10 +555,10 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
           sjcBuy = buy; sjcSell = sell
         }
       })
-      
+
       if (sjcBuy > 0) brands[`${brandCode}_SJC`] = { buy: sjcBuy, sell: sjcSell }
       if (ringBuy > 0) brands[`${brandCode}_NHAN`] = { buy: ringBuy, sell: ringSell }
-    } catch {}
+    } catch { }
   }
 
   await Promise.allSettled([
@@ -633,19 +620,26 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
 export async function crawlMarketData(): Promise<MarketSnapshot> {
   const fetchedAt = new Date().toISOString()
 
-  // Fetch exchange rate first — needed for gold VND conversion
-  const usdVnd = await fetchExchangeRate()
-  const usdVndRate = usdVnd?.rate ?? 25085
-
-  // Fetch all data in parallel
-  const [vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
+  // Fetch all data in parallel — exchange rate is no longer a blocker
+  const [usdVnd, vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
+    fetchExchangeRate(),
     fetchVnIndex(),
-    fetchGoldSjc(usdVndRate),
+    fetchGoldSjc(25085), // Use fallback rate for initial calculation if needed
     fetchBtc(),
-    fetchSilver(usdVndRate),
+    fetchSilver(25085), // Use fallback rate for initial calculation if needed
     fetchNews(),
     fetchMultiBrandGold()
   ])
+
+  // Recalculate gold/silver VND if we got a fresh exchange rate
+  if (usdVnd && usdVnd.rate !== 25085) {
+    if (goldSjc) {
+      goldSjc.goldVnd = calculateGoldVnd(goldSjc.goldUsd, usdVnd.rate)
+    }
+    if (silver) {
+      silver.silverVnd = Math.round(silver.silverUsd * usdVnd.rate * (37.5 / 31.1035))
+    }
+  }
 
   const snapshot: MarketSnapshot = {
     fetchedAt,

@@ -105,7 +105,7 @@ function GamificationBar() {
         prevXPRef.current = newGam.xp;
       }
       setGam(newGam);
-    }, 1000);
+    }, 5000);
     return () => clearInterval(t);
   }, [getGamification]); // Polling from the local storage helper function
 
@@ -204,11 +204,11 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       const debts = getDebts();
       const onboarding = getOnboardingState();
       setSetupStatus({
-        "/dashboard/budget": pots.length > 0,
-        "/dashboard/debt": debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
+        "/dashboard/budget": pots.filter(p => p.allocated >= 500_000).length >= 2,
+        "/dashboard/debt": debts.some(d => d.principal > 100_000),
         "/dashboard/risk-profile": !!onboarding,
         "/dashboard/portfolio": !!onboarding,
-        "/dashboard/personal-cpi": pots.length > 0,
+        "/dashboard/personal-cpi": pots.length >= 3,
       });
     };
     check();

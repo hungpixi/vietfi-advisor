@@ -1,0 +1,9 @@
+{
+  "id": "3",
+  "subject": "Worker 3: Build one section of a cinematic Next.js landing page. Working in: D:/",
+  "description": "Build one section of a cinematic Next.js landing page. Working in: D:/vietfi-advisor. DO NOT push to git. Write your section to src/app/demo-awwwards/[section-name].tsx. Design: dark cinematic nature/tech, serif headings (Playfair Display), sans body (Inter), glassmorphism, neon green accents. Colors: #020202 bg, #0a1a0a forest, #00ff6a neon green. Export your component as default. Use Framer Motion (useScroll/useTransform for scroll animations, stagger variants, useInView). Lenis assumed for smooth scroll.",
+  "status": "pending",
+  "owner": null,
+  "result": null,
+  "created_at": "2026-04-07T11:23:45.353Z"
+}

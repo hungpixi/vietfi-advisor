@@ -47,7 +47,7 @@ const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 export default function NewsPage() {
-    const [filter, setFilter] = useState("Tất cả");
+  const [filter, setFilter] = useState("Tất cả");
   const [items, setItems] = useState<NewsItem[]>(allNewsFallback);
   const [loading, setLoading] = useState(true);
   const [stale, setStale] = useState(false);
@@ -90,12 +90,14 @@ export default function NewsPage() {
           id: article.id,
           title: article.title,
           source: article.source,
-          time: new Date(article.published).toLocaleString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            day: "2-digit",
-            month: "2-digit",
-          }),
+          time: (() => {
+            const d = new Date(article.published);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mo = String(d.getMonth() + 1).padStart(2, '0');
+            return `${hh}:${mm} Ngày ${dd} Tháng ${mo}`;
+          })(),
           sentiment: article.sentiment,
           asset: article.asset,
           summary: article.summary,
@@ -165,11 +167,10 @@ export default function NewsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`text-[11px] px-3 py-1.5 rounded-full transition-all ${
-                filter === f
+              className={`text-[11px] px-3 py-1.5 rounded-full transition-all ${filter === f
                   ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20"
                   : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:border-white/10"
-              }`}
+                }`}
             >
               {f}
             </button>

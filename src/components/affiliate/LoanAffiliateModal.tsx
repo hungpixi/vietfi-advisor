@@ -207,7 +207,7 @@ export function LoanAffiliateModal({ dtiRatio, totalMonthlyInterest, onClose }: 
               <div>
                 <h2 className="text-[15px] font-bold text-white leading-tight">
                   Bạn đang gánh{" "}
-                  <span className="text-[#EF4444]">{formatVND(totalMonthlyInterest)}</span>/năm lãi
+                  <span className="text-[#EF4444]">{formatVND(totalMonthlyInterest)}</span>/tháng lãi ẩn
                 </h2>
                 <p className="text-[11px] text-white/40 mt-0.5">
                   Đề xuất khoản vay tốt hơn?

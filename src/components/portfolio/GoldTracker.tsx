@@ -36,7 +36,7 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
       type: form.type,
       weight: Number(form.weight),
       buyPrice: Number(form.buyPrice),
-      date: new Date().toISOString()
+      date: new Date().toISOString().slice(0, 10)
     };
     addGoldPurchase(np);
     setPurchases(getGoldPurchases());
@@ -138,7 +138,7 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
             <div>
               <label className="text-white/40 block mb-1">Số lượng (Chỉ)</label>
               <input 
-                type="number" step="0.1" required
+                type="number" step="0.1" min="0.1" required
                 value={form.weight} 
                 onChange={e => setForm({...form, weight: Number(e.target.value)})}
                 className="w-full p-2 bg-black/20 border border-white/10 rounded-lg text-white outline-none" 

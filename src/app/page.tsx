@@ -228,6 +228,9 @@ function Navbar() {
           <button
             className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Mở menu điều hướng"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
           >
             {[0,1,2].map(i => (
               <div key={i} className={`w-5 h-0.5 bg-white/60 rounded transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
@@ -238,8 +241,9 @@ function Navbar() {
 
       {/* Mobile menu */}
       <motion.div
+        id="mobile-menu"
         initial={false}
-        animate={{ height: mobileOpen ? "auto" : 0, opacity: mobileOpen ? 1 : 0 }}
+        animate={{ maxHeight: mobileOpen ? 600 : 0, opacity: mobileOpen ? 1 : 0 }}
         className="md:hidden overflow-hidden bg-[#0A0A0F]/95 backdrop-blur-xl border-b border-white/[0.06]"
       >
         <div className="px-6 py-4 space-y-1">
@@ -806,7 +810,7 @@ function StickyCTABar() {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: visible ? 0 : 100, opacity: visible ? 1 : 0 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-3rem)] max-w-md"
+      className="fixed bottom-6 left-4 right-4 z-50 w-auto max-w-md mx-auto"
     >
       <div className="glass-card px-6 py-4 flex items-center justify-between gap-4 border-white/[0.1] shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
         <div>

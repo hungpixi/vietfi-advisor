@@ -120,7 +120,7 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
 
   return (
     <span ref={ref}>
-      {prefix}{count.toLocaleString("vi-VN")}{suffix}
+      {prefix}{count.toLocaleString("vi-VN", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}₫{suffix}
     </span>
   );
 }
@@ -390,9 +390,9 @@ export default function DashboardOverview() {
   const [aiBriefLoading, setAiBriefLoading] = useState(true);
   const [aiBriefError, setAiBriefError] = useState<string | null>(null);
   const [netWorth, setNetWorth] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
   const [assetSummary, setAssetSummary] = useState<string>("Chưa có dữ liệu");
-  const [mounted, setMounted] = useState(false);
 
   // Morning Brief AI
   useEffect(() => {
@@ -529,7 +529,7 @@ export default function DashboardOverview() {
   const briefLoading = aiBriefLoading;
 
   const liveNews: NewsItem[] = useMemo(() => {
-    if (liveArticles.length === 0) return FALLBACK_NEWS;
+    if (!mounted || liveArticles.length === 0) return [];
     return liveArticles.map((a) => ({
       title: a.title,
       source: a.source,
@@ -537,7 +537,7 @@ export default function DashboardOverview() {
       sentiment: a.sentiment,
       category: a.category,
     }));
-  }, [liveArticles]);
+  }, [liveArticles, mounted]);
 
   return (
     <>
@@ -571,9 +571,9 @@ export default function DashboardOverview() {
                 {/* Wealthsimple big number */}
                 <div className="mt-2 mb-1">
                   <span className="text-5xl md:text-6xl font-black text-white tracking-tight leading-none">
-                    {netWorth !== null ? (
+                    {netWorth !== null && netWorth !== 0 ? (
                       <>
-                        <AnimatedCounter target={Math.round(netWorth / 1_000_000 * 10) / 10} />
+                        <AnimatedCounter target={netWorth / 1_000_000} />
                         <span className="text-2xl md:text-3xl text-white/40 font-semibold ml-1.5">triệu</span>
                         <span className="text-base md:text-lg text-white/30 ml-1">₫</span>
                       </>

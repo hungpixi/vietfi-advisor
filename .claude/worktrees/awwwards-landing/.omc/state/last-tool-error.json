@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"taskkill /F /IM node.exe 2>nul & cd \\\"D:/vietfi-advisor\\\" && rm -rf \\\".claude/worktrees/awwwards-landing\\\" && echo \\\"removed\\\"\"}",
+  "error": "Exit code 1\nrm: cannot remove '.claude/worktrees/awwwards-landing': Device or resource busy",
+  "timestamp": "2026-04-07T11:53:03.045Z",
+  "retry_count": 1
+}

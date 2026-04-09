@@ -136,7 +136,7 @@ export default function DebtPage() {
     } catch {
       // localStorage unavailable — skip dismiss check
     }
-    const hasDebts = debts.length > 0;
+    const hasDebts = debts.some(d => d.principal > 0);
     const viewedPlan = sessionStorage.getItem("vf_viewed_plan") === "1";
     if (hasDebts && (dtiRatio < 35 || viewedPlan)) {
       setShowAffiliateModal(true);

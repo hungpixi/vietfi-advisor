@@ -1,0 +1,10 @@
+{
+  "active": true,
+  "skill_name": "deepinit",
+  "session_id": "350d4ef4-fefd-4d9e-b3f2-0cf708d2f5ee",
+  "started_at": "2026-04-09T14:29:06.844Z",
+  "last_checked_at": "2026-04-09T14:29:06.844Z",
+  "reinforcement_count": 0,
+  "max_reinforcements": 10,
+  "stale_ttl_ms": 1800000
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { crawlNews, type NewsSnapshot } from '@/lib/news/crawler'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const CACHE_TTL_MS = 10 * 60 * 1000
 

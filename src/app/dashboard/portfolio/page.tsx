@@ -74,7 +74,9 @@ export default function PortfolioPage() {
       return;
     }
     // TODO(Phase 3): real Monte Carlo API call
-    setMonteCarloData(null);
+    // eslint-disable-next-line no-console
+    console.info("[Monte Carlo] Phase 3 — coming soon");
+    setMonteCarloData("coming-soon");
   }, []);
 
   // ── Pull Risk DNA from localStorage on mount ──
@@ -83,10 +85,14 @@ export default function PortfolioPage() {
     const riskResult = getRiskResult();
     if (riskResult) {
       setHasRiskDNA(true);
-      // Map Risk DNA score to risk type
-      if (riskResult.score <= 6) setRiskType("conservative");
-      else if (riskResult.score <= 10) setRiskType("balanced");
-      else setRiskType("growth");
+      // v2: use the `type` field directly (probabilistic classification)
+      // v1 fallback: re-map from score if type is missing
+      const riskType = riskResult.type ?? (
+        riskResult.score <= 8 ? 'conservative'
+          : riskResult.score <= 11 ? 'balanced'
+            : 'growth'
+      );
+      setRiskType(riskType);
     }
 
     // Pull income for capital suggestion
@@ -109,7 +115,10 @@ export default function PortfolioPage() {
     }
     if (income > 0) parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
     if (riskResult) {
-      parts.push(`Risk DNA: ${riskResult.label} (score ${riskResult.score}/15)`);
+      const confPct = riskResult.confidence != null
+        ? ` (tin cậy ${Math.round(riskResult.confidence * 100)}%)`
+        : '';
+      parts.push(`Risk DNA: ${riskResult.label}${confPct}`);
     }
     setUserContext(parts.join(", "));
   }, []);
@@ -339,10 +348,12 @@ export default function PortfolioPage() {
         </p>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={backtestData?.history?.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
-              year: d.year,
-              value: Math.round(d.portfolioValue / 1000000),
-            })) || []}>
+            <AreaChart data={Array.isArray(backtestData?.history)
+              ? backtestData.history.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
+                year: d.year,
+                value: Math.round(d.portfolioValue / 1000000),
+              }))
+              : []}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />

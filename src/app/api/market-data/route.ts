@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { crawlMarketData, type MarketSnapshot } from '@/lib/market-data/crawler'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 // ── In-memory cache ──────────────────────────────────────────────────────────
 // Persists across requests within the same serverless function instance.

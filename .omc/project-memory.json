@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775550494003,
+  "lastScanned": 1775743946996,
   "projectRoot": "D:\\vietfi-advisor",
   "techStack": {
     "languages": [
@@ -92,18 +92,11 @@
   },
   "customNotes": [],
   "directoryMap": {
-    "android": {
-      "path": "android",
-      "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1775550493966,
-      "keyFiles": []
-    },
     "design-exports": {
       "path": "design-exports",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775550493966,
+      "lastAccessed": 1775743946906,
       "keyFiles": [
         "9nb0s.png",
         "AL84F.png",
@@ -112,11 +105,18 @@
         "K66sZ.png"
       ]
     },
+    "design-system": {
+      "path": "design-system",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775743946907,
+      "keyFiles": []
+    },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 1,
-      "lastAccessed": 1775550493973,
+      "lastAccessed": 1775743946914,
       "keyFiles": [
         "wda2026-report-sections-vietfi.md"
       ]
@@ -125,7 +125,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 9,
-      "lastAccessed": 1775550493974,
+      "lastAccessed": 1775743946915,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -138,7 +138,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 6,
-      "lastAccessed": 1775550493974,
+      "lastAccessed": 1775743946915,
       "keyFiles": [
         "debug_clone.py",
         "generate-tts-bank.ts",
@@ -151,7 +151,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 1,
-      "lastAccessed": 1775550493974,
+      "lastAccessed": 1775743946916,
       "keyFiles": [
         "proxy.ts"
       ]
@@ -160,14 +160,14 @@
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 0,
-      "lastAccessed": 1775550493975,
+      "lastAccessed": 1775743946916,
       "keyFiles": []
     },
     "ui-prototype": {
       "path": "ui-prototype",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775550493975,
+      "lastAccessed": 1775743946917,
       "keyFiles": [
         "index.html",
         "quotes.json",
@@ -180,7 +180,7 @@
       "path": "vietfi-appwrite",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775550493976,
+      "lastAccessed": 1775743946917,
       "keyFiles": [
         "README.md"
       ]
@@ -189,23 +189,16 @@
       "path": "voice_ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775550493976,
+      "lastAccessed": 1775743946918,
       "keyFiles": [
         "zinzin.vi.vtt"
       ]
-    },
-    "android\\app": {
-      "path": "android\\app",
-      "purpose": "Application code",
-      "fileCount": 0,
-      "lastAccessed": 1775550493977,
-      "keyFiles": []
     },
     "docs\\assets": {
       "path": "docs\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1775550493977,
+      "lastAccessed": 1775743946919,
       "keyFiles": [
         "vietfi-onboarding-flow.png",
         "vietfi-system-architecture.png"
@@ -215,7 +208,7 @@
       "path": "public\\assets",
       "purpose": "Static assets",
       "fileCount": 10,
-      "lastAccessed": 1775550493980,
+      "lastAccessed": 1775743946920,
       "keyFiles": [
         "icon-192.png",
         "icon-512.png",
@@ -226,7 +219,7 @@
       "path": "public\\docs",
       "purpose": "Documentation",
       "fileCount": 57,
-      "lastAccessed": 1775550493982,
+      "lastAccessed": 1775743946920,
       "keyFiles": [
         "audit_budget_1773931000033.png",
         "audit_cpi_retry_1773931015040.png",
@@ -237,7 +230,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 4,
-      "lastAccessed": 1775550493982,
+      "lastAccessed": 1775743946921,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -248,14 +241,14 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 0,
-      "lastAccessed": 1775550493983,
+      "lastAccessed": 1775743946921,
       "keyFiles": []
     },
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 17,
-      "lastAccessed": 1775550493984,
+      "lastAccessed": 1775743946922,
       "keyFiles": [
         "expense-parser.ts",
         "gamification.ts",
@@ -266,7 +259,7 @@
       "path": "src\\test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1775550493984,
+      "lastAccessed": 1775743946925,
       "keyFiles": [
         "setup.ts"
       ]
@@ -275,7 +268,7 @@
       "path": "ui-prototype\\assets",
       "purpose": "Static assets",
       "fileCount": 8,
-      "lastAccessed": 1775550493986,
+      "lastAccessed": 1775743946926,
       "keyFiles": [
         "icon.png",
         "level-1-con.png",
@@ -286,7 +279,7 @@
       "path": "vietfi-appwrite\\docs",
       "purpose": "Documentation",
       "fileCount": 3,
-      "lastAccessed": 1775550493987,
+      "lastAccessed": 1775743946927,
       "keyFiles": [
         "appwrite-clone-plan.md",
         "appwrite-schema.md",
@@ -296,16 +289,58 @@
   },
   "hotPaths": [
     {
-      "path": "src\\app\\dashboard\\page.tsx",
-      "accessCount": 34,
-      "lastAccessed": 1775557197708,
+      "path": "src\\app\\page.tsx",
+      "accessCount": 69,
+      "lastAccessed": 1775759144216,
       "type": "file"
     },
     {
-      "path": "src\\app\\page.tsx",
-      "accessCount": 26,
-      "lastAccessed": 1775556919476,
+      "path": "src\\app\\dashboard\\page.tsx",
+      "accessCount": 67,
+      "lastAccessed": 1775759293338,
       "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\layout.tsx",
+      "accessCount": 29,
+      "lastAccessed": 1775759116072,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\debt\\page.tsx",
+      "accessCount": 26,
+      "lastAccessed": 1775759180298,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\news\\crawler.ts",
+      "accessCount": 24,
+      "lastAccessed": 1775564715445,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\sentiment\\page.tsx",
+      "accessCount": 20,
+      "lastAccessed": 1775565533892,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\storage.ts",
+      "accessCount": 19,
+      "lastAccessed": 1775757787421,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 15,
+      "lastAccessed": 1775757832320,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 15,
+      "lastAccessed": 1775757882361,
+      "type": "directory"
     },
     {
       "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
@@ -314,16 +349,100 @@
       "type": "file"
     },
     {
-      "path": "src",
+      "path": "src\\lib\\scripted-responses.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775565054826,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\worktrees\\awwwards-landing\\src\\app\\demo-awwwards\\HeroSection.tsx",
       "accessCount": 6,
-      "lastAccessed": 1775556526683,
+      "lastAccessed": 1775562224325,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\globals.css",
+      "accessCount": 5,
+      "lastAccessed": 1775565209124,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\stores\\ledger-store.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775565433732,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\InputCard.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1775565461955,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\calculations\\ledger-summary.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775565220610,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\TransactionItem.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775565426759,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\UndoToast.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775565461915,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 4,
+      "lastAccessed": 1775745013949,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib",
+      "accessCount": 4,
+      "lastAccessed": 1775751195058,
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 5,
-      "lastAccessed": 1775556871088,
-      "type": "directory"
+      "path": "src\\components\\vet-vang\\AnimatedParrot.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775565209526,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\SummaryBar.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775565425316,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775565426949,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\TransactionList.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775565433805,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 3,
+      "lastAccessed": 1775745014164,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\supabase\\useUserData.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775751052338,
+      "type": "file"
     },
     {
       "path": "next.config.ts",
@@ -338,16 +457,40 @@
       "type": "file"
     },
     {
-      "path": "src\\app\\dashboard\\layout.tsx",
+      "path": "src\\app\\api\\news\\route.ts",
       "accessCount": 2,
-      "lastAccessed": 1775556948169,
+      "lastAccessed": 1775564368494,
       "type": "file"
     },
     {
-      "path": "src\\app\\globals.css",
-      "accessCount": 1,
-      "lastAccessed": 1775551367043,
+      "path": "src\\app\\dashboard\\ledger\\components\\PeriodToggle.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775565425036,
       "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\FAB.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775565426546,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\ledger\\components\\CategorySheet.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775565427637,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\budget\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775745138442,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard",
+      "accessCount": 2,
+      "lastAccessed": 1775751194935,
+      "type": "directory"
     },
     {
       "path": "src\\lib\\vetvang-persona.ts",
@@ -362,15 +505,87 @@
       "type": "directory"
     },
     {
-      "path": "src\\app\\dashboard\\debt\\page.tsx",
+      "path": "README.md",
       "accessCount": 1,
-      "lastAccessed": 1775556535743,
+      "lastAccessed": 1775564044061,
       "type": "file"
     },
     {
-      "path": "src\\app\\dashboard\\budget\\page.tsx",
+      "path": "WDA2026_PHAN_CONG.md",
       "accessCount": 1,
-      "lastAccessed": 1775556535860,
+      "lastAccessed": 1775564066376,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\news\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775564079913,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\gemini.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775564123578,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\news\\crawler.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775564123611,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\news\\route.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775564123627,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\calculations\\fg-index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775564359063,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\supabase\\user-data.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775564553931,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\vet-vang\\VetVangFloat.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775564585123,
+      "type": "file"
+    },
+    {
+      "path": "AGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1775745099490,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\vet-vang\\VetVangChat.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775745138107,
+      "type": "file"
+    },
+    {
+      "path": "src\\AGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1775745210800,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\AGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1775745308443,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\AGENTS.md",
+      "accessCount": 1,
+      "lastAccessed": 1775745310489,
       "type": "file"
     }
   ],

@@ -1,0 +1,58 @@
+{
+  "name": "build-one-section-of-a-cinemat",
+  "task": "Worker 1: Build one section of a cinematic Next.js landing page. Working in: D:/; Worker 2: Build one section of a cinematic Next.js landing page. Working in: D:/; Worker 3: Build one section of a cinematic Next.js landing page. Working in: D:/",
+  "agent_type": "claude",
+  "worker_launch_mode": "interactive",
+  "policy": {
+    "display_mode": "split_pane",
+    "worker_launch_mode": "interactive",
+    "dispatch_mode": "hook_preferred_with_fallback",
+    "dispatch_ack_timeout_ms": 15000
+  },
+  "governance": {
+    "delegation_only": false,
+    "plan_approval_required": false,
+    "nested_teams_allowed": false,
+    "one_team_per_leader_session": true,
+    "cleanup_requires_all_workers_inactive": true
+  },
+  "worker_count": 3,
+  "max_workers": 20,
+  "workers": [
+    {
+      "name": "worker-1",
+      "index": 1,
+      "role": "claude",
+      "assigned_tasks": [],
+      "working_dir": "D:\\vietfi-advisor",
+      "pane_id": "%3"
+    },
+    {
+      "name": "worker-2",
+      "index": 2,
+      "role": "claude",
+      "assigned_tasks": [],
+      "working_dir": "D:\\vietfi-advisor",
+      "pane_id": "%4"
+    },
+    {
+      "name": "worker-3",
+      "index": 3,
+      "role": "claude",
+      "assigned_tasks": [],
+      "working_dir": "D:\\vietfi-advisor",
+      "pane_id": "%5"
+    }
+  ],
+  "created_at": "2026-04-07T11:23:48.061Z",
+  "tmux_session": "omc-team-build-one-section-of-a-cinemat-mnoj6wzg:0",
+  "tmux_window_owned": true,
+  "next_task_id": 4,
+  "leader_cwd": "D:\\vietfi-advisor",
+  "team_state_root": "D:\\vietfi-advisor\\.omc\\state\\team\\build-one-section-of-a-cinemat",
+  "leader_pane_id": "%1",
+  "hud_pane_id": null,
+  "resize_hook_name": null,
+  "resize_hook_target": null,
+  "workspace_mode": "single"
+}

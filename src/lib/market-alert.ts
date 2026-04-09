@@ -91,7 +91,7 @@ export async function checkMarketAlerts(): Promise<MarketAlertResult> {
     }
 
     // BTC ±5%
-    const btcChange = data.btcUsdt?.changePct24h;
+    const btcChange = data.btc?.changePct24h;
     if (typeof btcChange === "number" && Math.abs(btcChange) >= 5) {
       alerts.push(btcChange > 0
         ? `₿ Bitcoin tăng +${btcChange.toFixed(1)}% trong 24h`
