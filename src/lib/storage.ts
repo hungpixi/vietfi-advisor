@@ -336,6 +336,20 @@ export function getLeaderboardBaseline(weekId: string): number {
 export function setLeaderboardBaseline(weekId: string, baseline: number): void {
   setItem(`vietfi_leaderboard_baseline_${weekId}`, baseline);
 }
+
+/* ─── Premium State ─── */
+import type { PremiumState } from "@/lib/premium";
+
+const PREMIUM_KEY = "vietfi_premium_state";
+
+export function getPremiumStateLS(): PremiumState | null {
+  return getItem<PremiumState | null>(PREMIUM_KEY, null);
+}
+
+export function setPremiumStateLS(state: PremiumState): void {
+  setItem(PREMIUM_KEY, state);
+}
+
 /* ─── News Bookmarks ─── */
 
 const NEWS_BOOKMARKS_KEY = "vietfi_news_bookmarks";
@@ -409,6 +423,7 @@ const ALL_USER_KEYS = [
   NEWS_BOOKMARKS_KEY,
   SOUND_MUTED_KEY,
   GOLD_KEY,
+  PREMIUM_KEY,
 ];
 
 export function clearAllUserData(): void {

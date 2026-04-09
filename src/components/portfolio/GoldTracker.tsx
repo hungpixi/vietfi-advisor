@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Trash2, Plus, TrendingUp, TrendingDown, Coins } from "lucide-react";
+import { Trash2, Plus, TrendingUp, TrendingDown, Coins, ArrowRight } from "lucide-react";
 import { getGoldPurchases, addGoldPurchase, deleteGoldPurchase, type GoldPurchase } from "@/lib/storage";
+import { GOLD_VENDORS, buildGoldAffiliateUrl } from "@/lib/affiliate/gold-partners";
+import { trackEvent } from "@/lib/affiliate/analytics";
 
 interface GoldTrackerProps {
   marketData: any;
@@ -223,6 +225,34 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
           })}
         </div>
       )}
+
+      {/* ─── Affiliate CTA ─── */}
+      <div className="mt-4 pt-4 border-t border-[#E6B84F]/10">
+        <p className="text-[11px] text-white/30 mb-3 text-center">Mua vàng chính hãng — hoàn tiền qua VietFi</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {GOLD_VENDORS.map((vendor) => (
+            <a
+              key={vendor.id}
+              href={buildGoldAffiliateUrl(vendor)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent({ type: "GOLD_AFFILIATE_CLICK", vendorId: vendor.id })}
+              className="flex items-center gap-2 px-3 py-2.5 bg-[#E6B84F]/5 hover:bg-[#E6B84F]/10 border border-[#E6B84F]/15 hover:border-[#E6B84F]/30 rounded-xl transition-all text-xs group"
+            >
+              <span className="text-base">🏆</span>
+              <div>
+                <div className="font-semibold text-[#E6B84F] group-hover:text-[#FFD700] transition-colors leading-tight">{vendor.name}</div>
+                <div className="text-[10px] text-white/40 mt-0.5">{vendor.note}</div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-[#E6B84F]/40 group-hover:text-[#E6B84F] ml-auto transition-colors" />
+            </a>
+          ))}
+        </div>
+        {/* HIGH-1: Affiliate disclosure */}
+        <p className="text-[9px] text-white/20 mt-3 text-center">
+          Liên kết tài chính. VietFi nhận phí giới thiệu từ các đối tác trên.
+        </p>
+      </div>
     </div>
   );
 }

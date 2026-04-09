@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyPremium } from "@/lib/premium-auth";
 
 export async function GET(req: NextRequest) {
-    const searchParams = req.nextUrl.searchParams;
-    const capital = parseFloat(searchParams.get('capital') || '100000000');
-    const riskType = searchParams.get('riskType') || 'balanced';
+  // Premium gate: LEGEND XP (≥2000) gets 3yr backtest; others get 403
+  const auth = await verifyPremium(req);
+  if (!auth.active) {
+    return NextResponse.json(
+      { error: "PREMIUM_REQUIRED", message: "Backtest requires Vẹt Vàng VIP", premiumRequired: true },
+      { status: 403 }
+    );
+  }
+
+  const searchParams = req.nextUrl.searchParams;
+  const capital = parseFloat(searchParams.get('capital') || '100000000');
+  const riskType = searchParams.get('riskType') || 'balanced';
 
     // We define 5 asset classes:
     // 1. Tiết kiệm (Deposit): steady ~7% per year.

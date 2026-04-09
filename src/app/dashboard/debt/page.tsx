@@ -26,6 +26,7 @@ import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabas
 import { analyzeDTI, snowballPlan, avalanchePlan, getFreedomMonth } from "@/lib/calculations/debt-optimizer";
 import { getDebts, setDebts as saveDebtsLocal } from "@/lib/storage";
 
+import { LoanAffiliateModal } from "@/components/affiliate/LoanAffiliateModal";
 import { UIDebt, ICON_MAP, formatVND } from "@/components/debt/types";
 import { AddDebtModal } from "@/components/debt/AddDebtModal";
 import { PayDebtModal } from "@/components/debt/PayDebtModal";
@@ -55,11 +56,12 @@ export default function DebtPage() {
   const [payingDebt, setPayingDebt] = useState<UIDebt | null>(null);
   const [hasPledged, setHasPledged] = useState(false);
   const [showTriage, setShowTriage] = useState(false);
+  const [showAffiliateModal, setShowAffiliateModal] = useState(false);
 
   // Load from localStorage
   useEffect(() => {
     setDebts(getDebts() as unknown as UIDebt[]);
-    
+
     // Dynamically load user's income
     import("@/lib/storage").then((mod) => {
       const income = mod.getIncome();
@@ -118,6 +120,28 @@ export default function DebtPage() {
 
   const currentPlan = strategy === "snowball" ? snowballPlan(debts) : avalanchePlan(debts);
 
+  // Track when user views a Snowball/Avalanche result (ADR-001)
+  useEffect(() => {
+    if (currentPlan.length > 0) {
+      sessionStorage.setItem("vf_viewed_plan", "1");
+    }
+  }, [currentPlan]);
+
+  // Trigger affiliate modal (ADR-001 trigger condition)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("vietfi_affiliate_dismissed_until");
+      if (raw && Date.now() < Number(raw)) return; // still dismissed
+    } catch {
+      // localStorage unavailable — skip dismiss check
+    }
+    const hasDebts = debts.length > 0;
+    const viewedPlan = sessionStorage.getItem("vf_viewed_plan") === "1";
+    if (hasDebts && (dtiRatio < 35 || viewedPlan)) {
+      setShowAffiliateModal(true);
+    }
+  }, [dtiRatio, debts.length]);
+
   // ─── XỬ LÝ DỮ LIỆU STACKED CHART (DOMINO EFFECT) ───
   const maxMonth = currentPlan.length > 0 ? Math.max(...currentPlan.map(p => p.month)) : 0;
   const chartData: any[] = [];
@@ -153,6 +177,20 @@ export default function DebtPage() {
       {showAddModal && <AddDebtModal onClose={() => setShowAddModal(false)} onAdd={addDebt} />}
       {payingDebt && <PayDebtModal debt={payingDebt} onClose={() => setPayingDebt(null)} onPay={payDebt} />}
       {showTriage && <FinancialTriageModal debts={debts} dtiRatio={dtiRatio} onClose={() => setShowTriage(false)} />}
+      {showAffiliateModal && (
+        <LoanAffiliateModal
+          dtiRatio={dtiRatio}
+          totalMonthlyInterest={totalHiddenInterest / 12}
+          onClose={() => {
+            setShowAffiliateModal(false);
+            try {
+              localStorage.setItem("vietfi_affiliate_dismissed_until", String(Date.now() + 86_400_000));
+            } catch {
+              // storage full — ignore
+            }
+          }}
+        />
+      )}
 
       {/* Triage Banner Alert (Hiển thị khi DTI nguy hiểm) */}
       {dtiRatio >= 40 && (

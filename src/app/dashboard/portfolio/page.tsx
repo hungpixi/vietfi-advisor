@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, AlertTriangle, Loader2 } from "lucide-react";
+import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, AlertTriangle, Loader2, BarChart2, Dices } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
@@ -9,6 +9,10 @@ import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage
 import { GoldTracker } from "@/components/portfolio/GoldTracker";
 import { CashflowDNA } from "@/components/portfolio/CashflowDNA";
 import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
+import { UNIT_TRUST_PRODUCTS, isStale, type UnitTrustProduct } from "@/lib/affiliate/gold-partners";
+import { trackEvent } from "@/lib/affiliate/analytics";
+import { PremiumGateModal } from "@/components/gamification/PremiumGateModal";
+import { isPremiumActive } from "@/lib/premium";
 
 /* ─── Types ─── */
 interface MarketData {
@@ -33,6 +37,13 @@ function generateProjection(capital: number, riskType: string) {
   }));
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  equity: "Cổ phiếu",
+  bond: "Trái phiếu",
+  balanced: "Cân bằng",
+  money_market: "Thị trường tiền tệ",
+};
+
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
@@ -53,6 +64,18 @@ export default function PortfolioPage() {
   const [aiInsight, setAiInsight] = useState<string>("");
   const [aiLoading, setAiLoading] = useState(false);
   const [userContext, setUserContext] = useState<string>("");
+  const [premiumGate, setPremiumGate] = useState<{ featureName: string } | null>(null);
+  const [monteCarloData, setMonteCarloData] = useState<unknown>(null);
+
+  // ── Monte Carlo handler (PREMIUM-gated) ──
+  const handleMonteCarlo = useCallback(async () => {
+    if (!isPremiumActive()) {
+      setPremiumGate({ featureName: "Monte Carlo Projection" });
+      return;
+    }
+    // TODO(Phase 3): real Monte Carlo API call
+    setMonteCarloData(null);
+  }, []);
 
   // ── Pull Risk DNA from localStorage on mount ──
   useEffect(() => {
@@ -356,7 +379,17 @@ export default function PortfolioPage() {
 
       {/* 10-Year Projection */}
       <motion.div variants={fadeIn} className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-white mb-3">Dự phóng 10 năm (3 kịch bản)</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-white">Dự phóng 10 năm (3 kịch bản)</h3>
+          <button
+            onClick={handleMonteCarlo}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E6B84F]/10 hover:bg-[#E6B84F]/20 border border-[#E6B84F]/20 rounded-lg text-xs text-[#E6B84F] transition-colors"
+          >
+            <Dices className="w-3.5 h-3.5" />
+            Monte Carlo
+            <span className="text-[9px] bg-[#E6B84F]/20 px-1.5 py-0.5 rounded font-mono">VIP</span>
+          </button>
+        </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={projection}>
@@ -381,6 +414,70 @@ export default function PortfolioPage() {
       <motion.div variants={fadeIn} className="mt-6">
         <GoldTracker marketData={marketData} />
       </motion.div>
+
+      {/* ─── Unit Trust Recommendations ─── */}
+      <motion.div variants={fadeIn} className="glass-card p-5 border border-[#22C55E]/10 mt-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-[#22C55E]/10 flex items-center justify-center">
+            <BarChart2 className="w-4 h-4 text-[#22C55E]" />
+          </div>
+          <h3 className="text-sm font-semibold text-white">Quỹ Đầu Tư — Danh Mục VietFi</h3>
+          <span className="text-[9px] bg-[#22C55E]/10 text-[#22C55E] px-2 py-0.5 rounded font-mono uppercase">Affiliate</span>
+        </div>
+        <div className="space-y-3">
+          {UNIT_TRUST_PRODUCTS.map((fund: UnitTrustProduct) => {
+            const stale = isStale(fund);
+            return (
+              <a
+                key={fund.id}
+                href={fund.affiliateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent({ type: "GOLD_AFFILIATE_CLICK", vendorId: fund.id })}
+                className="block p-4 bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.06] hover:border-[#22C55E]/20 rounded-xl transition-all"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-[13px] text-white leading-tight flex items-center gap-2">
+                      {fund.fundName}
+                      {stale && (
+                        <span className="text-[9px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-mono">
+                          Cũ
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-white/40 mt-0.5">{fund.fundHouse} · {fund.fundCode}</div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded text-white/60">{CATEGORY_LABELS[fund.category]}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded text-white/60">NAV: {new Intl.NumberFormat("vi-VN").format(fund.nav)}đ</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded text-white/60">Phí quản lý: {(fund.aumFee * 100).toFixed(1)}%/năm</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className={`text-[14px] font-bold ${fund.return1yr >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                      {fund.return1yr >= 0 ? "+" : ""}{fund.return1yr}%
+                    </div>
+                    <div className="text-[10px] text-white/30 mt-0.5">1 năm</div>
+                    <div className="text-[10px] text-[#22C55E]/60 mt-1">3yr: +{fund.return3yr}%</div>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+        {/* HIGH-1: Affiliate disclosure */}
+        <p className="text-[10px] text-white/20 mt-3 text-center">
+          Liên kết tài chính. VietFi nhận phí giới thiệu từ các đối tác trên.
+        </p>
+      </motion.div>
+
+      {/* Premium Gate Modal */}
+      {premiumGate && (
+        <PremiumGateModal
+          featureName={premiumGate.featureName}
+          onClose={() => setPremiumGate(null)}
+        />
+      )}
     </motion.div>
   );
 }

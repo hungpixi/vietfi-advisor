@@ -32,12 +32,14 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
+import { hasPremium } from "@/lib/rbac";
 import { XPToastContainer, useXPToast } from "@/components/gamification/XPToast";
 import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
 import { getAuthUserId } from "@/lib/supabase/user-data";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 import { checkMarketAlerts } from "@/lib/market-alert";
 import { getBudgetPots, getDebts, getOnboardingState, getLessonsDone, getStreakFreeze as storageGetStreak, setStreakFreeze } from "@/lib/storage";
+import { syncPremiumFromSupabase } from "@/lib/premium";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -85,6 +87,7 @@ function GamificationBar() {
   const prevXPRef = useRef(0);
   const [xpFlash, setXpFlash] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [premiumMounted, setPremiumMounted] = useState(false);
 
   useEffect(() => {
     // First mount: read from localStorage
@@ -105,7 +108,12 @@ function GamificationBar() {
     return () => clearInterval(t);
   }, [getGamification]); // Polling from the local storage helper function
 
+  // Hydration-safe VIP badge — check premium status after mount
+  useEffect(() => { setPremiumMounted(true); }, []);
+
   const { current, next, progress, xpToNext } = getLevelProgress(gam.xp);
+  const currentXp = mounted ? gam.xp : 0;
+  const showVIP = premiumMounted && hasPremium(currentXp);
 
   return (
     <div className="flex items-center gap-3">
@@ -163,6 +171,14 @@ function GamificationBar() {
           <span className="text-[9px] text-white/20 font-mono whitespace-nowrap">{xpToNext}→{next.emoji}</span>
         )}
       </motion.div>
+
+      {/* ─── VIP Badge — hydration-safe ────────────────────────── */}
+      {showVIP && (
+        <div className="px-3 py-1.5 bg-gradient-to-r from-[#E6B84F]/15 to-[#FF6B35]/10 border border-[#E6B84F]/25 rounded-xl flex items-center gap-1.5">
+          <span className="text-sm">👑</span>
+          <span className="text-[11px] font-bold text-[#E6B84F]">Vẹt Vàng VIP</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -310,6 +326,24 @@ export default function DashboardLayout({
         migrateLocalStorageToSupabase(userId);
       }
     });
+  }, []);
+
+  // Sync premium state from server on app load (resolves CRITICAL-2 split-brain)
+  useEffect(() => {
+    async function syncPremium() {
+      try {
+        const res = await fetch("/api/premium");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.active) {
+            await syncPremiumFromSupabase();
+          }
+        }
+      } catch {
+        // Network error — use localStorage fallback
+      }
+    }
+    syncPremium();
   }, []);
 
   return (
