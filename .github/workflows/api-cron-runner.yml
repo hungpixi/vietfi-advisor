@@ -1,0 +1,29 @@
+name: API Route Endpoints Runner
+on:
+  schedule:
+    - cron: '0 23 * * *'
+    - cron: '30 8 * * 1-5'
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  run-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Morning Brief
+        if: github.event.schedule == '0 23 * * *'
+        run: |
+          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/morning-brief \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          
+      - name: Trigger Market Data
+        if: github.event.schedule == '30 8 * * 1-5'
+        run: |
+          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/market-data \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+      - name: Trigger Macro Update
+        if: github.event.schedule == '0 0 1 * *'
+        run: |
+          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/macro-update \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
