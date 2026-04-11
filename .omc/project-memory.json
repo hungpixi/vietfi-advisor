@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775743946996,
+  "lastScanned": 1775917920177,
   "projectRoot": "D:\\vietfi-advisor",
   "techStack": {
     "languages": [
@@ -96,7 +96,7 @@
       "path": "design-exports",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775743946906,
+      "lastAccessed": 1775917920095,
       "keyFiles": [
         "9nb0s.png",
         "AL84F.png",
@@ -109,15 +109,17 @@
       "path": "design-system",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775743946907,
+      "lastAccessed": 1775917920096,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 1,
-      "lastAccessed": 1775743946914,
+      "fileCount": 3,
+      "lastAccessed": 1775917920105,
       "keyFiles": [
+        "AGENTS.md",
+        "deployment-vinahost-node.md",
         "wda2026-report-sections-vietfi.md"
       ]
     },
@@ -125,7 +127,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 9,
-      "lastAccessed": 1775743946915,
+      "lastAccessed": 1775917920107,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -138,7 +140,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 6,
-      "lastAccessed": 1775743946915,
+      "lastAccessed": 1775917920108,
       "keyFiles": [
         "debug_clone.py",
         "generate-tts-bank.ts",
@@ -150,24 +152,27 @@
     "src": {
       "path": "src",
       "purpose": "Source code",
-      "fileCount": 1,
-      "lastAccessed": 1775743946916,
+      "fileCount": 2,
+      "lastAccessed": 1775917920109,
       "keyFiles": [
+        "AGENTS.md",
         "proxy.ts"
       ]
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
-      "fileCount": 0,
-      "lastAccessed": 1775743946916,
-      "keyFiles": []
+      "fileCount": 1,
+      "lastAccessed": 1775917920109,
+      "keyFiles": [
+        "AGENTS.md"
+      ]
     },
     "ui-prototype": {
       "path": "ui-prototype",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775743946917,
+      "lastAccessed": 1775917920109,
       "keyFiles": [
         "index.html",
         "quotes.json",
@@ -180,7 +185,7 @@
       "path": "vietfi-appwrite",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775743946917,
+      "lastAccessed": 1775917920110,
       "keyFiles": [
         "README.md"
       ]
@@ -189,7 +194,7 @@
       "path": "voice_ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775743946918,
+      "lastAccessed": 1775917920110,
       "keyFiles": [
         "zinzin.vi.vtt"
       ]
@@ -198,7 +203,7 @@
       "path": "docs\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1775743946919,
+      "lastAccessed": 1775917920111,
       "keyFiles": [
         "vietfi-onboarding-flow.png",
         "vietfi-system-architecture.png"
@@ -208,7 +213,7 @@
       "path": "public\\assets",
       "purpose": "Static assets",
       "fileCount": 10,
-      "lastAccessed": 1775743946920,
+      "lastAccessed": 1775917920112,
       "keyFiles": [
         "icon-192.png",
         "icon-512.png",
@@ -219,7 +224,7 @@
       "path": "public\\docs",
       "purpose": "Documentation",
       "fileCount": 57,
-      "lastAccessed": 1775743946920,
+      "lastAccessed": 1775917920114,
       "keyFiles": [
         "audit_budget_1773931000033.png",
         "audit_cpi_retry_1773931015040.png",
@@ -229,37 +234,39 @@
     "src\\app": {
       "path": "src\\app",
       "purpose": "Application code",
-      "fileCount": 4,
-      "lastAccessed": 1775743946921,
+      "fileCount": 5,
+      "lastAccessed": 1775917920115,
       "keyFiles": [
+        "AGENTS.md",
         "favicon.ico",
-        "globals.css",
-        "layout.tsx"
+        "globals.css"
       ]
     },
     "src\\components": {
       "path": "src\\components",
       "purpose": "UI components",
-      "fileCount": 0,
-      "lastAccessed": 1775743946921,
-      "keyFiles": []
+      "fileCount": 1,
+      "lastAccessed": 1775917920116,
+      "keyFiles": [
+        "AGENTS.md"
+      ]
     },
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
-      "fileCount": 17,
-      "lastAccessed": 1775743946922,
+      "fileCount": 22,
+      "lastAccessed": 1775917920116,
       "keyFiles": [
+        "AGENTS.md",
         "expense-parser.ts",
-        "gamification.ts",
-        "gemini-batch.ts"
+        "gamification.ts"
       ]
     },
     "src\\test": {
       "path": "src\\test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1775743946925,
+      "lastAccessed": 1775917920116,
       "keyFiles": [
         "setup.ts"
       ]
@@ -268,7 +275,7 @@
       "path": "ui-prototype\\assets",
       "purpose": "Static assets",
       "fileCount": 8,
-      "lastAccessed": 1775743946926,
+      "lastAccessed": 1775917920117,
       "keyFiles": [
         "icon.png",
         "level-1-con.png",
@@ -279,7 +286,7 @@
       "path": "vietfi-appwrite\\docs",
       "purpose": "Documentation",
       "fileCount": 3,
-      "lastAccessed": 1775743946927,
+      "lastAccessed": 1775917920118,
       "keyFiles": [
         "appwrite-clone-plan.md",
         "appwrite-schema.md",
