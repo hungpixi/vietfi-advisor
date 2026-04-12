@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "personal CPI",
     "quản lý tài chính",
   ],
-  authors: [{ name: "VietFi Team", url: "https://comarai.com" }],
+  authors: [{ name: "VietFi Team" }],
   openGraph: {
     title: "VietFi Advisor — Cố Vấn Tài Chính AI",
     description: "Multi-agent AI phân tích thị trường tài chính Việt Nam",

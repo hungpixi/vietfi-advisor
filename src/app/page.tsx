@@ -1241,14 +1241,6 @@ function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/20">
           <p>© 2026 VietFi Advisor — Cuộc thi WebDev Adventure 2026</p>
-          <a
-            href="https://comarai.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#FFD700] transition-colors"
-          >
-            by Comarai
-          </a>
         </div>
       </div>
     </footer>
