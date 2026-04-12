@@ -120,7 +120,7 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
 
   return (
     <span ref={ref}>
-      {prefix}{count.toLocaleString("vi-VN", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}₫{suffix}
+      {prefix}{count.toLocaleString("vi-VN", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}{suffix}
     </span>
   );
 }
