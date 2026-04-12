@@ -60,7 +60,7 @@ Vẹt Vàng — mascot xoắc quắt, mổ tiêu xài dở — biến thói quen
 git clone https://github.com/hungpixi/vietfi-advisor.git
 cd vietfi-advisor
 npm install
-cp .env.example .env.local   # add GEMINI_API_KEY + Supabase keys
+cp .env.example .env.local   # add GOOGLE_GENERATIVE_AI_API_KEY (or GEMINI_API_KEY) + Supabase keys
 npm run dev                   # http://localhost:3000
 ```
 

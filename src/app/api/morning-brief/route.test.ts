@@ -1,4 +1,5 @@
-process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-key'
+process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || 'test-key'
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -17,6 +18,12 @@ const sampleBrief = {
   raw: 'Test summary',
   takeaways: [],
   source: 'gemini' as const,
+  thesis: 'Luận điểm test',
+  marketOverview: 'Tổng quan test',
+  macroContext: 'Vĩ mô test',
+  newsSynthesis: 'Tin nóng test',
+  risks: ['Rủi ro test'],
+  actionItems: ['Việc test'],
 }
 
 describe('/api/morning-brief', () => {
@@ -33,6 +40,9 @@ describe('/api/morning-brief', () => {
 
     const body = await response.json()
     expect(body.summary).toBe('Test summary')
+    expect(body.thesis).toBe('Luận điểm test')
+    expect(body.marketOverview).toBe('Tổng quan test')
+    expect(body.actionItems).toEqual(['Việc test'])
     expect(body.stale).toBe(false)
   })
 

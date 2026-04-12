@@ -1,7 +1,7 @@
 import { google } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { checkLlmRateLimit } from '@/lib/llm-limiter';
+import { getGeminiApiKey } from '@/lib/gemini';
 import { parseExpenseWithContext, type ParsedExpense } from '@/lib/expense-parser';
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
@@ -154,10 +154,6 @@ export async function POST(req: Request) {
     }
 
     // ── STEP 3: Fallback to AI Provider (Ollama, Google, or TrollLLM) ──
-    const AI_PROVIDER = process.env.AI_PROVIDER || "ollama";
-    const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
-    const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:14b";
-
     // RPM check logic (currently shared, though Gemini has its own limits)
     try {
       checkLlmRateLimit();
@@ -167,83 +163,18 @@ export async function POST(req: Request) {
       });
     }
 
-    let model;
-    let result;
-
-    if (AI_PROVIDER === "ollama") {
-      // Ollama local: OpenAI-compatible API
-      const ollama = createOpenAI({
-        apiKey: "ollama", // Required but ignored
-        baseURL: OLLAMA_BASE_URL,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      model = ollama(OLLAMA_MODEL);
-      result = streamText({
-        model,
-        system: SYSTEM_PROMPT,
-        messages: sanitized,
-      });
-    } else if (AI_PROVIDER === "ollama-cloud") {
-      // Ollama Cloud: https://ollama.com
-      const ollamaApiKey = process.env.OLLAMA_API_KEY;
-      if (!ollamaApiKey) {
-        return new Response(JSON.stringify({ error: "OLLAMA_API_KEY is not configured." }), {
-          status: 500, headers: { "Content-Type": "application/json" }
-        });
-      }
-      const ollama = createOpenAI({
-        apiKey: ollamaApiKey,
-        baseURL: "https://ollama.com",
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      model = ollama(OLLAMA_MODEL);
-      result = streamText({
-        model,
-        system: SYSTEM_PROMPT,
-        messages: sanitized,
-      });
-    } else if (AI_PROVIDER === "trollllm") {
-      const apiKey = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return new Response(JSON.stringify({ error: "TROLL_LLM_API_KEY is not configured." }), {
-          status: 500, headers: { "Content-Type": "application/json" }
-        });
-      }
-      const troll = createOpenAI({
-        apiKey,
-        baseURL: "https://chat.trollllm.xyz/v1",
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      model = troll("gemini-3-flash");
-      result = streamText({
-        model,
-        system: SYSTEM_PROMPT,
-        messages: sanitized,
-      });
-    } else if (AI_PROVIDER === "google") {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured." }), {
-          status: 500, headers: { "Content-Type": "application/json" }
-        });
-      }
-      model = google("gemini-1.5-flash");
-      result = streamText({
-        model,
-        system: SYSTEM_PROMPT,
-        messages: sanitized,
-      });
-    } else {
-      return new Response(JSON.stringify({ error: `Unknown AI_PROVIDER: ${AI_PROVIDER}. Use: ollama, ollama-cloud, google, or trollllm.` }), {
-        status: 400, headers: { "Content-Type": "application/json" }
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY is not configured." }), {
+        status: 500, headers: { "Content-Type": "application/json" }
       });
     }
+    const model = google({ apiKey })("gemini-2.0-flash");
+    const result = streamText({
+      model,
+      system: SYSTEM_PROMPT,
+      messages: sanitized,
+    });
 
     // Vercel AI SDK v6 returns StreamTextResult with .toDataStreamResponse() / .toTextStreamResponse()
     const streamResult = result as { toDataStreamResponse?: () => Response; toTextStreamResponse?: () => Response };
