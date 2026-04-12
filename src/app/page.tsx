@@ -1499,12 +1499,12 @@ function FinalCTA() {
           🦜
         </motion.div>
 
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight whitespace-nowrap">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-[1.3] md:leading-[1.24] inline-flex flex-col items-center gap-3 md:gap-4 whitespace-nowrap overflow-visible">
           <WordReveal
             text="Sẵn sàng bị Vẹt Vàng"
             className="text-white block"
           />
-          <GradientText>"mổ" cho giàu?</GradientText>
+          <GradientText className="block leading-[1.18] pt-[0.2em] pb-[0.08em]">"mổ" cho giàu?</GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">
