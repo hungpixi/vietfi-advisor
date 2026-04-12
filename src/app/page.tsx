@@ -447,6 +447,44 @@ function Hero() {
               </div>
             </TiltCard>
 
+            {/* Floating AI Insight Card — Overlapping bottom left */}
+            <motion.div
+              initial={{ opacity: 0, x: -20, y: 20 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ delay: 1, duration: 0.8 }}
+              className="absolute -bottom-8 -left-12 z-20 w-64 glass-card p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-[#FFD700]/20 animate-float"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-[#FFD700]/10 flex items-center justify-center">
+                  <span className="text-sm">✨</span>
+                </div>
+                <div>
+                  <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">AI INSIGHT</div>
+                  <div className="text-xs font-bold text-[#FFD700]">Tín hiệu tích cực</div>
+                </div>
+              </div>
+              <p className="text-[11px] text-white/50 leading-relaxed">
+                Thị trường đang có xu hướng tích lũy tốt. Đây là thời điểm thích hợp để tái cơ cấu danh mục.
+              </p>
+            </motion.div>
+
+            {/* Floating Trading Signal Card — Overlapping top right */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.2, duration: 0.6 }}
+              className="absolute -top-6 -right-6 z-20 w-48 glass-card p-3 border-[#00E5FF]/20 shadow-[0_15px_40px_rgba(0,0,0,0.4)]"
+              style={{ animation: "float 6s ease-in-out infinite reverse" }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[9px] font-bold text-white/30 uppercase">VN-INDEX</div>
+                <div className="text-[10px] font-mono text-[#22C55E]">+1.2%</div>
+              </div>
+              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#00E5FF] to-[#22C55E] w-[75%]" />
+              </div>
+            </motion.div>
+
             {/* Vẹt Vàng mascot — bottom right, smaller */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
@@ -597,12 +635,36 @@ function Features() {
             <motion.div
               animate={{ y: [0, -5, 0] }}
               transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-6 glass-card px-4 py-3 z-20 border-[#EF4444]/15"
+              className="absolute -bottom-4 -right-6 glass-card px-4 py-3 z-20 border-[#EF4444]/15 shadow-2xl"
             >
-              <div className="text-[10px] text-white/30 mb-1">Chỉ số DTI</div>
-              <div className="text-xl font-black text-[#EF4444] font-mono">38%</div>
-              <div className="text-[10px] text-[#22C55E]">Khả năng tốt</div>
+              <div className="text-[10px] text-white/30 mb-1 font-bold">CHỈ SỐ DTI</div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-[#EF4444] font-mono">38%</span>
+                <span className="text-[9px] text-[#22C55E] font-bold">KHẢ NĂNG TỐT</span>
+              </div>
             </motion.div>
+
+
+
+            {/* Mini Notification Card overlapping left edge */}
+            <div className="absolute top-1/2 -left-16 -translate-y-1/2 z-20">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="glass-card p-3 w-44 border-white/5 bg-[#0F172A]/80 shadow-2xl"
+                style={{ transform: "rotateZ(-2deg)" }}
+              >
+                <div className="flex items-center gap-2 mb-1.5 font-bold">
+                  <div className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
+                  <span className="text-[10px] text-white/40 uppercase">Hệ thống</span>
+                </div>
+                <p className="text-[10px] text-white/70 leading-relaxed font-medium">
+                  Vẹt Vàng vừa phát hiện cơ hội đầu tư mới cho bạn!
+                </p>
+              </motion.div>
+            </div>
 
             {/* Overlay: streak */}
             <motion.div
