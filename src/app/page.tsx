@@ -1504,7 +1504,9 @@ function FinalCTA() {
             text="Sẵn sàng bị Vẹt Vàng"
             className="text-white block"
           />
-          <GradientText className="block leading-[1.18] pt-[0.2em] pb-[0.08em]">"mổ" cho giàu?</GradientText>
+          <GradientText className="block leading-[1.18] pt-[0.2em] pb-[0.08em]">
+            "mổ" cho giàu?
+          </GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">
@@ -1519,7 +1521,8 @@ function FinalCTA() {
             boxShadow: "0 0 80px rgba(255,215,0,0.3)",
           }}
           whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          className="inline-block">
           <Link
             href="/dashboard"
             className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-lg text-xl">
