@@ -1,4 +1,5 @@
-process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-key'
+process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || 'test-key'
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -34,24 +35,46 @@ vi.mock('@/lib/news/crawler', () => ({
 }))
 
 vi.mock('@/lib/gemini-batch', () => ({
-  generateMorningBrief: vi.fn(async () => 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.'),
+  generateMorningBrief: vi.fn(async () => ({
+    summary: 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.',
+    thesis: 'Thị trường còn nhiều nhiễu, nhưng xu hướng chưa bị phá vỡ.',
+    marketOverview: 'VN-Index đi ngang trong biên hẹp, vàng neo cao.',
+    macroContext: 'GDP và CPI đang tạo ra môi trường vừa hỗ trợ vừa gợn rủi ro.',
+    newsSynthesis: 'Tin tức trộn lẫn tạo ra độ nhiễu vừa phải cho nhà đầu tư cổ phiếu.',
+    risks: [
+      'Biến động tạm thời có thể tạo ra bẫy tăng giá.',
+      'USD/VND đảo chiều có thể động vào tâm lý.',
+    ],
+    actionItems: [
+      'Giữ kỷ luật danh mục.',
+      'Không FOMO vào tin đột biến.',
+    ],
+    takeaways: [
+      { emoji: '🟢', asset: 'Chứng khoán', text: 'Dòng tiền đang quay lại nhóm cổ phiếu lớn.' },
+      { emoji: '🟡', asset: 'Vàng', text: 'Giá vàng đi ngang, chưa có cú bứt phá rõ ràng.' },
+    ],
+  })),
 }))
 
 import { buildMorningBrief, getMorningBriefCached, refreshMorningBriefCache, resetMorningBriefCache } from './morning-brief'
-
-
 
 describe('morning-brief utils', () => {
   beforeEach(() => {
     resetMorningBriefCache()
   })
 
-  it('buildMorningBrief returns an object with summary and takeaways', async () => {
+  it('buildMorningBrief returns rich sections and takeaways', async () => {
     const brief = await buildMorningBrief()
 
     expect(brief.title).toBe('Morning Brief AI')
     expect(brief.summary).toContain('VN-Index và thị trường vàng')
     expect(brief.takeaways.length).toBe(2)
+    expect(brief.thesis).toContain('Thị trường')
+    expect(brief.marketOverview).toContain('VN-Index')
+    expect(brief.macroContext).toContain('GDP')
+    expect(brief.newsSynthesis).toContain('Tin tức')
+    expect(brief.risks).toHaveLength(2)
+    expect(brief.actionItems).toHaveLength(2)
   })
 
   it('getMorningBriefCached uses cache and returns stale flag', async () => {
@@ -61,7 +84,6 @@ describe('morning-brief utils', () => {
     const second = await getMorningBriefCached()
     expect(second.stale).toBe(false)
 
-    // Simulate expiration by setting clock forward
     const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 20 * 60 * 1000)
     const third = await getMorningBriefCached()
     expect(third.stale).toBe(true)
@@ -74,9 +96,12 @@ describe('morning-brief utils', () => {
   })
 
   it('buildMorningBrief falls back to heuristic when GEMINI_API_KEY missing', async () => {
+    delete process.env.GOOGLE_GENERATIVE_AI_API_KEY
     delete process.env.GEMINI_API_KEY
     const brief = await buildMorningBrief()
     expect(brief.source).toBe('heuristic')
-    expect(brief.summary).toContain('VN-Index bật tăng')
+    expect(brief.summary).toContain('VN-Index')
+    expect(brief.marketOverview).toBeDefined()
+    expect(brief.actionItems?.length).toBeGreaterThan(0)
   })
 })

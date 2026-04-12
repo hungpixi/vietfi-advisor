@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775917920177,
+  "lastScanned": 1776006465367,
   "projectRoot": "D:\\vietfi-advisor",
   "techStack": {
     "languages": [
@@ -96,7 +96,7 @@
       "path": "design-exports",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775917920095,
+      "lastAccessed": 1776006465314,
       "keyFiles": [
         "9nb0s.png",
         "AL84F.png",
@@ -109,14 +109,14 @@
       "path": "design-system",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775917920096,
+      "lastAccessed": 1776006465315,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 3,
-      "lastAccessed": 1775917920105,
+      "lastAccessed": 1776006465322,
       "keyFiles": [
         "AGENTS.md",
         "deployment-vinahost-node.md",
@@ -127,7 +127,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 9,
-      "lastAccessed": 1775917920107,
+      "lastAccessed": 1776006465322,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -136,11 +136,20 @@
         "quotes.json"
       ]
     },
+    "reports": {
+      "path": "reports",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1776006465323,
+      "keyFiles": [
+        "evaluation_report.json"
+      ]
+    },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 6,
-      "lastAccessed": 1775917920108,
+      "lastAccessed": 1776006465324,
       "keyFiles": [
         "debug_clone.py",
         "generate-tts-bank.ts",
@@ -153,7 +162,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1775917920109,
+      "lastAccessed": 1776006465324,
       "keyFiles": [
         "AGENTS.md",
         "proxy.ts"
@@ -163,7 +172,7 @@
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1775917920109,
+      "lastAccessed": 1776006465325,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -172,7 +181,7 @@
       "path": "ui-prototype",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775917920109,
+      "lastAccessed": 1776006465325,
       "keyFiles": [
         "index.html",
         "quotes.json",
@@ -185,7 +194,7 @@
       "path": "vietfi-appwrite",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775917920110,
+      "lastAccessed": 1776006465326,
       "keyFiles": [
         "README.md"
       ]
@@ -194,7 +203,7 @@
       "path": "voice_ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775917920110,
+      "lastAccessed": 1776006465326,
       "keyFiles": [
         "zinzin.vi.vtt"
       ]
@@ -203,7 +212,7 @@
       "path": "docs\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1775917920111,
+      "lastAccessed": 1776006465330,
       "keyFiles": [
         "vietfi-onboarding-flow.png",
         "vietfi-system-architecture.png"
@@ -213,7 +222,7 @@
       "path": "public\\assets",
       "purpose": "Static assets",
       "fileCount": 10,
-      "lastAccessed": 1775917920112,
+      "lastAccessed": 1776006465333,
       "keyFiles": [
         "icon-192.png",
         "icon-512.png",
@@ -224,7 +233,7 @@
       "path": "public\\docs",
       "purpose": "Documentation",
       "fileCount": 57,
-      "lastAccessed": 1775917920114,
+      "lastAccessed": 1776006465339,
       "keyFiles": [
         "audit_budget_1773931000033.png",
         "audit_cpi_retry_1773931015040.png",
@@ -235,7 +244,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 5,
-      "lastAccessed": 1775917920115,
+      "lastAccessed": 1776006465349,
       "keyFiles": [
         "AGENTS.md",
         "favicon.ico",
@@ -246,7 +255,7 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 1,
-      "lastAccessed": 1775917920116,
+      "lastAccessed": 1776006465351,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -255,7 +264,7 @@
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 22,
-      "lastAccessed": 1775917920116,
+      "lastAccessed": 1776006465357,
       "keyFiles": [
         "AGENTS.md",
         "expense-parser.ts",
@@ -266,7 +275,7 @@
       "path": "src\\test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1775917920116,
+      "lastAccessed": 1776006465359,
       "keyFiles": [
         "setup.ts"
       ]
@@ -275,7 +284,7 @@
       "path": "ui-prototype\\assets",
       "purpose": "Static assets",
       "fileCount": 8,
-      "lastAccessed": 1775917920117,
+      "lastAccessed": 1776006465362,
       "keyFiles": [
         "icon.png",
         "level-1-con.png",
@@ -286,7 +295,7 @@
       "path": "vietfi-appwrite\\docs",
       "purpose": "Documentation",
       "fileCount": 3,
-      "lastAccessed": 1775917920118,
+      "lastAccessed": 1776006465366,
       "keyFiles": [
         "appwrite-clone-plan.md",
         "appwrite-schema.md",
@@ -303,8 +312,8 @@
     },
     {
       "path": "src\\app\\dashboard\\page.tsx",
-      "accessCount": 67,
-      "lastAccessed": 1775759293338,
+      "accessCount": 70,
+      "lastAccessed": 1776008568711,
       "type": "file"
     },
     {
@@ -338,6 +347,12 @@
       "type": "file"
     },
     {
+      "path": "src",
+      "accessCount": 21,
+      "lastAccessed": 1776008475390,
+      "type": "directory"
+    },
+    {
       "path": "src\\lib\\storage.ts",
       "accessCount": 19,
       "lastAccessed": 1775757787421,
@@ -350,12 +365,6 @@
       "type": "directory"
     },
     {
-      "path": "src",
-      "accessCount": 18,
-      "lastAccessed": 1775973890426,
-      "type": "directory"
-    },
-    {
       "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
       "accessCount": 9,
       "lastAccessed": 1775559451922,
@@ -365,6 +374,12 @@
       "path": ".claude\\worktrees\\awwwards-landing\\src\\app\\demo-awwwards\\HeroSection.tsx",
       "accessCount": 6,
       "lastAccessed": 1775562224325,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\gemini.ts",
+      "accessCount": 6,
+      "lastAccessed": 1776007624425,
       "type": "file"
     },
     {
@@ -527,12 +542,6 @@
       "path": "src\\app\\dashboard\\news\\page.tsx",
       "accessCount": 1,
       "lastAccessed": 1775564079913,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\gemini.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775564123578,
       "type": "file"
     },
     {

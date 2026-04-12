@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import type { NewsArticle, NewsSentimentLabel } from "@/lib/news/crawler";
 import dynamic from "next/dynamic";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
-import { cn } from "@/lib/utils";
 import {
   getBudgetPots,
   getExpenses,
@@ -30,6 +29,9 @@ import {
   PencilLine,
   BarChart3,
   TrendingUp,
+  FileText,
+  ShieldAlert,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -71,6 +73,12 @@ interface BriefData {
   takeaways: { emoji: string; asset: string; text: string }[];
   source?: "gemini" | "heuristic";
   stale?: boolean;
+  thesis?: string;
+  marketOverview?: string;
+  macroContext?: string;
+  newsSynthesis?: string;
+  risks?: string[];
+  actionItems?: string[];
 }
 
 interface NewsItem {
@@ -90,15 +98,6 @@ function formatTimeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
 }
-
-const FALLBACK_NEWS: NewsItem[] = [
-  {
-    title: "Đang tải tin tức...",
-    source: "VietFi",
-    time: "",
-    sentiment: "neutral",
-  },
-];
 
 const sentimentTag = {
   bullish: { color: "#22C55E", label: "Tích cực" },
@@ -241,6 +240,13 @@ function BriefCard({
   brief: BriefData | null;
   loading: boolean;
 }) {
+  const hasRichSections =
+    Boolean(brief?.thesis) ||
+    Boolean(brief?.marketOverview) ||
+    Boolean(brief?.macroContext) ||
+    Boolean(brief?.newsSynthesis) ||
+    Boolean(brief?.risks?.length) ||
+    Boolean(brief?.actionItems?.length);
   if (loading || !brief) {
     return (
       <motion.div
@@ -285,9 +291,97 @@ function BriefCard({
           </span>
         </div>
         <h2 className="text-lg font-bold text-white mb-2">{brief.title}</h2>
-        <p className="text-[13px] text-white/50 leading-relaxed mb-4">
+        <p className="text-[13px] text-white/50 leading-relaxed whitespace-pre-line mb-4">
           {brief.summary}
         </p>
+        {brief.thesis && (
+          <div className="mb-4 rounded-xl border border-white/6 bg-white/[0.03] p-3">
+            <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#E6B84F] font-mono">
+              <Target className="w-3.5 h-3.5" />
+              Luận điểm chính
+            </div>
+            <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-line">
+              {brief.thesis}
+            </p>
+          </div>
+        )}
+        {hasRichSections && (
+          <div className="grid gap-3 md:grid-cols-2 mb-4">
+            {brief.marketOverview && (
+              <div className="rounded-xl border border-white/6 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#E6B84F] font-mono">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  Thị trường
+                </div>
+                <p className="text-[12px] text-white/60 leading-relaxed whitespace-pre-line">
+                  {brief.marketOverview}
+                </p>
+              </div>
+            )}
+            {brief.macroContext && (
+              <div className="rounded-xl border border-white/6 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#E6B84F] font-mono">
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  Vĩ mô
+                </div>
+                <p className="text-[12px] text-white/60 leading-relaxed whitespace-pre-line">
+                  {brief.macroContext}
+                </p>
+              </div>
+            )}
+            {brief.newsSynthesis && (
+              <div className="rounded-xl border border-white/6 bg-white/[0.03] p-3 md:col-span-2">
+                <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#E6B84F] font-mono">
+                  <FileText className="w-3.5 h-3.5" />
+                  Tổng hợp tin nóng
+                </div>
+                <p className="text-[12px] text-white/60 leading-relaxed whitespace-pre-line">
+                  {brief.newsSynthesis}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        {(brief.risks?.length || brief.actionItems?.length) && (
+          <div className="grid gap-3 md:grid-cols-2 mb-4">
+            {brief.risks?.length ? (
+              <div className="rounded-xl border border-white/6 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#FFB300] font-mono">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Rủi ro / watchlist
+                </div>
+                <ul className="space-y-2">
+                  {brief.risks.map((risk, index) => (
+                    <li
+                      key={index}
+                      className="text-[12px] text-white/60 leading-relaxed flex gap-2">
+                      <span className="text-[#FFB300]">•</span>
+                      <span>{risk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {brief.actionItems?.length ? (
+              <div className="rounded-xl border border-white/6 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2 mb-2 text-[10px] uppercase tracking-wider text-[#22C55E] font-mono">
+                  <Clock className="w-3.5 h-3.5" />
+                  Việc nên làm
+                </div>
+                <ul className="space-y-2">
+                  {brief.actionItems.map((item, index) => (
+                    <li
+                      key={index}
+                      className="text-[12px] text-white/60 leading-relaxed flex gap-2">
+                      <span className="text-[#22C55E]">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-2">
           {brief.takeaways.map(
             (t: { emoji: string; asset: string; text: string }, i: number) => (
@@ -422,21 +516,43 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
 
 function VetVangFloatWidget() {
   const [mounted, setMounted] = useState(false);
-  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({
-    xp: 0,
-    level: 0,
-    levelName: "🐣 Vẹt Teen",
-    streak: 0,
-    lastActiveDate: "",
-    actions: [],
-    questCompleted: false,
-  });
 
-  useEffect(() => {
-    setGam(getGamification());
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
 
+  // SSR: Return placeholder to match client hydration
+  if (!mounted) {
+    return (
+      <motion.div
+        variants={fadeIn}
+        className="glass-card p-5 border-[#E6B84F]/10">
+        <div className="flex items-center gap-2 mb-2">
+          <Flame className="w-4 h-4 text-[#E6B84F]" />
+          <h3 className="text-sm font-semibold text-white">Vẹt Vàng nói gì?</h3>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-mono ml-auto">
+            💛 Khen Mode
+          </span>
+        </div>
+        <div className="bg-white/[0.02] rounded-xl p-3 mb-3">
+          <p className="text-[13px] text-white/60 italic leading-relaxed">
+            &ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi
+            đâu! Level 🐣 Vẹt Con rồi mà còn lười hả? 🦜&rdquo;
+          </p>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/30">Lvl 1</span>
+            <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full w-0" />
+            </div>
+            <span className="text-[10px] text-[#E6B84F]">0 XP</span>
+          </div>
+          <span className="text-[10px] text-white/20">🐣 Vẹt Con</span>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const gam = getGamification();
   const { current, progress } = getLevelProgress(gam.xp);
 
   return (
@@ -459,24 +575,18 @@ function VetVangFloatWidget() {
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-white/30">
-            Lvl {mounted ? gam.level + 1 : "--"}
-          </span>
+          <span className="text-[10px] text-white/30">Lvl {gam.level + 1}</span>
           <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${mounted ? progress : 0}%` }}
+              animate={{ width: `${progress}%` }}
               transition={{ duration: 1 }}
             />
           </div>
-          <span className="text-[10px] text-[#E6B84F]">
-            {mounted ? gam.xp : "--"} XP
-          </span>
+          <span className="text-[10px] text-[#E6B84F]">{gam.xp} XP</span>
         </div>
-        <span className="text-[10px] text-white/20">
-          {mounted ? current.name : "🐣 Vẹt Teen"}
-        </span>
+        <span className="text-[10px] text-white/20">{current.name}</span>
       </div>
     </motion.div>
   );
@@ -518,6 +628,27 @@ export default function DashboardOverview() {
           raw: data.raw ?? data.summary,
           takeaways: Array.isArray(data.takeaways) ? data.takeaways : [],
           source: data.source ?? "heuristic",
+          thesis: typeof data.thesis === "string" ? data.thesis : undefined,
+          marketOverview:
+            typeof data.marketOverview === "string"
+              ? data.marketOverview
+              : undefined,
+          macroContext:
+            typeof data.macroContext === "string"
+              ? data.macroContext
+              : undefined,
+          newsSynthesis:
+            typeof data.newsSynthesis === "string"
+              ? data.newsSynthesis
+              : undefined,
+          risks: Array.isArray(data.risks)
+            ? data.risks.filter((item: unknown) => typeof item === "string")
+            : undefined,
+          actionItems: Array.isArray(data.actionItems)
+            ? data.actionItems.filter(
+                (item: unknown) => typeof item === "string",
+              )
+            : undefined,
         });
       } catch {
         setAiBriefError("Không thể tải Morning Brief");
@@ -634,7 +765,6 @@ export default function DashboardOverview() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const liveBrief = aiBrief;
@@ -683,7 +813,7 @@ export default function DashboardOverview() {
                 {/* Wealthsimple big number */}
                 <div className="mt-2 mb-1">
                   <span className="text-5xl md:text-6xl font-black text-white tracking-tight leading-none">
-                    {netWorth !== null && netWorth !== 0 ? (
+                    {netWorth !== null ? (
                       <>
                         <AnimatedCounter target={netWorth / 1_000_000} />
                         <span className="text-2xl md:text-3xl text-white/40 font-semibold ml-1.5">
@@ -771,6 +901,11 @@ export default function DashboardOverview() {
 
         {/* Morning Brief — Full width */}
         <motion.div variants={stagger} className="mb-4">
+          {aiBriefError && (
+            <div className="mb-2 text-[11px] text-[#FFB300] font-mono">
+              {aiBriefError}
+            </div>
+          )}
           <BriefCard brief={liveBrief} loading={briefLoading} />
         </motion.div>
 

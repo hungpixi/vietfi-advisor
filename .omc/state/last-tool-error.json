@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd \\\"D:/vietfi-advisor\\\" && ~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3-pro-preview - \\\"$PWD\\\" <<'EOF'\\nROLE_FILE: ~/.claude/.ccg/prompts/gemini/analyzer.md\\n<...",
-  "error": "Exit code 127\n/usr/bin/bash: line 15: /c/Users/Hoang/.claude/bin/codeagent-wrapper: No such file or directory",
-  "timestamp": "2026-04-12T06:05:44.389Z",
-  "retry_count": 1
-}
