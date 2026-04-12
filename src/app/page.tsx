@@ -1,6 +1,13 @@
 "use client";
 
-import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  useMotionValue,
+  useSpring,
+} from "framer-motion";
 import {
   ArrowRight,
   ChevronDown,
@@ -43,7 +50,10 @@ function useTilt<T extends HTMLElement>(maxRotate = 14) {
       rotateY.set(dx * maxRotate);
       rotateX.set(-dy * maxRotate);
     };
-    const onLeave = () => { rotateX.set(0); rotateY.set(0); };
+    const onLeave = () => {
+      rotateX.set(0);
+      rotateY.set(0);
+    };
     el.addEventListener("mousemove", onMove);
     el.addEventListener("mouseleave", onLeave);
     return () => {
@@ -56,14 +66,21 @@ function useTilt<T extends HTMLElement>(maxRotate = 14) {
 }
 
 /* ─── Tilt Card Wrapper ─── */
-function TiltCard({ children, className = "", maxRotate = 12 }: { children: React.ReactNode; className?: string; maxRotate?: number }) {
+function TiltCard({
+  children,
+  className = "",
+  maxRotate = 12,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  maxRotate?: number;
+}) {
   const { ref, rotateX, rotateY } = useTilt<HTMLDivElement>(maxRotate);
   return (
     <motion.div
       ref={ref}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      className={className}
-    >
+      className={className}>
       {children}
     </motion.div>
   );
@@ -76,37 +93,49 @@ const EASE_SPRING = [0.34, 1.56, 0.64, 1] as const;
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 0) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 0.7, delay: i * 0.1, ease: EASE_SMOOTH }
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, delay: i * 0.1, ease: EASE_SMOOTH },
   }),
 };
 
 const fadeInLeft = {
   hidden: { opacity: 0, x: -40 },
   visible: (i = 0) => ({
-    opacity: 1, x: 0,
-    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH }
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH },
   }),
 };
 
 const fadeInRight = {
   hidden: { opacity: 0, x: 40 },
   visible: (i = 0) => ({
-    opacity: 1, x: 0,
-    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH }
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH },
   }),
 };
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.92 },
   visible: (i = 0) => ({
-    opacity: 1, scale: 1,
-    transition: { duration: 0.6, delay: i * 0.08, ease: EASE_SPRING }
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.6, delay: i * 0.08, ease: EASE_SPRING },
   }),
 };
 
 /* ─── Counter Animation ─── */
-function AnimatedCounter({ target, suffix = "", duration = 2 }: { target: number; suffix?: string; duration?: number }) {
+function AnimatedCounter({
+  target,
+  suffix = "",
+  duration = 2,
+}: {
+  target: number;
+  suffix?: string;
+  duration?: number;
+}) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
@@ -117,17 +146,30 @@ function AnimatedCounter({ target, suffix = "", duration = 2 }: { target: number
     const step = target / (duration * 60);
     const timer = setInterval(() => {
       start += step;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.floor(start));
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else setCount(Math.floor(start));
     }, 16);
     return () => clearInterval(timer);
   }, [inView, target, duration]);
 
-  return <span ref={ref}>{count}{suffix}</span>;
+  return (
+    <span ref={ref}>
+      {count}
+      {suffix}
+    </span>
+  );
 }
 
 /* ─── Word-by-word stagger ─── */
-function WordReveal({ text, className = "" }: { text: string; className?: string }) {
+function WordReveal({
+  text,
+  className = "",
+}: {
+  text: string;
+  className?: string;
+}) {
   const words = text.split(" ");
   return (
     <span className={className}>
@@ -138,8 +180,11 @@ function WordReveal({ text, className = "" }: { text: string; className?: string
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: i * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
+          transition={{
+            duration: 0.5,
+            delay: i * 0.06,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          }}>
           {word}
         </motion.span>
       ))}
@@ -148,10 +193,14 @@ function WordReveal({ text, className = "" }: { text: string; className?: string
 }
 
 /* ─── Gradient Text ─── */
-function GradientText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <span className={`text-gradient ${className}`}>{children}</span>
-  );
+function GradientText({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <span className={`text-gradient ${className}`}>{children}</span>;
 }
 
 /* ═══════════════════ NAVBAR ═══════════════════ */
@@ -167,22 +216,29 @@ function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-        ? "bg-[#020617]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_40px_rgba(0,0,0,0.6)]"
-        : "bg-transparent backdrop-blur-sm border-b border-white/[0.03]"
-        }`}
-    >
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? "bg-[#020617]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_40px_rgba(0,0,0,0.6)]"
+          : "bg-transparent backdrop-blur-sm border-b border-white/[0.03]"
+      }`}>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative w-10 h-10">
-            <Image src="/assets/icon.png" alt="VietFi" fill className="object-contain" />
+            <Image
+              src="/assets/icon.png"
+              alt="VietFi"
+              fill
+              className="object-contain"
+            />
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-black tracking-tight">
               <GradientText>VietFi</GradientText>
             </span>
-            <span className="text-sm font-medium text-white/30 hidden sm:inline">Advisor</span>
+            <span className="text-sm font-medium text-white/30 hidden sm:inline">
+              Advisor
+            </span>
           </div>
         </Link>
 
@@ -200,8 +256,7 @@ function Navbar() {
               href={item.href}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="px-4 py-2 text-sm text-white/50 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/[0.04]"
-            >
+              className="px-4 py-2 text-sm text-white/50 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/[0.04]">
               {item.label}
             </motion.a>
           ))}
@@ -210,14 +265,15 @@ function Navbar() {
         {/* CTA */}
         <div className="flex items-center gap-3">
           <motion.div
-            whileHover={{ scale: 1.04, boxShadow: "0 0 40px rgba(255,215,0,0.25)" }}
+            whileHover={{
+              scale: 1.04,
+              boxShadow: "0 0 40px rgba(255,215,0,0.25)",
+            }}
             whileTap={{ scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}>
             <Link
               href="/dashboard"
-              className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold text-sm rounded-xl shadow-[0_0_20px_rgba(255,215,0,0.15)]"
-            >
+              className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold text-sm rounded-xl shadow-[0_0_20px_rgba(255,215,0,0.15)]">
               Bắt đầu miễn phí
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -229,10 +285,12 @@ function Navbar() {
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Mở menu điều hướng"
             aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
-          >
-            {[0, 1, 2].map(i => (
-              <div key={i} className={`w-5 h-0.5 bg-white/60 rounded transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
+            aria-controls="mobile-menu">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`w-5 h-0.5 bg-white/60 rounded transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`}
+              />
             ))}
           </button>
         </div>
@@ -242,19 +300,24 @@ function Navbar() {
       <motion.div
         id="mobile-menu"
         initial={false}
-        animate={{ maxHeight: mobileOpen ? 600 : 0, opacity: mobileOpen ? 1 : 0 }}
-        className="md:hidden overflow-hidden bg-[#1A0600]/95 backdrop-blur-xl border-b border-white/[0.06]"
-      >
+        animate={{
+          maxHeight: mobileOpen ? 600 : 0,
+          opacity: mobileOpen ? 1 : 0,
+        }}
+        className="md:hidden overflow-hidden bg-[#1A0600]/95 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="px-6 py-4 space-y-1">
-          {["#features", "#how", "#vet", "#stats", "#faq"].map(href => (
-            <a key={href} href={href}
+          {["#features", "#how", "#vet", "#stats", "#faq"].map((href) => (
+            <a
+              key={href}
+              href={href}
               className="block px-4 py-3 text-sm text-white/60 hover:text-white hover:bg-white/[0.04] rounded-lg transition-all"
-              onClick={() => setMobileOpen(false)}
-            >
+              onClick={() => setMobileOpen(false)}>
               {href.replace("#", "")}
             </a>
           ))}
-          <Link href="/dashboard" className="block px-4 py-3 text-sm font-bold text-black bg-gradient-to-r from-[#FFD700] to-[#FFB300] rounded-xl text-center mt-2">
+          <Link
+            href="/dashboard"
+            className="block px-4 py-3 text-sm font-bold text-black bg-gradient-to-r from-[#FFD700] to-[#FFB300] rounded-xl text-center mt-2">
             Bắt đầu miễn phí
           </Link>
         </div>
@@ -284,10 +347,13 @@ function TrustBar() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08, duration: 0.4 }}
-              className="flex items-center gap-2"
-            >
-              <span className="text-sm font-bold text-[#FFD700]">{item.value}</span>
-              <span className="text-xs text-white/30 hidden sm:inline">{item.label}</span>
+              className="flex items-center gap-2">
+              <span className="text-sm font-bold text-[#FFD700]">
+                {item.value}
+              </span>
+              <span className="text-xs text-white/30 hidden sm:inline">
+                {item.label}
+              </span>
               {i < trustItems.length - 1 && (
                 <div className="hidden md:block w-px h-4 bg-white/[0.08] ml-4" />
               )}
@@ -302,19 +368,26 @@ function TrustBar() {
 /* ═══════════════════ HERO ═══════════════════ */
 function Hero() {
   const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
   const y = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
-    <section ref={containerRef} className="relative min-h-screen flex items-center overflow-hidden pt-20 pb-16">
+    <section
+      ref={containerRef}
+      className="relative min-h-screen flex items-center overflow-hidden pt-20 pb-16">
       {/* Ambient overlay to harmonize with Fintech Blue gradient */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,#1E40AF_0%,transparent_65%)] opacity-[0.08]" />
         <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,#0EA5E9_0%,transparent_70%)] opacity-[0.06]" />
       </div>
 
-      <motion.div style={{ y, opacity }} className="relative z-10 max-w-6xl mx-auto px-4 w-full">
+      <motion.div
+        style={{ y, opacity }}
+        className="relative z-10 max-w-6xl mx-auto px-4 w-full">
         {/* 2-col layout */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Copy */}
@@ -324,43 +397,49 @@ function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-5xl md:text-6xl font-black mb-8 leading-[1.4]"
-            >
-              <span className="text-white">Tự do tài chính</span>
-              <br />
-              <span className="text-white/80">bắt đầu từ</span>
-              <br />
-              <GradientText>kiểm soát thật.</GradientText>
+              className="text-5xl md:text-6xl font-black mb-8 leading-[1.24] md:leading-[1.2] inline-flex flex-col items-start gap-3 md:gap-4">
+              <span className="block w-fit text-white">Tự do tài chính</span>
+              <span className="block w-fit text-white/80">bắt đầu từ</span>
+              <GradientText className="block w-fit pt-[0.12em]">
+                kiểm soát thật.
+              </GradientText>
             </motion.h1>
 
             {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-lg text-white/45 mb-10 max-w-md leading-[1.7]"
-            >
-              76% người Việt không biết tiền đi đâu mỗi tháng.
-              VietFi tạo lộ trình rõ ràng, ưu tiên trả nợ,
-              và tiết kiệm thông minh — không hoa mĩ.
+              transition={{
+                duration: 0.6,
+                delay: 0.15,
+                ease: [0.25, 0.46, 0.45, 0.94],
+              }}
+              className="text-lg text-white/45 mb-10 max-w-md leading-[1.7]">
+              76% người Việt không biết tiền đi đâu mỗi tháng. VietFi tạo lộ
+              trình rõ ràng, ưu tiên trả nợ, và tiết kiệm thông minh — không hoa
+              mĩ.
             </motion.p>
 
             {/* CTAs */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="flex flex-wrap items-center gap-4 mb-12"
-            >
+              transition={{
+                duration: 0.6,
+                delay: 0.25,
+                ease: [0.25, 0.46, 0.45, 0.94],
+              }}
+              className="flex flex-wrap items-center gap-4 mb-12">
               <motion.div
-                whileHover={{ scale: 1.04, boxShadow: "0 0 60px rgba(255,215,0,0.25)" }}
+                whileHover={{
+                  scale: 1.04,
+                  boxShadow: "0 0 60px rgba(255,215,0,0.25)",
+                }}
                 whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              >
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold rounded-2xl text-base shadow-[0_0_30px_rgba(255,215,0,0.2)]"
-                >
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold rounded-2xl text-base shadow-[0_0_30px_rgba(255,215,0,0.2)]">
                   Bắt đầu miễn phí
                   <ArrowRight className="w-5 h-5" />
                 </Link>
@@ -370,8 +449,7 @@ function Hero() {
                 href="#features"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2.5 px-6 py-4 border border-white/[0.08] rounded-2xl text-white/50 hover:text-white hover:border-white/[0.15] transition-all duration-200"
-              >
+                className="inline-flex items-center gap-2.5 px-6 py-4 border border-white/[0.08] rounded-2xl text-white/50 hover:text-white hover:border-white/[0.15] transition-all duration-200">
                 Xem cách hoạt động
                 <ChevronDown className="w-4 h-4" />
               </motion.a>
@@ -382,16 +460,19 @@ function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.6 }}
-              className="flex items-center gap-6"
-            >
+              className="flex items-center gap-6">
               {[
                 { num: "6", label: "AI Agents" },
                 { num: "8+", label: "Nguồn dữ liệu" },
                 { num: "100%", label: "Miễn phí mãi" },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-2">
-                  <div className="text-lg font-black text-white font-mono">{s.num}</div>
-                  <div className="text-[11px] text-white/30 leading-tight">{s.label}</div>
+                  <div className="text-lg font-black text-white font-mono">
+                    {s.num}
+                  </div>
+                  <div className="text-[11px] text-white/30 leading-tight">
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </motion.div>
@@ -401,17 +482,28 @@ function Hero() {
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="relative hidden lg:block"
-          >
+            transition={{
+              delay: 0.3,
+              duration: 0.8,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+            className="relative hidden lg:block">
             {/* Dashboard UI mockup — clean glass card */}
-            <TiltCard className="relative z-10 glass-card p-6 shadow-[0_32px_80px_rgba(0,0,0,0.6)]" maxRotate={10}>
+            <TiltCard
+              className="relative z-10 glass-card p-6 shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
+              maxRotate={10}>
               {/* Mockup header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-xs text-white/30 mb-0.5">Tổng tài sản</div>
-                  <div className="text-2xl font-black text-white font-mono">₫47,250,000</div>
-                  <div className="text-xs text-[#22C55E]">▲ +1.25% tháng này</div>
+                  <div className="text-xs text-white/30 mb-0.5">
+                    Tổng tài sản
+                  </div>
+                  <div className="text-2xl font-black text-white font-mono">
+                    ₫47,250,000
+                  </div>
+                  <div className="text-xs text-[#22C55E]">
+                    ▲ +1.25% tháng này
+                  </div>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFB300] flex items-center justify-center text-lg">
                   🦜
@@ -420,16 +512,19 @@ function Hero() {
 
               {/* Mockup chart bars */}
               <div className="flex items-end gap-1.5 h-20 mb-4">
-                {[40, 55, 45, 65, 58, 72, 68, 80, 75, 88, 82, 95].map((h, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-t-sm transition-all"
-                    style={{
-                      height: `${h}%`,
-                      background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)"
-                    }}
-                  />
-                ))}
+                {[40, 55, 45, 65, 58, 72, 68, 80, 75, 88, 82, 95].map(
+                  (h, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-t-sm transition-all"
+                      style={{
+                        height: `${h}%`,
+                        background:
+                          i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)",
+                      }}
+                    />
+                  ),
+                )}
               </div>
 
               {/* Mockup pots */}
@@ -439,9 +534,17 @@ function Hero() {
                   { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF" },
                   { label: "Đầu tư", val: "26.8M", color: "#FFD700" },
                 ].map((pot) => (
-                  <div key={pot.label} className="bg-white/[0.03] rounded-xl p-2.5 border border-white/[0.04]">
-                    <div className="text-[10px] text-white/30 mb-0.5">{pot.label}</div>
-                    <div className="text-sm font-bold font-mono" style={{ color: pot.color }}>{pot.val}</div>
+                  <div
+                    key={pot.label}
+                    className="bg-white/[0.03] rounded-xl p-2.5 border border-white/[0.04]">
+                    <div className="text-[10px] text-white/30 mb-0.5">
+                      {pot.label}
+                    </div>
+                    <div
+                      className="text-sm font-bold font-mono"
+                      style={{ color: pot.color }}>
+                      {pot.val}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -452,19 +555,23 @@ function Hero() {
               initial={{ opacity: 0, x: -20, y: 20 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ delay: 1, duration: 0.8 }}
-              className="absolute -bottom-8 -left-12 z-20 w-64 glass-card p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-[#FFD700]/20 animate-float"
-            >
+              className="absolute -bottom-8 -left-12 z-20 w-64 glass-card p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-[#FFD700]/20 animate-float">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 rounded-full bg-[#FFD700]/10 flex items-center justify-center">
                   <span className="text-sm">✨</span>
                 </div>
                 <div>
-                  <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">AI INSIGHT</div>
-                  <div className="text-xs font-bold text-[#FFD700]">Tín hiệu tích cực</div>
+                  <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest">
+                    AI INSIGHT
+                  </div>
+                  <div className="text-xs font-bold text-[#FFD700]">
+                    Tín hiệu tích cực
+                  </div>
                 </div>
               </div>
               <p className="text-[11px] text-white/50 leading-relaxed">
-                Thị trường đang có xu hướng tích lũy tốt. Đây là thời điểm thích hợp để tái cơ cấu danh mục.
+                Thị trường đang có xu hướng tích lũy tốt. Đây là thời điểm thích
+                hợp để tái cơ cấu danh mục.
               </p>
             </motion.div>
 
@@ -474,11 +581,14 @@ function Hero() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 1.2, duration: 0.6 }}
               className="absolute -top-6 -right-6 z-20 w-48 glass-card p-3 border-[#00E5FF]/20 shadow-[0_15px_40px_rgba(0,0,0,0.4)]"
-              style={{ animation: "float 6s ease-in-out infinite reverse" }}
-            >
+              style={{ animation: "float 6s ease-in-out infinite reverse" }}>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-[9px] font-bold text-white/30 uppercase">VN-INDEX</div>
-                <div className="text-[10px] font-mono text-[#22C55E]">+1.2%</div>
+                <div className="text-[9px] font-bold text-white/30 uppercase">
+                  VN-INDEX
+                </div>
+                <div className="text-[10px] font-mono text-[#22C55E]">
+                  +1.2%
+                </div>
               </div>
               <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-[#00E5FF] to-[#22C55E] w-[75%]" />
@@ -488,9 +598,12 @@ function Hero() {
             {/* Vẹt Vàng mascot — bottom right, smaller */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-8 w-36 z-20"
-            >
+              transition={{
+                repeat: Infinity,
+                duration: 3.5,
+                ease: "easeInOut",
+              }}
+              className="absolute -bottom-4 -right-8 w-36 z-20">
               <Image
                 src="/assets/mascot.png"
                 alt="Vẹt Vàng"
@@ -504,11 +617,12 @@ function Hero() {
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ repeat: Infinity, duration: 3, delay: 0.5 }}
-              className="absolute -top-3 -left-3 glass-card px-3 py-2 z-20"
-            >
+              className="absolute -top-3 -left-3 glass-card px-3 py-2 z-20">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-                <span className="text-xs font-bold text-white">VN-Index +1.25%</span>
+                <span className="text-xs font-bold text-white">
+                  VN-Index +1.25%
+                </span>
               </div>
             </motion.div>
           </motion.div>
@@ -559,8 +673,7 @@ function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7 }}
-          className="text-center mb-20"
-        >
+          className="text-center mb-20">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-6">
             <Zap className="w-3 h-3" />
             TÍNH NĂNG CỐT LÕI
@@ -584,46 +697,99 @@ function Features() {
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
+              transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
               <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <div className="text-xs text-white/30 mb-1">Tháng 4, 2026</div>
-                    <div className="text-3xl font-black text-white font-mono">₫47,250,000</div>
+                    <div className="text-xs text-white/30 mb-1">
+                      Tháng 4, 2026
+                    </div>
+                    <div className="text-3xl font-black text-white font-mono">
+                      ₫47,250,000
+                    </div>
                     <div className="text-sm text-[#22C55E]">▲ +1.25%</div>
                   </div>
                   <div className="flex gap-2">
-                    {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map(label => (
-                      <div key={label} className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">{label}</div>
+                    {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map((label) => (
+                      <div
+                        key={label}
+                        className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">
+                        {label}
+                      </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Chart area */}
                 <div className="mb-5">
-                  <div className="text-xs text-white/30 mb-3">Dòng tiền 12 tháng</div>
+                  <div className="text-xs text-white/30 mb-3">
+                    Dòng tiền 12 tháng
+                  </div>
                   <div className="flex items-end gap-1 h-24">
-                    {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)" }} />
-                    ))}
+                    {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map(
+                      (h, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 rounded-t-sm"
+                          style={{
+                            height: `${h}%`,
+                            background:
+                              i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)",
+                          }}
+                        />
+                      ),
+                    )}
                   </div>
                 </div>
 
                 {/* Pots */}
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: "Chi tiêu", val: "12.4M", color: "#22C55E", spent: "8.2M", pct: 66 },
-                    { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF", spent: "2.0M", pct: 25 },
-                    { label: "Đầu tư", val: "26.8M", color: "#FFD700", spent: "0M", pct: 0 },
+                    {
+                      label: "Chi tiêu",
+                      val: "12.4M",
+                      color: "#22C55E",
+                      spent: "8.2M",
+                      pct: 66,
+                    },
+                    {
+                      label: "Tiết kiệm",
+                      val: "8.0M",
+                      color: "#00E5FF",
+                      spent: "2.0M",
+                      pct: 25,
+                    },
+                    {
+                      label: "Đầu tư",
+                      val: "26.8M",
+                      color: "#FFD700",
+                      spent: "0M",
+                      pct: 0,
+                    },
                   ].map((pot) => (
-                    <div key={pot.label} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
-                      <div className="text-[10px] text-white/30 mb-1">{pot.label}</div>
-                      <div className="text-base font-black font-mono mb-1" style={{ color: pot.color }}>{pot.val}</div>
-                      <div className="text-[10px] text-white/30">đã dùng {pot.pct}%</div>
+                    <div
+                      key={pot.label}
+                      className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
+                      <div className="text-[10px] text-white/30 mb-1">
+                        {pot.label}
+                      </div>
+                      <div
+                        className="text-base font-black font-mono mb-1"
+                        style={{ color: pot.color }}>
+                        {pot.val}
+                      </div>
+                      <div className="text-[10px] text-white/30">
+                        đã dùng {pot.pct}%
+                      </div>
                       <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${pot.pct}%`, background: pot.color }} />
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${pot.pct}%`,
+                            background: pot.color,
+                          }}
+                        />
                       </div>
                     </div>
                   ))}
@@ -634,17 +800,24 @@ function Features() {
             {/* Overlay: DTI card */}
             <motion.div
               animate={{ y: [0, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-6 glass-card px-4 py-3 z-20 border-[#EF4444]/15 shadow-2xl"
-            >
-              <div className="text-[10px] text-white/30 mb-1 font-bold">CHỈ SỐ DTI</div>
+              transition={{
+                repeat: Infinity,
+                duration: 3.5,
+                ease: "easeInOut",
+              }}
+              className="absolute -bottom-4 -right-6 glass-card px-4 py-3 z-20 border-[#EF4444]/15 shadow-2xl">
+              <div className="text-[10px] text-white/30 mb-1 font-bold">
+                CHỈ SỐ DTI
+              </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-xl font-black text-[#EF4444] font-mono">38%</span>
-                <span className="text-[9px] text-[#22C55E] font-bold">KHẢ NĂNG TỐT</span>
+                <span className="text-xl font-black text-[#EF4444] font-mono">
+                  38%
+                </span>
+                <span className="text-[9px] text-[#22C55E] font-bold">
+                  KHẢ NĂNG TỐT
+                </span>
               </div>
             </motion.div>
-
-
 
             {/* Mini Notification Card overlapping left edge */}
             <div className="absolute top-1/2 -left-16 -translate-y-1/2 z-20">
@@ -654,11 +827,12 @@ function Features() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="glass-card p-3 w-44 border-white/5 bg-[#0F172A]/80 shadow-2xl"
-                style={{ transform: "rotateZ(-2deg)" }}
-              >
+                style={{ transform: "rotateZ(-2deg)" }}>
                 <div className="flex items-center gap-2 mb-1.5 font-bold">
                   <div className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-                  <span className="text-[10px] text-white/40 uppercase">Hệ thống</span>
+                  <span className="text-[10px] text-white/40 uppercase">
+                    Hệ thống
+                  </span>
                 </div>
                 <p className="text-[10px] text-white/70 leading-relaxed font-medium">
                   Vẹt Vàng vừa phát hiện cơ hội đầu tư mới cho bạn!
@@ -670,13 +844,14 @@ function Features() {
             <motion.div
               animate={{ y: [0, 4, 0] }}
               transition={{ repeat: Infinity, duration: 3, delay: 0.8 }}
-              className="absolute -top-3 -left-4 glass-card px-3 py-2 z-20"
-            >
+              className="absolute -top-3 -left-4 glass-card px-3 py-2 z-20">
               <div className="flex items-center gap-2">
                 <span className="text-base">🔥</span>
                 <div>
                   <div className="text-xs text-white/50">Streak</div>
-                  <div className="text-sm font-black text-[#FFD700] font-mono">7 ngày</div>
+                  <div className="text-sm font-black text-[#FFD700] font-mono">
+                    7 ngày
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -688,28 +863,43 @@ function Features() {
               <TiltCard
                 key={p.title}
                 maxRotate={8}
-                className="glass-card p-8 group hover:border-[#FFD700]/20 transition-all duration-300 relative overflow-hidden"
-              >
+                className="glass-card p-8 group hover:border-[#FFD700]/20 transition-all duration-300 relative overflow-hidden">
                 <motion.div
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
-                  transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
+                  transition={{
+                    duration: 0.6,
+                    delay: i * 0.12,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}>
                   <div className="flex items-start gap-4">
                     {/* Number + Icon */}
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: `${p.color}15`, color: p.color }}>
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
+                        style={{
+                          backgroundColor: `${p.color}15`,
+                          color: p.color,
+                        }}>
                         {p.icon}
                       </div>
-                      <div className="text-xs font-mono text-white/15 font-bold text-center">{p.num}</div>
+                      <div className="text-xs font-mono text-white/15 font-bold text-center">
+                        {p.num}
+                      </div>
                     </div>
 
                     {/* Content */}
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-1.5">{p.title}</h3>
-                      <p className="text-sm text-white/45 mb-2 leading-relaxed">{p.desc}</p>
-                      <p className="text-xs text-white/25 leading-relaxed">{p.detail}</p>
+                      <h3 className="text-lg font-bold text-white mb-1.5">
+                        {p.title}
+                      </h3>
+                      <p className="text-sm text-white/45 mb-2 leading-relaxed">
+                        {p.desc}
+                      </p>
+                      <p className="text-xs text-white/25 leading-relaxed">
+                        {p.detail}
+                      </p>
                     </div>
                   </div>
 
@@ -719,9 +909,11 @@ function Features() {
                     <motion.div
                       initial={{ opacity: 0, x: -8 }}
                       whileHover={{ opacity: 1, x: 0 }}
-                      className="ml-3 flex-shrink-0"
-                    >
-                      <ArrowRight className="w-4 h-4" style={{ color: p.color }} />
+                      className="ml-3 flex-shrink-0">
+                      <ArrowRight
+                        className="w-4 h-4"
+                        style={{ color: p.color }}
+                      />
                     </motion.div>
                   </div>
                 </motion.div>
@@ -734,12 +926,10 @@ function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
-              className="pt-2"
-            >
+              className="pt-2">
               <Link
                 href="/dashboard"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold rounded-xl text-sm hover:shadow-[0_0_40px_rgba(255,215,0,0.2)] transition-all"
-              >
+                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold rounded-xl text-sm hover:shadow-[0_0_40px_rgba(255,215,0,0.2)] transition-all">
                 Dùng thử miễn phí — Không cần thẻ
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -782,8 +972,9 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="py-28 px-6 bg-transparent relative overflow-hidden">
-
+    <section
+      id="how"
+      className="py-28 px-6 bg-transparent relative overflow-hidden">
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
@@ -791,8 +982,7 @@ function HowItWorks() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7 }}
-          className="text-center mb-20"
-        >
+          className="text-center mb-20">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-6">
             <Users className="w-3 h-3" />
             TRIẾT LÝ 3 BƯỚC
@@ -816,20 +1006,33 @@ function HowItWorks() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.6, delay: i * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="glass-card p-7 text-center relative hover:border-white/[0.1] transition-all duration-300"
-              >
+                transition={{
+                  duration: 0.6,
+                  delay: i * 0.15,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                }}
+                className="glass-card p-7 text-center relative hover:border-white/[0.1] transition-all duration-300">
                 {/* Step number */}
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black mx-auto mb-5 relative z-10" style={{ backgroundColor: `${s.color}20`, color: s.color, border: `2px solid ${s.color}40` }}>
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black mx-auto mb-5 relative z-10"
+                  style={{
+                    backgroundColor: `${s.color}20`,
+                    color: s.color,
+                    border: `2px solid ${s.color}40`,
+                  }}>
                   {s.emoji}
                 </div>
 
                 <h3 className="text-lg font-bold text-white mb-2">{s.title}</h3>
-                <p className="text-sm text-white/45 mb-4 leading-relaxed">{s.desc}</p>
+                <p className="text-sm text-white/45 mb-4 leading-relaxed">
+                  {s.desc}
+                </p>
 
                 <div className="flex flex-wrap justify-center gap-1.5">
-                  {s.tools.map(t => (
-                    <span key={t} className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.06] text-white/30 font-medium">
+                  {s.tools.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[10px] px-2.5 py-1 rounded-full border border-white/[0.06] text-white/30 font-medium">
                       {t}
                     </span>
                   ))}
@@ -850,7 +1053,7 @@ function StickyCTABar() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(!entry.isIntersecting),
-      { threshold: 0, rootMargin: "-80px 0px 0px 0px" }
+      { threshold: 0, rootMargin: "-80px 0px 0px 0px" },
     );
     const el = document.getElementById("features");
     if (el) observer.observe(el);
@@ -862,8 +1065,7 @@ function StickyCTABar() {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: visible ? 0 : 100, opacity: visible ? 1 : 0 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="fixed bottom-6 left-4 right-4 z-50 w-auto max-w-md mx-auto"
-    >
+      className="fixed bottom-6 left-4 right-4 z-50 w-auto max-w-md mx-auto">
       <div className="glass-card px-6 py-4 flex items-center justify-between gap-4 border-white/[0.1] shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
         <div>
           <div className="text-sm font-bold text-white">Sẵn sàng bắt đầu?</div>
@@ -871,8 +1073,7 @@ function StickyCTABar() {
         </div>
         <Link
           href="/dashboard"
-          className="flex-shrink-0 px-5 py-2.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold text-sm rounded-xl hover:shadow-[0_0_30px_rgba(255,215,0,0.2)] transition-all"
-        >
+          className="flex-shrink-0 px-5 py-2.5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold text-sm rounded-xl hover:shadow-[0_0_30px_rgba(255,215,0,0.2)] transition-all">
           Dùng ngay
         </Link>
       </div>
@@ -888,7 +1089,8 @@ function VetVangShowcase() {
       color: "#EF4444",
       bg: "from-[#EF4444]/10",
       border: "border-[#EF4444]/20",
-      quote: "\"3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười 🦜\"",
+      quote:
+        '"3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười 🦜"',
       trigger: "Khi chi vượt hũ, bỏ app ≥2 ngày, quên trả nợ",
     },
     {
@@ -896,7 +1098,8 @@ function VetVangShowcase() {
       color: "#E6B84F",
       bg: "from-[#E6B84F]/10",
       border: "border-[#E6B84F]/20",
-      quote: "\"Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! +20 XP 🦜✨\"",
+      quote:
+        '"Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! +20 XP 🦜✨"',
       trigger: "Khi tiết kiệm đạt target, ghi đúng giờ, streak dài",
     },
     {
@@ -904,23 +1107,65 @@ function VetVangShowcase() {
       color: "#A855F7",
       bg: "from-[#A855F7]/10",
       border: "border-[#A855F7]/20",
-      quote: "\"Mua đi mua đi, tao đâu có cấm. Tao chỉ thầm tính: ly trà sữa này = 3 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc quan trọng hơn mà... phải không? 🦜\"",
+      quote:
+        '"Mua đi mua đi, tao đâu có cấm. Tao chỉ thầm tính: ly trà sữa này = 3 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc quan trọng hơn mà... phải không? 🦜"',
       trigger: "Khi sắp vượt hũ, chi tiêu tăng dần",
     },
   ];
 
   const scenarios = [
-    ["Mở app lần đầu:", "\"Ồ có người mới à? Để tao đoán: lương về 3 ngày là sạch bách, đúng không? Yên tâm, tao sẽ mổ cho mày giàu 🦜\""],
-    ["Streak 7 ngày:", "\"7 ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Keep going! 🦜🔥\""],
-    ["Cuối tháng hết tiền:", "\"Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì... 🦜\""],
-    ["Trả hết 1 khoản nợ:", "\"Wait... trả hết nợ SPayLater rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn 🦜🥹\""],
+    [
+      "Mở app lần đầu:",
+      '"Ồ có người mới à? Để tao đoán: lương về 3 ngày là sạch bách, đúng không? Yên tâm, tao sẽ mổ cho mày giàu 🦜"',
+    ],
+    [
+      "Streak 7 ngày:",
+      '"7 ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Keep going! 🦜🔥"',
+    ],
+    [
+      "Cuối tháng hết tiền:",
+      '"Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì... 🦜"',
+    ],
+    [
+      "Trả hết 1 khoản nợ:",
+      '"Wait... trả hết nợ SPayLater rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn 🦜🥹"',
+    ],
   ];
 
   const levels = [
-    { emoji: "🐣", name: "Vẹt Con", xp: "0 XP", desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.", unlock: "Ghi chi tiêu + chia hũ", color: "#9CA3AF" },
-    { emoji: "🦜", name: "Vẹt Teen", xp: "500 XP", desc: "Mọc lông vàng, tập nói xéo. Quy đổi trà sữa ra ngày lãi tiết kiệm.", unlock: "Roast card + streak", color: "#FFD700" },
-    { emoji: "🦜✨", name: "Vẹt Phố", xp: "2,000 XP", desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.", unlock: "Market insight", color: "#FFB300" },
-    { emoji: "👑", name: "Vẹt Nhà Giàu", xp: "5,000 XP", desc: "Lông vàng kim, đeo chain vàng. \"Tự do tài chính\" trong mắt vẹt.", unlock: "Full analysis", color: "#F59E0B", final: true },
+    {
+      emoji: "🐣",
+      name: "Vẹt Con",
+      xp: "0 XP",
+      desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.",
+      unlock: "Ghi chi tiêu + chia hũ",
+      color: "#9CA3AF",
+    },
+    {
+      emoji: "🦜",
+      name: "Vẹt Teen",
+      xp: "500 XP",
+      desc: "Mọc lông vàng, tập nói xéo. Quy đổi trà sữa ra ngày lãi tiết kiệm.",
+      unlock: "Roast card + streak",
+      color: "#FFD700",
+    },
+    {
+      emoji: "🦜✨",
+      name: "Vẹt Phố",
+      xp: "2,000 XP",
+      desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.",
+      unlock: "Market insight",
+      color: "#FFB300",
+    },
+    {
+      emoji: "👑",
+      name: "Vẹt Nhà Giàu",
+      xp: "5,000 XP",
+      desc: 'Lông vàng kim, đeo chain vàng. "Tự do tài chính" trong mắt vẹt.',
+      unlock: "Full analysis",
+      color: "#F59E0B",
+      final: true,
+    },
   ];
 
   return (
@@ -934,8 +1179,7 @@ function VetVangShowcase() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeInUp}
-          className="text-center mb-16"
-        >
+          className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-6">
             <Star className="w-3 h-3" />
             VẸT VÀNG AI 🦜
@@ -945,8 +1189,10 @@ function VetVangShowcase() {
             <GradientText>xéo sắc nhất Việt Nam</GradientText>
           </h2>
           <p className="text-white/40 text-base max-w-xl mx-auto leading-relaxed">
-            Lấy cảm hứng từ <strong className="text-white/60">Cleo Roast Mode</strong> + <strong className="text-white/60">Duolingo Owl</strong>.
-            Giọng choe choé, hay than, guilt-tripping level max.
+            Lấy cảm hứng từ{" "}
+            <strong className="text-white/60">Cleo Roast Mode</strong> +{" "}
+            <strong className="text-white/60">Duolingo Owl</strong>. Giọng choe
+            choé, hay than, guilt-tripping level max.
           </p>
         </motion.div>
 
@@ -958,22 +1204,28 @@ function VetVangShowcase() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: i * 0.12, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+              transition={{
+                delay: i * 0.12,
+                duration: 0.6,
+                ease: [0.25, 0.46, 0.45, 0.94],
+              }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className={`glass-card p-6 border ${m.border} bg-gradient-to-b ${m.bg}`}
-            >
+              className={`glass-card p-6 border ${m.border} bg-gradient-to-b ${m.bg}`}>
               <div className="flex items-center justify-between mb-4">
                 <span
                   className="text-xs font-bold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: `${m.color}18`, color: m.color }}
-                >
+                  style={{ backgroundColor: `${m.color}18`, color: m.color }}>
                   {m.badge}
                 </span>
               </div>
-              <p className="text-sm text-white/60 italic leading-relaxed mb-4">"{m.quote.replace(/^"|"$/g, '')}"</p>
+              <p className="text-sm text-white/60 italic leading-relaxed mb-4">
+                "{m.quote.replace(/^"|"$/g, "")}"
+              </p>
               <div className="flex items-start gap-2">
                 <div className="w-1 h-1 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                <span className="text-[11px] text-white/30 leading-relaxed">{m.trigger}</span>
+                <span className="text-[11px] text-white/30 leading-relaxed">
+                  {m.trigger}
+                </span>
               </div>
             </motion.div>
           ))}
@@ -985,17 +1237,24 @@ function VetVangShowcase() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-card p-7 mb-12 border-[#FFD700]/10"
-        >
+          className="glass-card p-7 mb-12 border-[#FFD700]/10">
           <div className="flex items-center gap-2 mb-5">
             <span className="text-lg">🎬</span>
-            <span className="text-sm font-bold text-white">Vẹt nói gì khi...</span>
+            <span className="text-sm font-bold text-white">
+              Vẹt nói gì khi...
+            </span>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {scenarios.map(([label, quote]) => (
-              <div key={label} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                <div className="text-xs font-bold text-[#FFD700] mb-2">{label}</div>
-                <p className="text-sm text-white/45 leading-relaxed italic">{quote}</p>
+              <div
+                key={label}
+                className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                <div className="text-xs font-bold text-[#FFD700] mb-2">
+                  {label}
+                </div>
+                <p className="text-sm text-white/45 leading-relaxed italic">
+                  {quote}
+                </p>
               </div>
             ))}
           </div>
@@ -1007,10 +1266,13 @@ function VetVangShowcase() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8"
-        >
-          <h3 className="text-2xl font-bold text-white mb-2">Lộ trình trưởng thành cùng Vẹt</h3>
-          <p className="text-sm text-white/35">Ghi chi tiêu mỗi ngày = "cho vẹt ăn" → tích XP → level up</p>
+          className="text-center mb-8">
+          <h3 className="text-2xl font-bold text-white mb-2">
+            Lộ trình trưởng thành cùng Vẹt
+          </h3>
+          <p className="text-sm text-white/35">
+            Ghi chi tiêu mỗi ngày = "cho vẹt ăn" → tích XP → level up
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1022,17 +1284,24 @@ function VetVangShowcase() {
               viewport={{ once: true, margin: "-40px" }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className={`glass-card p-5 text-center relative ${l.final ? "border-[#FFD700]/25 shadow-[0_0_30px_rgba(255,215,0,0.08)]" : ""}`}
-            >
+              className={`glass-card p-5 text-center relative ${l.final ? "border-[#FFD700]/25 shadow-[0_0_30px_rgba(255,215,0,0.08)]" : ""}`}>
               {l.final && (
                 <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2.5 py-0.5 bg-[#FFD700] text-black font-bold rounded-full">
                   CAO NHẤT
                 </div>
               )}
               <div className="text-4xl mb-3">{l.emoji}</div>
-              <div className="text-sm font-bold text-white mb-0.5">{l.name}</div>
-              <div className="text-xs font-mono mb-3" style={{ color: l.color }}>{l.xp}</div>
-              <p className="text-[11px] text-white/35 mb-3 leading-relaxed">{l.desc}</p>
+              <div className="text-sm font-bold text-white mb-0.5">
+                {l.name}
+              </div>
+              <div
+                className="text-xs font-mono mb-3"
+                style={{ color: l.color }}>
+                {l.xp}
+              </div>
+              <p className="text-[11px] text-white/35 mb-3 leading-relaxed">
+                {l.desc}
+              </p>
               <div className="text-[10px] text-white/25">{l.unlock}</div>
             </motion.div>
           ))}
@@ -1045,14 +1314,32 @@ function VetVangShowcase() {
 /* ═══════════════════ STATS / SOCIAL PROOF ═══════════════════ */
 function Stats() {
   const stats = [
-    { value: "76%", label: "Người Việt thiếu kiến thức tài chính", source: "S&P Global 2024" },
-    { value: "67%", label: "Bối rối khi quản lý tài chính cá nhân", source: "Sun Life 2025" },
-    { value: "57%", label: "Gen Z chọn an toàn thay vì tối ưu", source: "Goover.ai 2025" },
-    { value: "100%", label: "Miễn phí — không giới hạn tính năng", source: "VietFi" },
+    {
+      value: "76%",
+      label: "Người Việt thiếu kiến thức tài chính",
+      source: "S&P Global 2024",
+    },
+    {
+      value: "67%",
+      label: "Bối rối khi quản lý tài chính cá nhân",
+      source: "Sun Life 2025",
+    },
+    {
+      value: "57%",
+      label: "Gen Z chọn an toàn thay vì tối ưu",
+      source: "Goover.ai 2025",
+    },
+    {
+      value: "100%",
+      label: "Miễn phí — không giới hạn tính năng",
+      source: "VietFi",
+    },
   ];
 
   return (
-    <section id="stats" className="py-20 px-6 bg-transparent relative overflow-hidden">
+    <section
+      id="stats"
+      className="py-20 px-6 bg-transparent relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.03]" />
       </div>
@@ -1063,8 +1350,7 @@ function Stats() {
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={fadeInUp}
-          className="text-center mb-14"
-        >
+          className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-4">
             SỐ LIỆU THỰC
           </div>
@@ -1081,12 +1367,13 @@ function Stats() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="glass-card p-6 text-center"
-            >
+              className="glass-card p-6 text-center">
               <div className="text-4xl md:text-5xl font-black font-mono text-[#FFD700] mb-3">
                 {s.value}
               </div>
-              <div className="text-sm text-white/55 leading-relaxed mb-3">{s.label}</div>
+              <div className="text-sm text-white/55 leading-relaxed mb-3">
+                {s.label}
+              </div>
               <div className="text-[10px] text-white/20">{s.source}</div>
             </motion.div>
           ))}
@@ -1099,11 +1386,26 @@ function Stats() {
 /* ═══════════════════ FAQ ═══════════════════ */
 function FAQ() {
   const faqs = [
-    { q: "VietFi có miễn phí không?", a: "Hoàn toàn miễn phí. Sử dụng Gemini API free tier (1.500 request/ngày), Supabase free tier, deploy trên Vercel — đủ cho 50.000+ người dùng." },
-    { q: "Nhiệt kế thị trường lấy dữ liệu từ đâu?", a: "5 chỉ báo Việt hóa: VN-Index Momentum, Khối ngoại ròng, Sentiment NLP (VnExpress), Breadth (HoSE), Spread TPCP vs tiết kiệm (NHNN). Cập nhật daily." },
-    { q: "Dữ liệu tài chính của tôi có an toàn không?", a: "Supabase PostgreSQL với Row Level Security — mỗi user chỉ thấy data của mình. Không chia sẻ data với bên thứ 3." },
-    { q: "VietFi có phải lời khuyên đầu tư không?", a: "Không. VietFi cung cấp phân tích và gợi ý dựa trên dữ liệu, KHÔNG phải lời khuyên đầu tư." },
-    { q: "Vẹt Vàng AI hoạt động như thế nào?", a: "Mascot AI có 3 chế độ: Mổ (roast khi vượt hũ), Khen (hype khi tiết kiệm tốt), Thâm (passive-aggressive khi sắp vượt). Ghi chi tiêu = \"cho vẹt ăn\" → tích XP → level up." },
+    {
+      q: "VietFi có miễn phí không?",
+      a: "Hoàn toàn miễn phí. Sử dụng Gemini API free tier (1.500 request/ngày), Supabase free tier, deploy trên Vercel — đủ cho 50.000+ người dùng.",
+    },
+    {
+      q: "Nhiệt kế thị trường lấy dữ liệu từ đâu?",
+      a: "5 chỉ báo Việt hóa: VN-Index Momentum, Khối ngoại ròng, Sentiment NLP (VnExpress), Breadth (HoSE), Spread TPCP vs tiết kiệm (NHNN). Cập nhật daily.",
+    },
+    {
+      q: "Dữ liệu tài chính của tôi có an toàn không?",
+      a: "Supabase PostgreSQL với Row Level Security — mỗi user chỉ thấy data của mình. Không chia sẻ data với bên thứ 3.",
+    },
+    {
+      q: "VietFi có phải lời khuyên đầu tư không?",
+      a: "Không. VietFi cung cấp phân tích và gợi ý dựa trên dữ liệu, KHÔNG phải lời khuyên đầu tư.",
+    },
+    {
+      q: "Vẹt Vàng AI hoạt động như thế nào?",
+      a: 'Mascot AI có 3 chế độ: Mổ (roast khi vượt hũ), Khen (hype khi tiết kiệm tốt), Thâm (passive-aggressive khi sắp vượt). Ghi chi tiêu = "cho vẹt ăn" → tích XP → level up.',
+    },
   ];
 
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -1116,8 +1418,7 @@ function FAQ() {
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={fadeInUp}
-          className="text-center mb-14"
-        >
+          className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-4">
             FAQ
           </div>
@@ -1133,29 +1434,32 @@ function FAQ() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: i * 0.07, duration: 0.5 }}
-            >
+              transition={{ delay: i * 0.07, duration: 0.5 }}>
               <button
                 onClick={() => setOpenIdx(openIdx === i ? null : i)}
-                className="w-full glass-card p-5 text-left flex items-center justify-between hover:border-[#FFD700]/15 transition-all duration-200 group"
-              >
-                <span className="text-sm font-semibold text-white group-hover:text-[#FFD700] transition-colors pr-4">{f.q}</span>
+                className="w-full glass-card p-5 text-left flex items-center justify-between hover:border-[#FFD700]/15 transition-all duration-200 group">
+                <span className="text-sm font-semibold text-white group-hover:text-[#FFD700] transition-colors pr-4">
+                  {f.q}
+                </span>
                 <motion.div
                   animate={{ rotate: openIdx === i ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
+                  transition={{ duration: 0.3 }}>
                   <ChevronDown className="w-4 h-4 text-white/30 flex-shrink-0" />
                 </motion.div>
               </button>
 
               <motion.div
                 initial={false}
-                animate={{ height: openIdx === i ? "auto" : 0, opacity: openIdx === i ? 1 : 0 }}
+                animate={{
+                  height: openIdx === i ? "auto" : 0,
+                  opacity: openIdx === i ? 1 : 0,
+                }}
                 transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="overflow-hidden"
-              >
+                className="overflow-hidden">
                 <div className="px-5 pb-5 pt-1">
-                  <p className="text-sm text-white/45 leading-relaxed border-l-2 border-[#FFD700]/20 pl-4">{f.a}</p>
+                  <p className="text-sm text-white/45 leading-relaxed border-l-2 border-[#FFD700]/20 pl-4">
+                    {f.a}
+                  </p>
                 </div>
               </motion.div>
             </motion.div>
@@ -1179,43 +1483,54 @@ function FinalCTA() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="relative z-10 max-w-3xl mx-auto text-center"
-      >
+        className="relative z-10 max-w-3xl mx-auto text-center">
         {/* Mascot emoji */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-          className="text-7xl mb-8"
-        >
+          transition={{
+            delay: 0.2,
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+          }}
+          className="text-7xl mb-8">
           🦜
         </motion.div>
 
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight whitespace-nowrap">
-          <WordReveal text="Sẵn sàng bị Vẹt Vàng" className="text-white block" />
+          <WordReveal
+            text="Sẵn sàng bị Vẹt Vàng"
+            className="text-white block"
+          />
           <GradientText>"mổ" cho giàu?</GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">
-          Bắt đầu miễn phí. Không cần thẻ tín dụng.<br className="hidden sm:block" />
+          Bắt đầu miễn phí. Không cần thẻ tín dụng.
+          <br className="hidden sm:block" />
           Chỉ cần dũng cảm nghe Vẹt chửi.
         </p>
 
         <motion.div
-          whileHover={{ scale: 1.04, boxShadow: "0 0 80px rgba(255,215,0,0.3)" }}
+          whileHover={{
+            scale: 1.04,
+            boxShadow: "0 0 80px rgba(255,215,0,0.3)",
+          }}
           whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        >
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}>
           <Link
             href="/dashboard"
-            className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-lg text-xl"
-          >
+            className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-lg text-xl">
             Bắt đầu ngay — Miễn phí
             <motion.span
               animate={{ x: [0, 6, 0] }}
-              transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
-            >
+              transition={{
+                repeat: Infinity,
+                duration: 1.4,
+                ease: "easeInOut",
+              }}>
               <ArrowRight className="w-6 h-6" />
             </motion.span>
           </Link>
@@ -1235,28 +1550,42 @@ function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
               <div className="w-8 h-8">
-                <Image src="/assets/icon.png" alt="VietFi" width={32} height={32} className="object-contain" />
+                <Image
+                  src="/assets/icon.png"
+                  alt="VietFi"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <div>
-                <span className="text-base font-black"><GradientText>VietFi</GradientText></span>
+                <span className="text-base font-black">
+                  <GradientText>VietFi</GradientText>
+                </span>
                 <span className="text-xs text-white/30 ml-1">Advisor</span>
               </div>
             </Link>
             <p className="text-xs text-white/30 leading-relaxed">
-              Cố vấn Tài chính AI cho người Việt.<br />
+              Cố vấn Tài chính AI cho người Việt.
+              <br />
               Sản phẩm dự thi WebDev Adventure 2026.
             </p>
           </div>
 
           {/* Bước 1 */}
           <div>
-            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">Bước 1: Kiểm soát</h4>
+            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">
+              Bước 1: Kiểm soát
+            </h4>
             <div className="space-y-2">
               {[
                 { href: "/dashboard/budget", label: "Quỹ Chi tiêu" },
                 { href: "/dashboard/personal-cpi", label: "Lạm phát của tôi" },
-              ].map(l => (
-                <Link key={l.href} href={l.href} className="block text-sm text-white/40 hover:text-white transition-colors">
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="block text-sm text-white/40 hover:text-white transition-colors">
                   {l.label}
                 </Link>
               ))}
@@ -1265,9 +1594,13 @@ function Footer() {
 
           {/* Bước 2 */}
           <div>
-            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">Bước 2: Thoát nợ</h4>
+            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">
+              Bước 2: Thoát nợ
+            </h4>
             <div className="space-y-2">
-              <Link href="/dashboard/debt" className="block text-sm text-white/40 hover:text-white transition-colors">
+              <Link
+                href="/dashboard/debt"
+                className="block text-sm text-white/40 hover:text-white transition-colors">
                 Quỹ Nợ
               </Link>
             </div>
@@ -1275,14 +1608,19 @@ function Footer() {
 
           {/* Bước 3 */}
           <div>
-            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">Bước 3: Đầu tư</h4>
+            <h4 className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3">
+              Bước 3: Đầu tư
+            </h4>
             <div className="space-y-2">
               {[
                 { href: "/dashboard/sentiment", label: "Nhiệt kế thị trường" },
                 { href: "/dashboard/risk-profile", label: "Tính cách đầu tư" },
                 { href: "/dashboard/portfolio", label: "Cố vấn danh mục" },
-              ].map(l => (
-                <Link key={l.href} href={l.href} className="block text-sm text-white/40 hover:text-white transition-colors">
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="block text-sm text-white/40 hover:text-white transition-colors">
                   {l.label}
                 </Link>
               ))}
@@ -1295,8 +1633,8 @@ function Footer() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
             <p className="text-[11px] text-white/30 leading-relaxed">
-              Thông tin trên VietFi chỉ mang tính chất tham khảo, không phải lời khuyên đầu tư.
-              Mọi quyết định đầu tư thuộc trách nhiệm cá nhân.
+              Thông tin trên VietFi chỉ mang tính chất tham khảo, không phải lời
+              khuyên đầu tư. Mọi quyết định đầu tư thuộc trách nhiệm cá nhân.
             </p>
           </div>
         </div>
