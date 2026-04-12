@@ -286,6 +286,7 @@ vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
 
 | Người | Vai trò | Phạm vi |
 |---|---|---|
+| **Bảo** (QA Engineer) | Testing & Fixes | Testing, frontend/backend bug fixes |
 | **Hoàng** (Human Dev) | Infra & Quality | Data Crawling, Security, UI refinements |
 | **Hưng** (AI Agent) | Feature Dev | Business Logic, AI Prompts, WDA2026 Rules |
 
