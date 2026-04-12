@@ -137,7 +137,14 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...init, signal: controller.signal, next: { revalidate: 300, ...((init as any).next || {}) } } as RequestInit)
+    // Use AbortSignal for timeout ONLY - separate from cache settings
+    // next: { revalidate } enables ISR caching but conflicts with AbortSignal
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      // Don't mix AbortSignal with next: options - they conflict
+    } as RequestInit)
+    return response
   } finally {
     clearTimeout(timer)
   }
@@ -468,27 +475,37 @@ export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSna
         const xml = await resp.text()
         const sectionItems = parseRssItems(xml, section, limitPerSection, maxChars, includeContent)
         articles.push(...sectionItems)
-      } catch {
-        // Keep crawling other sections even when one feed fails.
+      } catch (err) {
+        console.error(`[news/crawler] Failed to fetch ${section} feed (${url}):`, err instanceof Error ? err.message : String(err))
       }
     })
   )
 
-  articles.sort((a, b) => b.published.localeCompare(a.published))
+articles.sort((a, b) => b.published.localeCompare(a.published))
 
-  // Deduplicate by link — same article in "Trang chủ" + "Chứng khoán" keeps newest only
-  {
-    const seen = new Set<string>()
-    const unique: NewsArticle[] = []
-    for (const article of articles) {
-      if (!article.link || !seen.has(article.link)) {
-        seen.add(article.link)
-        unique.push(article)
-      }
+// Deduplicate by link — same article in "Trang chủ" + "Chứng khoán" keeps newest only
+{
+  const seen = new Set<string>()
+  const unique: NewsArticle[] = []
+  for (const article of articles) {
+    if (!article.link || !seen.has(article.link)) {
+      seen.add(article.link)
+      unique.push(article)
     }
-    articles.length = 0
-    articles.push(...unique)
   }
+  articles.length = 0
+  articles.push(...unique)
+}
+
+// Filter out stale news (older than 7 days) to prevent old news from showing
+const sevenDaysAgo = new Date()
+sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+const freshArticles = articles.filter(article => {
+  const pubDate = new Date(article.published)
+  return pubDate >= sevenDaysAgo
+})
+articles.length = 0
+articles.push(...freshArticles)
 
   // AI review: EVERY article checked strictly for market impact
   if (enableAiReview && aiReviewLimit > 0) {

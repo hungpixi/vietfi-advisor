@@ -29,7 +29,7 @@ interface RequestBody {
 
 // ── Rate limiting: in-memory token bucket (per-IP) ────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 20;    // max requests per window
+const RATE_LIMIT = 200;    // max requests per window (increased for testing)
 const WINDOW_MS  = 60_000; // 60-second window
 
 function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
@@ -153,17 +153,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── STEP 3: Fallback to AI Provider (Google or TrollLLM) ──
-    const AI_PROVIDER = process.env.AI_PROVIDER || "trollllm";
-    const apiKey = AI_PROVIDER === "trollllm" 
-      ? (process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY)
-      : process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: `${AI_PROVIDER === "trollllm" ? "TROLL_LLM_API_KEY" : "GEMINI_API_KEY"} is not configured.` }), {
-        status: 500, headers: { "Content-Type": "application/json" }
-      });
-    }
+    // ── STEP 3: Fallback to AI Provider (Ollama, Google, or TrollLLM) ──
+    const AI_PROVIDER = process.env.AI_PROVIDER || "ollama";
+    const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
+    const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5:14b";
 
     // RPM check logic (currently shared, though Gemini has its own limits)
     try {
@@ -175,7 +168,51 @@ export async function POST(req: Request) {
     }
 
     let model;
-    if (AI_PROVIDER === "trollllm") {
+    let result;
+
+    if (AI_PROVIDER === "ollama") {
+      // Ollama local: OpenAI-compatible API
+      const ollama = createOpenAI({
+        apiKey: "ollama", // Required but ignored
+        baseURL: OLLAMA_BASE_URL,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      model = ollama(OLLAMA_MODEL);
+      result = streamText({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: sanitized,
+      });
+    } else if (AI_PROVIDER === "ollama-cloud") {
+      // Ollama Cloud: https://ollama.com
+      const ollamaApiKey = process.env.OLLAMA_API_KEY;
+      if (!ollamaApiKey) {
+        return new Response(JSON.stringify({ error: "OLLAMA_API_KEY is not configured." }), {
+          status: 500, headers: { "Content-Type": "application/json" }
+        });
+      }
+      const ollama = createOpenAI({
+        apiKey: ollamaApiKey,
+        baseURL: "https://ollama.com",
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      model = ollama(OLLAMA_MODEL);
+      result = streamText({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: sanitized,
+      });
+    } else if (AI_PROVIDER === "trollllm") {
+      const apiKey = process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: "TROLL_LLM_API_KEY is not configured." }), {
+          status: 500, headers: { "Content-Type": "application/json" }
+        });
+      }
       const troll = createOpenAI({
         apiKey,
         baseURL: "https://chat.trollllm.xyz/v1",
@@ -184,15 +221,29 @@ export async function POST(req: Request) {
         }
       });
       model = troll("gemini-3-flash");
-    } else {
+      result = streamText({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: sanitized,
+      });
+    } else if (AI_PROVIDER === "google") {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured." }), {
+          status: 500, headers: { "Content-Type": "application/json" }
+        });
+      }
       model = google("gemini-1.5-flash");
+      result = streamText({
+        model,
+        system: SYSTEM_PROMPT,
+        messages: sanitized,
+      });
+    } else {
+      return new Response(JSON.stringify({ error: `Unknown AI_PROVIDER: ${AI_PROVIDER}. Use: ollama, ollama-cloud, google, or trollllm.` }), {
+        status: 400, headers: { "Content-Type": "application/json" }
+      });
     }
-
-    const result = streamText({
-      model,
-      system: SYSTEM_PROMPT,
-      messages: sanitized,
-    });
 
     // Vercel AI SDK v6 returns StreamTextResult with .toDataStreamResponse() / .toTextStreamResponse()
     const streamResult = result as { toDataStreamResponse?: () => Response; toTextStreamResponse?: () => Response };

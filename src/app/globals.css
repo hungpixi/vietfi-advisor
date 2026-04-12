@@ -63,16 +63,31 @@
     background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
   }
 
-  .glass-card {
-    background: rgba(18, 18, 26, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    color: rgba(240, 240, 245, 0.92);
+  .bg-sunset-gradient {
+    /* Fintech Luxury: Deep Navy to Pitch Black with Gold hints */
+    background: linear-gradient(to bottom,
+        #020617 0%,
+        /* Slate 950 (Very Dark Blue) */
+        #0F172A 15%,
+        /* Slate 900 (Deep Navy) */
+        #020617 40%,
+        /* Back to Slate 950 */
+        #000000 100%
+        /* Absolute Black */
+      );
+    background-attachment: fixed;
+    background-size: cover;
   }
 
   .glass-card {
-    color: rgba(240, 240, 245, 0.92);
+    background: rgba(15, 23, 42, 0.75);
+    /* Slate 900 - Dark Fintech Navy */
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    /* Subtle Gold border */
+    border-radius: 20px;
+    color: rgba(248, 250, 252, 0.95);
+    transition: all 0.3s ease;
   }
 
   .glass-card p,
@@ -87,7 +102,7 @@
   .glass-card button,
   .glass-card label,
   .glass-card li {
-    color: rgba(240, 240, 245, 0.92) !important;
+    color: rgba(248, 250, 252, 0.95);
   }
 
   .glass-card-hover:hover {

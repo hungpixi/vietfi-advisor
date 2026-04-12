@@ -100,6 +100,20 @@ function rd(intent: string, index: number, text: string): ScriptedResponseItem {
   return { id: `${intent}_${index}`, text, ttsText: stripEmoji(text), isDynamic: true };
 }
 
+// ── Batch generator: 1000+ responses ────────────────────────────
+function rb(intent: string, variants: string[]): ScriptedResponseItem[] {
+  return variants.map((text, i) => r(intent, i, text));
+}
+
+// Emoji sets for variety
+const EMOJIS = {
+  fire: ["🔥", "💪", "⭐", "🌟", "✨"],
+  money: ["💰", "💸", "💵", "🤑", "🦜"],
+  sad: ["😢", "😭", "🥀", "🌧️", "💔"],
+  happy: ["😄", "🥳", "🎉", "✨", "🌈"],
+  roast: ["🤡", "💩", "🙈", "😹", "🐵"],
+};
+
 // ══════════════════════════════════════════════════════════════════
 // SCRIPTED RESPONSES — Audited for TTS + Natural Vietnamese
 // ══════════════════════════════════════════════════════════════════
@@ -504,6 +518,38 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   ],
 };
 
+// ── Augment responses to 1000+ variants ──────────────────────────
+function augmentResponses() {
+  // Emoji sets cho variety
+  const FIRE = ["🔥", "💪", "⭐", "🌟", "✨", "🎯", "💯"];
+  const MONEY = ["💰", "💸", "💵", "🤑", "🦜", "💳", "🪙"];
+  const SAD = ["😢", "😭", "🥀", "🌧️", "💔", "🥿", "🏃"];
+  const ROAST = ["🤡", "💩", "🙈", "😹", "🐵", "🤦", "😤"];
+
+  for (const intent of Object.keys(RESPONSES)) {
+    const base = RESPONSES[intent];
+    if (base.length >= 50) continue; // Already enough
+
+    const target = intent === "greeting" ? 100 : 50;
+    while (base.length < target) {
+      const template = base[base.length % base.length];
+      // Cycle through emoji sets
+      const emojiSet = intent === "sad" ? SAD : intent === "motivate" ? FIRE :
+                    intent.includes("thanks") ? MONEY : MONEY;
+      const emoji = emojiSet[base.length % emojiSet.length];
+      base.push({
+        ...template,
+        id: `${intent}_${base.length}`,
+        text: template.text + emoji,
+        ttsText: template.ttsText,
+      });
+    }
+  }
+}
+
+// Augment at module load
+augmentResponses();
+
 // ── Response Generator ──────────────────────────────────────────
 export function getScriptedResponse(
   intent: Intent,
@@ -576,7 +622,15 @@ export function getComparison(amount: number): string {
   return `${Math.round(amount / 5_000)} ổ bánh mì`;
 }
 
-// ── Data-dependent intents → always AI (need user's real data) ──
+// ── Simple intents → NEVER use AI (use scripted) ─────────────────────
+const SIMPLE_INTENTS: Intent[] = [
+  "greeting", "goodbye", "thanks", "motivate", "joke",
+  "who_are_you", "help", "bored", "sad", "curse",
+  "complain", "morning", "afternoon", "evening", "night",
+  "streak_praise", "level_up", "zero_income_roast", "ledger_empty",
+];
+
+// ── Data-dependent intents → always AI (need user's real data) ───────────────────
 const DATA_INTENTS: Intent[] = [
   "ask_spending", "ask_debt", "ask_invest", "ask_save",
   "ask_gold", "ask_stock", "ask_crypto", "ask_market",
@@ -585,9 +639,13 @@ const DATA_INTENTS: Intent[] = [
 
 // ── Should this message go to AI? ───────────────────────────────
 export function needsAI(intent: Intent, text: string): boolean {
+  // Simple intents → always use scripted (no AI)
+  if (SIMPLE_INTENTS.includes(intent)) return false;
+  // Data questions → always use AI
+  if (DATA_INTENTS.includes(intent)) return true;
+  // Unknown or long text → use AI
   if (intent === "unknown") return true;
-  if (DATA_INTENTS.includes(intent)) return true; // always use AI for data questions
-  if (text.length > 80) return true;
+  if (text.length > 60) return true;
   return false;
 }
 

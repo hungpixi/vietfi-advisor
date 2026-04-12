@@ -5,6 +5,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const CACHE_TTL_MS = 10 * 60 * 1000
+const MAX_CACHE_AGE_MS = 30 * 60 * 1000
 
 interface CacheEntry {
   snapshot: NewsSnapshot
@@ -22,6 +23,11 @@ function isCacheFresh(): boolean {
   return Date.now() - cache.fetchedAt < CACHE_TTL_MS
 }
 
+function isCacheTooOld(): boolean {
+  if (!cache) return false
+  return Date.now() - cache.fetchedAt > MAX_CACHE_AGE_MS
+}
+
 export async function getNewsResponse(crawl: () => Promise<NewsSnapshot>) {
   try {
     if (cache) {
@@ -29,15 +35,19 @@ export async function getNewsResponse(crawl: () => Promise<NewsSnapshot>) {
         return NextResponse.json({ ...cache.snapshot, stale: false }, { status: 200 })
       }
 
-      void crawl()
-        .then((snapshot) => {
-          cache = { snapshot, fetchedAt: Date.now() }
-        })
-        .catch(() => {
-          // ignore failed background refresh
-        })
+      if (isCacheTooOld()) {
+        cache = null
+      } else {
+        void crawl()
+          .then((snapshot) => {
+            cache = { snapshot, fetchedAt: Date.now() }
+          })
+          .catch(() => {
+            // ignore failed background refresh
+          })
 
-      return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
+        return NextResponse.json({ ...cache.snapshot, stale: true }, { status: 200 })
+      }
     }
 
     const snapshot = await crawl()

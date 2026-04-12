@@ -167,11 +167,10 @@ function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-[#0A0A0F]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_40px_rgba(0,0,0,0.5)]"
-          : "bg-[#0A0A0F]/80 backdrop-blur-xl border-b border-white/[0.04]"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+        ? "bg-[#020617]/85 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_40px_rgba(0,0,0,0.6)]"
+        : "bg-transparent backdrop-blur-sm border-b border-white/[0.03]"
+        }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
@@ -187,8 +186,8 @@ function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Center: Desktop Nav */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-10">
           {[
             { href: "#features", label: "Tính năng" },
             { href: "#how", label: "3 Bước" },
@@ -232,7 +231,7 @@ function Navbar() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
           >
-            {[0,1,2].map(i => (
+            {[0, 1, 2].map(i => (
               <div key={i} className={`w-5 h-0.5 bg-white/60 rounded transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
             ))}
           </button>
@@ -244,7 +243,7 @@ function Navbar() {
         id="mobile-menu"
         initial={false}
         animate={{ maxHeight: mobileOpen ? 600 : 0, opacity: mobileOpen ? 1 : 0 }}
-        className="md:hidden overflow-hidden bg-[#0A0A0F]/95 backdrop-blur-xl border-b border-white/[0.06]"
+        className="md:hidden overflow-hidden bg-[#1A0600]/95 backdrop-blur-xl border-b border-white/[0.06]"
       >
         <div className="px-6 py-4 space-y-1">
           {["#features", "#how", "#vet", "#stats", "#faq"].map(href => (
@@ -275,7 +274,7 @@ function TrustBar() {
   ];
 
   return (
-    <div className="bg-[#0D0D14] border-b border-white/[0.05]">
+    <div className="bg-[#0F172A]/40 backdrop-blur-sm border-b border-white/[0.05]">
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-center gap-6 md:gap-12 flex-wrap">
           {trustItems.map((item, i) => (
@@ -309,10 +308,10 @@ function Hero() {
 
   return (
     <section ref={containerRef} className="relative min-h-screen flex items-center overflow-hidden pt-20 pb-16">
-      {/* Subtle ambient */}
+      {/* Ambient overlay to harmonize with Fintech Blue gradient */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_65%)] opacity-[0.04]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,#00E5FF_0%,transparent_70%)] opacity-[0.03]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,#1E40AF_0%,transparent_65%)] opacity-[0.08]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,#0EA5E9_0%,transparent_70%)] opacity-[0.06]" />
       </div>
 
       <motion.div style={{ y, opacity }} className="relative z-10 max-w-6xl mx-auto px-4 w-full">
@@ -325,7 +324,7 @@ function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-5xl md:text-6xl font-black mb-6 leading-[1.05] tracking-tight"
+              className="text-5xl md:text-6xl font-black mb-8 leading-[1.4]"
             >
               <span className="text-white">Tự do tài chính</span>
               <br />
@@ -406,7 +405,7 @@ function Hero() {
             className="relative hidden lg:block"
           >
             {/* Dashboard UI mockup — clean glass card */}
-            <TiltCard className="relative z-10 glass-card p-5 rounded-2xl border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]" maxRotate={10}>
+            <TiltCard className="relative z-10 glass-card p-6 shadow-[0_32px_80px_rgba(0,0,0,0.6)]" maxRotate={10}>
               {/* Mockup header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -513,7 +512,7 @@ function Features() {
 
   return (
     <section id="features" className="py-28 px-6 relative">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.03] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,#FF6000_0%,transparent_70%)] opacity-[0.05] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
@@ -549,49 +548,49 @@ function Features() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-            <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <div className="text-xs text-white/30 mb-1">Tháng 4, 2026</div>
-                  <div className="text-3xl font-black text-white font-mono">₫47,250,000</div>
-                  <div className="text-sm text-[#22C55E]">▲ +1.25%</div>
-                </div>
-                <div className="flex gap-2">
-                  {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map(label => (
-                    <div key={label} className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">{label}</div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chart area */}
-              <div className="mb-5">
-                <div className="text-xs text-white/30 mb-3">Dòng tiền 12 tháng</div>
-                <div className="flex items-end gap-1 h-24">
-                  {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map((h, i) => (
-                    <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)" }} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Pots */}
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: "Chi tiêu", val: "12.4M", color: "#22C55E", spent: "8.2M", pct: 66 },
-                  { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF", spent: "2.0M", pct: 25 },
-                  { label: "Đầu tư", val: "26.8M", color: "#FFD700", spent: "0M", pct: 0 },
-                ].map((pot) => (
-                  <div key={pot.label} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
-                    <div className="text-[10px] text-white/30 mb-1">{pot.label}</div>
-                    <div className="text-base font-black font-mono mb-1" style={{ color: pot.color }}>{pot.val}</div>
-                    <div className="text-[10px] text-white/30">đã dùng {pot.pct}%</div>
-                    <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pot.pct}%`, background: pot.color }} />
-                    </div>
+              <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="text-xs text-white/30 mb-1">Tháng 4, 2026</div>
+                    <div className="text-3xl font-black text-white font-mono">₫47,250,000</div>
+                    <div className="text-sm text-[#22C55E]">▲ +1.25%</div>
                   </div>
-                ))}
+                  <div className="flex gap-2">
+                    {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map(label => (
+                      <div key={label} className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">{label}</div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chart area */}
+                <div className="mb-5">
+                  <div className="text-xs text-white/30 mb-3">Dòng tiền 12 tháng</div>
+                  <div className="flex items-end gap-1 h-24">
+                    {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)" }} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pots */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Chi tiêu", val: "12.4M", color: "#22C55E", spent: "8.2M", pct: 66 },
+                    { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF", spent: "2.0M", pct: 25 },
+                    { label: "Đầu tư", val: "26.8M", color: "#FFD700", spent: "0M", pct: 0 },
+                  ].map((pot) => (
+                    <div key={pot.label} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
+                      <div className="text-[10px] text-white/30 mb-1">{pot.label}</div>
+                      <div className="text-base font-black font-mono mb-1" style={{ color: pot.color }}>{pot.val}</div>
+                      <div className="text-[10px] text-white/30">đã dùng {pot.pct}%</div>
+                      <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pot.pct}%`, background: pot.color }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
             </motion.div>
 
             {/* Overlay: DTI card */}
@@ -627,46 +626,43 @@ function Features() {
               <TiltCard
                 key={p.title}
                 maxRotate={8}
-                className="glass-card p-6 border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 group cursor-default"
+                className="glass-card p-8 group hover:border-[#FFD700]/20 transition-all duration-300 relative overflow-hidden"
               >
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <div className="flex items-start gap-4">
-                  {/* Number + Icon */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
-                      style={{ backgroundColor: `${p.color}15`, color: p.color }}
-                    >
-                      {p.icon}
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Number + Icon */}
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: `${p.color}15`, color: p.color }}>
+                        {p.icon}
+                      </div>
+                      <div className="text-xs font-mono text-white/15 font-bold text-center">{p.num}</div>
                     </div>
-                    <div className="text-xs font-mono text-white/15 font-bold text-center">{p.num}</div>
+
+                    {/* Content */}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-1.5">{p.title}</h3>
+                      <p className="text-sm text-white/45 mb-2 leading-relaxed">{p.desc}</p>
+                      <p className="text-xs text-white/25 leading-relaxed">{p.detail}</p>
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1.5">{p.title}</h3>
-                    <p className="text-sm text-white/45 mb-2 leading-relaxed">{p.desc}</p>
-                    <p className="text-xs text-white/25 leading-relaxed">{p.detail}</p>
+                  {/* Right arrow on hover */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="h-px flex-1 bg-white/[0.05]" />
+                    <motion.div
+                      initial={{ opacity: 0, x: -8 }}
+                      whileHover={{ opacity: 1, x: 0 }}
+                      className="ml-3 flex-shrink-0"
+                    >
+                      <ArrowRight className="w-4 h-4" style={{ color: p.color }} />
+                    </motion.div>
                   </div>
-                </div>
-
-                {/* Right arrow on hover */}
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="h-px flex-1 bg-white/[0.05]" />
-                  <motion.div
-                    initial={{ opacity: 0, x: -8 }}
-                    whileHover={{ opacity: 1, x: 0 }}
-                    className="ml-3 flex-shrink-0"
-                  >
-                    <ArrowRight className="w-4 h-4" style={{ color: p.color }} />
-                  </motion.div>
-                </div>
-              </motion.div>
+                </motion.div>
               </TiltCard>
             ))}
 
@@ -724,10 +720,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="py-28 px-6 bg-[#08080C] relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.02]"
-        style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)", backgroundSize: "40px 40px" }}
-      />
+    <section id="how" className="py-28 px-6 bg-transparent relative overflow-hidden">
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
@@ -765,10 +758,7 @@ function HowItWorks() {
                 className="glass-card p-7 text-center relative hover:border-white/[0.1] transition-all duration-300"
               >
                 {/* Step number */}
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black mx-auto mb-5 relative z-10"
-                  style={{ backgroundColor: `${s.color}20`, color: s.color, border: `2px solid ${s.color}40` }}
-                >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-black mx-auto mb-5 relative z-10" style={{ backgroundColor: `${s.color}20`, color: s.color, border: `2px solid ${s.color}40` }}>
                   {s.emoji}
                 </div>
 
@@ -1000,7 +990,7 @@ function Stats() {
   ];
 
   return (
-    <section id="stats" className="py-20 px-6 bg-[#08080C] relative overflow-hidden">
+    <section id="stats" className="py-20 px-6 bg-transparent relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.03]" />
       </div>
@@ -1117,12 +1107,10 @@ function FAQ() {
 /* ═══════════════════ FINAL CTA ═══════════════════ */
 function FinalCTA() {
   return (
-    <section className="py-28 px-6 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0F] via-[#FFD700]/[0.03] to-[#0A0A0F]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.05]" />
-      </div>
+    <section className="py-28 px-6 relative overflow-hidden bg-transparent">
+      {/* Subtle Blue/Gold glow instead of red overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05),transparent_70%)]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.05]" />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -1142,7 +1130,7 @@ function FinalCTA() {
           🦜
         </motion.div>
 
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight whitespace-nowrap">
           <WordReveal text="Sẵn sàng bị Vẹt Vàng" className="text-white block" />
           <GradientText>"mổ" cho giàu?</GradientText>
         </h2>
@@ -1159,7 +1147,7 @@ function FinalCTA() {
         >
           <Link
             href="/dashboard"
-            className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-2xl text-xl shadow-[0_0_40px_rgba(255,215,0,0.2)]"
+            className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-lg text-xl"
           >
             Bắt đầu ngay — Miễn phí
             <motion.span
@@ -1178,7 +1166,7 @@ function FinalCTA() {
 /* ═══════════════════ FOOTER ═══════════════════ */
 function Footer() {
   return (
-    <footer className="border-t border-white/[0.06] py-14 px-6">
+    <footer className="border-t border-white/[0.06] py-14 px-6 bg-transparent">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
@@ -1270,7 +1258,7 @@ function Footer() {
 /* ═══════════════════ PAGE ═══════════════════ */
 export default function HomePage() {
   return (
-    <>
+    <div className="bg-sunset-gradient min-h-screen">
       <Navbar />
       <TrustBar />
       <main>
@@ -1284,6 +1272,6 @@ export default function HomePage() {
       </main>
       <StickyCTABar />
       <Footer />
-    </>
+    </div>
   );
 }

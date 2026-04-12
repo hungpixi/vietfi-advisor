@@ -1,0 +1,130 @@
+# VietFi Advisor Evaluation Configuration
+
+# API Configuration
+api:
+  base_url: "http://localhost:3000"
+  timeout_seconds: 30
+  retry_attempts: 3
+  retry_delay_seconds: 1
+
+# OpenAI Compatible API (for agent decision-making)
+llm:
+  api_base: "http://localhost:20128/v1"
+  api_key: "sk-f56f21febe169a80-qieeeg-1539c9ee"
+  model: "qw/qwen3-coder-plus"
+  temperature: 0.7
+  max_tokens: 1000
+
+# Agent Configuration
+agents:
+  total_count: 1000
+  concurrent_per_batch: 50
+  personality_distribution:
+    budget_conscious: 125
+    debt_ridden: 125
+    investor: 125
+    skeptical: 125
+    gamification: 125
+    new_user: 125
+    power_user: 125
+    non_native: 125
+
+# Evaluation Criteria Weights
+evaluation:
+  accuracy:
+    weight: 0.35
+    criteria:
+      - "Expense parsing accuracy"
+      - "Calculation correctness"
+      - "Data validation"
+  performance:
+    weight: 0.25
+    criteria:
+      - "Response time"
+      - "Throughput"
+      - "Error rate"
+  user_experience:
+    weight: 0.25
+    criteria:
+      - "Response quality"
+      - "Engagement score"
+      - "Vietnamese context"
+  reliability:
+    weight: 0.15
+    criteria:
+      - "Error handling"
+      - "Data persistence"
+      - "Graceful degradation"
+
+# API Endpoints to Test
+endpoints:
+  - name: "Chat API"
+    path: "/api/chat"
+    method: "POST"
+    description: "3-tier pipeline: expense parser → scripted → Gemini"
+    test_scenarios:
+      - "Expense logging (phở 30k)"
+      - "Budget queries"
+      - "Debt calculations"
+      - "Investment questions"
+      - "Onboarding flow"
+  
+  - name: "Market Data API"
+    path: "/api/market-data"
+    method: "GET"
+    description: "VN-Index, Gold SJC, USD/VND"
+    expected_data:
+      - "VN-Index"
+      - "Gold SJC"
+      - "USD/VND"
+  
+  - name: "News API"
+    path: "/api/news"
+    method: "GET"
+    description: "CafeF RSS with sentiment analysis"
+    test_scenarios:
+      - "Fetch latest news"
+      - "Filter by category"
+      - "Sentiment check"
+  
+  - name: "Stock Screener API"
+    path: "/api/stock-screener"
+    method: "GET"
+    description: "VN stock filtering (TCBS/VN30)"
+    filters:
+      - "maxPE"
+      - "maxPB"
+      - "minROE"
+      - "minMarketCap"
+  
+  - name: "Morning Brief API"
+    path: "/api/morning-brief"
+    method: "GET"
+    description: "AI-generated morning brief"
+    cache_ttl: 86400  # 24 hours
+  
+  - name: "TTS API"
+    path: "/api/tts"
+    method: "POST"
+    description: "Vietnamese text-to-speech"
+    voices:
+      - "vi-VN-HoaiMyNeural"
+      - "vi-VN-NamMinhNeural"
+    max_chars: 500
+
+# Reporting
+reporting:
+  output_format: "json"
+  output_dir: "reports"
+  include_raw_results: true
+  generate_summary: true
+  export_formats:
+    - "json"
+    - "html"
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/evaluation.log"
+  console: true
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

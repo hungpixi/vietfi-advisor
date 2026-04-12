@@ -297,14 +297,20 @@
   "hotPaths": [
     {
       "path": "src\\app\\page.tsx",
-      "accessCount": 69,
-      "lastAccessed": 1775759144216,
+      "accessCount": 78,
+      "lastAccessed": 1775986386515,
       "type": "file"
     },
     {
       "path": "src\\app\\dashboard\\page.tsx",
       "accessCount": 67,
       "lastAccessed": 1775759293338,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\scripted-responses.ts",
+      "accessCount": 31,
+      "lastAccessed": 1775973656000,
       "type": "file"
     },
     {
@@ -327,8 +333,8 @@
     },
     {
       "path": "src\\app\\dashboard\\sentiment\\page.tsx",
-      "accessCount": 20,
-      "lastAccessed": 1775565533892,
+      "accessCount": 23,
+      "lastAccessed": 1775986147023,
       "type": "file"
     },
     {
@@ -338,27 +344,21 @@
       "type": "file"
     },
     {
-      "path": "src",
-      "accessCount": 15,
-      "lastAccessed": 1775757832320,
+      "path": "",
+      "accessCount": 18,
+      "lastAccessed": 1775962876975,
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 15,
-      "lastAccessed": 1775757882361,
+      "path": "src",
+      "accessCount": 18,
+      "lastAccessed": 1775973890426,
       "type": "directory"
     },
     {
       "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
       "accessCount": 9,
       "lastAccessed": 1775559451922,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\scripted-responses.ts",
-      "accessCount": 7,
-      "lastAccessed": 1775565054826,
       "type": "file"
     },
     {
