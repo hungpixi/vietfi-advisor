@@ -1,28 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --color-primary: #FFD700;
-    --color-primary-hover: #FFC107;
-    --color-accent: #00E5FF;
-    --color-success: #22C55E;
-    --color-danger: #EF4444;
-    --color-warning: #F59E0B;
-    --color-bg: #0A0A0F;
-    --color-bg-card: #12121A;
-    --color-bg-card-hover: #1A1A25;
-    --color-border: #2A2A3A;
-    --color-text: #F8FAFC;
-    --color-text-secondary: #94A3B8;
-    --color-gradient-start: #FFD700;
-    --color-gradient-end: #FF6B35;
+@theme {
+  --color-primary: #FFD700;
+  --color-primary-hover: #FFC107;
+  --color-accent: #00E5FF;
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-bg: #0A0A0F;
+  --color-bg-card: #12121A;
+  --color-bg-card-hover: #1A1A25;
+  --color-border: #2A2A3A;
+  --color-text: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-gradient-start: #FFD700;
+  --color-gradient-end: #FF6B35;
 
-    /* Font Tokens */
-    --font-heading: 'Fira Sans', sans-serif;
-    --font-body: 'Fira Sans', sans-serif;
-    --font-mono: 'Fira Code', monospace;
-  }
+  /* Font Tokens */
+  --font-heading: 'Fira Sans', sans-serif;
+  --font-body: 'Fira Sans', sans-serif;
+  --font-mono: 'Fira Code', monospace;
 }
 
 @layer base {
