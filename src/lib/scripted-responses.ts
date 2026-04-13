@@ -17,12 +17,9 @@ export type Intent =
   | "who_are_you" | "help" | "joke"
   | "morning" | "afternoon" | "evening" | "night"
   | "streak_praise" | "level_up" | "zero_income_roast"
-<<<<<<< HEAD
   | "ledger_empty"
-=======
   | "vuot_lo" | "mua_tra_sua" | "bo_app" | "shopee" | "het_tien"
   | "ghi_dung_gio" | "streak_7" | "tra_no" | "tiet_kiem"
->>>>>>> 6771142 (feat(tts): pre-render 125 voices for VetVang & cleanup)
   | "unknown";
 
 export interface ScriptedResponseItem {
@@ -488,7 +485,6 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Warren Buffett khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi! 🏃",
       "Oa ren Bâu phét khởi nghiệp bằng bán kẹo cao su, còn mày khởi nghiệp bằng túi rỗng à? Lao động vinh quang đi!")
   ],
-<<<<<<< HEAD
 
   // ── Ledger Empty ──
   ledger_empty: [
@@ -508,7 +504,6 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!",
       "Mới bắt đầu mà! Ghi một khoản đầu tiên nào, tao chờ!"),
   ],
-=======
   // ── Thêm từ quotes.json ──
   vuot_lo: [
     r("vuot_lo", 0,
@@ -650,7 +645,6 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Đủ target! Tao ngồi đây tính: nếu mày giữ tốc độ này, 8 tháng nữa mày có đủ quỹ khẩn cấp 3 tháng lương. Mày có hình dung được cảm giác đó không? 🏰",
       "Đủ mục tiêu! Tao ngồi đây tính: nếu mày giữ tốc độ này, tám tháng nữa mày có đủ quỹ khẩn cấp ba tháng lương. Mày có hình dung được cảm giác đó không?")
   ]
->>>>>>> 6771142 (feat(tts): pre-render 125 voices for VetVang & cleanup)
 };
 
 // ── Response Generator ──────────────────────────────────────────
