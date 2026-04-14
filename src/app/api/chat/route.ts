@@ -1,5 +1,4 @@
-import { google } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { checkLlmRateLimit } from '@/lib/llm-limiter';
 import { parseExpenseWithContext, type ParsedExpense } from '@/lib/expense-parser';
@@ -153,19 +152,16 @@ export async function POST(req: Request) {
       }
     }
 
-    // ── STEP 3: Fallback to AI Provider (Google or TrollLLM) ──
-    const AI_PROVIDER = process.env.AI_PROVIDER || "trollllm";
-    const apiKey = AI_PROVIDER === "trollllm" 
-      ? (process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY)
-      : process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: `${AI_PROVIDER === "trollllm" ? "TROLL_LLM_API_KEY" : "GEMINI_API_KEY"} is not configured.` }), {
+    // ── STEP 3: Fallback to AI (Gemini) ─────────────────────────────
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL;
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY is not configured." }), {
         status: 500, headers: { "Content-Type": "application/json" }
       });
     }
 
-    // RPM check logic (currently shared, though Gemini has its own limits)
+    // RPM check logic
     try {
       checkLlmRateLimit();
     } catch (e) {
@@ -174,19 +170,11 @@ export async function POST(req: Request) {
       });
     }
 
-    let model;
-    if (AI_PROVIDER === "trollllm") {
-      const troll = createOpenAI({
-        apiKey,
-        baseURL: "https://chat.trollllm.xyz/v1",
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      model = troll("gemini-3-flash");
-    } else {
-      model = google("gemini-1.5-flash");
-    }
+    const google = createGoogleGenerativeAI({
+      apiKey: GEMINI_API_KEY,
+      ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {}),
+    });
+    const model = google("gemini-1.5-flash");
 
     const result = streamText({
       model,

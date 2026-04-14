@@ -32,8 +32,6 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          AI_PROVIDER: trollllm
-          TROLL_LLM_API_KEY: test-key
           GEMINI_API_KEY: test-key
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
