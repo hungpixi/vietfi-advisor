@@ -54,7 +54,7 @@ export function ExtraPaymentSlider({ totalDebt, totalMonthlyMin, debts }: { tota
             </div>
           )}
           <p className="text-[10px] text-white/40 mt-2 pt-2 border-t border-[#22C55E]/10 italic">
-            💡 "Một đồng tiết kiệm được là một đồng cướp lại được từ bọn tài phiệt." — Khuyết danh
+            💡 &ldquo;Một đồng tiết kiệm được là một đồng cướp lại được từ bọn tài phiệt.&rdquo; - Khuyết danh
           </p>
         </div>
       )}

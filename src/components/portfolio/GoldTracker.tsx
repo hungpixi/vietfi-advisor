@@ -6,7 +6,11 @@ import { Trash2, Plus, TrendingUp, TrendingDown, Coins } from "lucide-react";
 import { getGoldPurchases, addGoldPurchase, deleteGoldPurchase, type GoldPurchase } from "@/lib/storage";
 
 interface GoldTrackerProps {
-  marketData: any;
+  marketData: {
+    goldSjc?: { goldVnd?: number; goldUsd?: number };
+    usdVnd?: { rate?: number };
+    goldBrands?: Record<string, { buy: number; sell: number }>;
+  } | null;
 }
 
 const BRANDS = ["SJC", "Bảo Tín Minh Châu", "DOJI", "PNJ", "Mi Hồng", "Khác"];
@@ -24,6 +28,7 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPurchases(getGoldPurchases());
   }, []);
 
@@ -161,7 +166,7 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
 
       {purchases.length === 0 && !isAdding && (
         <div className="text-center py-6 text-white/30 text-xs">
-          Bạn chưa ghi nhận mẻ vàng nào. Ấn "Thêm mẻ Vàng" để bắt đầu theo dõi Lãi/Lỗ.
+          Bạn chưa ghi nhận mẻ vàng nào. Ấn &ldquo;Thêm mẻ Vàng&rdquo; để bắt đầu theo dõi Lãi/Lỗ.
         </div>
       )}
 

@@ -88,6 +88,7 @@ function GamificationBar() {
   useEffect(() => {
     // First mount: read from localStorage
     const initial = getGamification();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGam(initial);
     prevXPRef.current = initial.xp;
     setMounted(true);

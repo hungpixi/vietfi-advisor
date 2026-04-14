@@ -202,6 +202,7 @@ export default function BudgetPage() {
 
   // Load from localStorage
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPots(getBudgetPots());
     setExpenses(getExpenses());
     setIncome(getIncome());

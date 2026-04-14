@@ -160,7 +160,12 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...init, signal: controller.signal, next: { revalidate: 300, ...((init as any).next || {}) } } as RequestInit)
+    const requestWithNext = init as RequestInit & { next?: { revalidate?: number } }
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      next: { revalidate: 300, ...(requestWithNext.next ?? {}) },
+    } as RequestInit)
   } finally {
     clearTimeout(timer)
   }

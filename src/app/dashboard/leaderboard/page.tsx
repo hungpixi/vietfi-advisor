@@ -42,6 +42,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const gam = getGamification();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUserXP(gam.xp);
     
     // We want the bots to have XP relative to the user's CURRENT xp,

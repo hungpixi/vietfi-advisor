@@ -340,6 +340,7 @@ function VetVangFloatWidget() {
   const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGam(getGamification());
     setMounted(true);
   }, []);
@@ -495,6 +496,7 @@ export default function DashboardOverview() {
 
   // Init: run once on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (isFirstTimeUser()) setShowSetup(true);
     fetchNews();

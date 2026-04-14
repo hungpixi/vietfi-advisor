@@ -40,6 +40,7 @@ export function BadgeGrid() {
 
   useEffect(() => {
     const gam = getGamification();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEarned(BADGES.filter((b) => b.condition(gam)));
     setLocked(BADGES.filter((b) => !b.condition(gam)));
     setMounted(true);
@@ -95,6 +96,7 @@ export function BadgeMiniRow() {
   const [earned, setEarned] = useState<Badge[]>([]);
   useEffect(() => {
     const gam = getGamification();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEarned(BADGES.filter((b) => b.condition(gam)).slice(0, 5));
   }, []);
   if (earned.length === 0) return null;

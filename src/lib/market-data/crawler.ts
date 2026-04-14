@@ -134,7 +134,12 @@ async function fetchWithCache(url: string, options: RequestInit = {}, timeoutMs 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...options, signal: controller.signal, next: { revalidate: 300, ...((options as any).next || {}) } } as RequestInit)
+    const requestWithNext = options as RequestInit & { next?: { revalidate?: number } }
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      next: { revalidate: 300, ...(requestWithNext.next ?? {}) },
+    } as RequestInit)
   } finally {
     clearTimeout(timer)
   }

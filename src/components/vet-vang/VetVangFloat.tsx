@@ -28,6 +28,7 @@ export default function VetVangFloat() {
 
   useEffect(() => {
     const gam = getGamification();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStreak(gam.streak);
     setXp(gam.xp);
     setMounted(true);

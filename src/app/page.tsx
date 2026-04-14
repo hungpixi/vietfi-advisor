@@ -865,7 +865,7 @@ function VetVangShowcase() {
                   {m.badge}
                 </span>
               </div>
-              <p className="text-sm text-white/60 italic leading-relaxed mb-4">"{m.quote.replace(/^"|"$/g, '')}"</p>
+              <p className="text-sm text-white/60 italic leading-relaxed mb-4">&ldquo;{m.quote.replace(/^"|"$/g, "")}&rdquo;</p>
               <div className="flex items-start gap-2">
                 <div className="w-1 h-1 rounded-full bg-white/20 mt-2 flex-shrink-0" />
                 <span className="text-[11px] text-white/30 leading-relaxed">{m.trigger}</span>
@@ -905,7 +905,7 @@ function VetVangShowcase() {
           className="text-center mb-8"
         >
           <h3 className="text-2xl font-bold text-white mb-2">Lộ trình trưởng thành cùng Vẹt</h3>
-          <p className="text-sm text-white/35">Ghi chi tiêu mỗi ngày = "cho vẹt ăn" → tích XP → level up</p>
+          <p className="text-sm text-white/35">Ghi chi tiêu mỗi ngày = &ldquo;cho vẹt ăn&rdquo; → tích XP → level up</p>
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1091,7 +1091,7 @@ function FinalCTA() {
 
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
           <WordReveal text="Sẵn sàng bị Vẹt Vàng" className="text-white block" />
-          <GradientText>"mổ" cho giàu?</GradientText>
+          <GradientText>&ldquo;mổ&rdquo; cho giàu?</GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">

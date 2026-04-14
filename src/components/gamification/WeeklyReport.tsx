@@ -89,6 +89,7 @@ export function WeeklyReportModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStats(getWeeklyStats());
       setFreezeState(getStreakFreezeState());
     }

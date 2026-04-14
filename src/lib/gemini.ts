@@ -44,6 +44,7 @@ async function callGoogleGemini(
 ): Promise<string> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+  const maxOutputTokens = typeof opts.maxTokens === "number" ? opts.maxTokens : undefined;
 
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= (opts.retries || 3); attempt++) {
@@ -52,7 +53,7 @@ async function callGoogleGemini(
         model: google(opts.model || "gemini-1.5-flash"),
         prompt,
         temperature: opts.temperature,
-        ...({ maxTokens: opts.maxTokens } as any),
+        ...(maxOutputTokens ? { maxOutputTokens } : {}),
       });
       return text;
     } catch (error) {

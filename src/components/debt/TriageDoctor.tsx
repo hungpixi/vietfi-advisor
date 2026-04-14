@@ -43,8 +43,7 @@ export function TriageDoctor({ dti, debtCount, phase }: DoctorProps) {
     return "BÁC SĨ NỘI TRÚ";
   };
 
-  const messages = SPICY_MESSAGES[phase];
-  const message = messages[Math.floor(Math.random() * messages.length)];
+  const message = SPICY_MESSAGES[phase][0];
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 w-full">

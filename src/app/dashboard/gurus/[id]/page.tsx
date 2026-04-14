@@ -26,6 +26,7 @@ export default function GuruDetailPage() {
 
   useEffect(() => {
     if (id && GURU_PERSONAS[id]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGuru(GURU_PERSONAS[id]);
     }
     const state = getGamification();
@@ -70,7 +71,7 @@ export default function GuruDetailPage() {
         <div className="flex-1 text-center md:text-left relative z-10">
           <h1 className="text-3xl font-bold text-white mb-1">{guru.name}</h1>
           <p className="text-emerald-400 font-medium mb-2">{guru.title}</p>
-          <p className="text-sm text-gray-400 italic">"{guru.philosophy}"</p>
+          <p className="text-sm text-gray-400 italic">&ldquo;{guru.philosophy}&rdquo;</p>
         </div>
         
         <div className="flex gap-4 relative z-10">

@@ -34,9 +34,8 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         addInitScript: () => localStorage.setItem("vietfi_onboarding_done", "true"),
-      } as any, // TS: addInitScript not in PlaywrightTestOptions type
+      } as unknown, // addInitScript is supported at runtime for context bootstrap
     },
     // ── Onboarding tests ─────────────────────────────────────────────────────
     // addInitScript clears localStorage BEFORE context creation, ensuring
@@ -47,9 +46,8 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         addInitScript: () => localStorage.clear(),
-      } as any,
+      } as unknown,
     },
     // ── Landing tests ─────────────────────────────────────────────────────────
     // No addInitScript — landing page doesn't need special localStorage state.

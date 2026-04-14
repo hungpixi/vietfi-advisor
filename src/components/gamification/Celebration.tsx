@@ -46,6 +46,7 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let alive = 0;
+    // eslint-disable-next-line react-hooks/immutability
     for (const p of particlesRef.current) {
       p.x += p.vx;
       p.vy += 0.3; // gravity
@@ -67,6 +68,7 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
     }
 
     if (alive > 0) {
+      // eslint-disable-next-line react-hooks/immutability
       rafRef.current = requestAnimationFrame(animate);
     } else {
       onDone();

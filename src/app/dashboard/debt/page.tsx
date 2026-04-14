@@ -120,7 +120,7 @@ export default function DebtPage() {
 
   // ─── XỬ LÝ DỮ LIỆU STACKED CHART (DOMINO EFFECT) ───
   const maxMonth = currentPlan.length > 0 ? Math.max(...currentPlan.map(p => p.month)) : 0;
-  const chartData: any[] = [];
+  const chartData: Array<Record<string, number | string>> = [];
   const initialBalances = Object.fromEntries(debts.map(d => [d.name, d.principal]));
 
   for (let m = 0; m <= maxMonth; m++) {
@@ -132,7 +132,7 @@ export default function DebtPage() {
     // Lấy sample 8 điểm trên biểu đồ cho đẹp
     if (m % Math.max(1, Math.floor(maxMonth / 8)) === 0 || m === maxMonth) {
       const stepsInMonth = currentPlan.filter(p => p.month === m);
-      const row: any = { month: `T${m}` };
+      const row: Record<string, number | string> = { month: `T${m}` };
       debts.forEach(d => {
         const step = stepsInMonth.find(p => p.debtName === d.name);
         row[d.name] = step ? step.remaining : 0;

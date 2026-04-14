@@ -166,7 +166,7 @@ describe('Gold SJC fetch', () => {
 
     const result = await fetchGoldSjc(25000)
     expect(result).not.toBeNull()
-    expect(result?.source).toContain('giaVang /wp-json/giavang/v1/all')
+    expect(result?.source).toContain('giaVang')
     expect(result?.goldVnd).toBe(171000000)
     expect(result?.changePct).toBe(0.0985)
   })

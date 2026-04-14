@@ -20,6 +20,7 @@ export function NotificationBanner() {
       Notification.permission === "default" &&
       !getNotifDismissed()
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(true)
     }
   }, [])

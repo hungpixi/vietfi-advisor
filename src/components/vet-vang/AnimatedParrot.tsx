@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 type AnimState = "idle" | "celebrate" | "sleepy" | "angry" | "thinking" | "peek" | "welcome" | "scared" | "bounce" | "fly-across";
 
@@ -19,7 +18,8 @@ const PARTS = {
 };
 
 /* ─── Animation variants per state ─── */
-const VARIANTS: Record<AnimState, Record<string, any>> = {
+type PartAnimationMap = Record<string, unknown>;
+const VARIANTS: Record<AnimState, PartAnimationMap> = {
   idle: {
     body: { y: [0, -4, 0], transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } },
     head: { y: [0, -6, 0], rotate: [0, 1.5, 0, -1.5, 0], transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } },

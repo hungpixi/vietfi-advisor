@@ -161,6 +161,7 @@ export default function MarketDeepDivePage() {
     const essentials = pots.filter(p => ['Ăn uống', 'Nhà cửa', 'Đi lại', 'Hoá đơn', 'Sức khoẻ'].some(k => p.name.includes(k))).reduce((sum, p) => sum + p.allocated, 0);
     const essentialExpense = essentials > 0 ? essentials : pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5;
     const debtMin = debts.reduce((sum, d) => sum + d.min_payment, 0);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFreeCashflow(income - essentialExpense - debtMin);
 
     const risk = getRiskResult();

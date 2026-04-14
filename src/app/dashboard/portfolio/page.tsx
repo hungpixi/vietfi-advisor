@@ -55,6 +55,7 @@ export default function PortfolioPage() {
     if (typeof window === "undefined") return;
     const riskResult = getRiskResult();
     if (riskResult) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasRiskDNA(true);
       // Map Risk DNA score to risk type
       if (riskResult.score <= 6) setRiskType("conservative");

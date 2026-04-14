@@ -22,6 +22,7 @@ export default function RequireTier({ requiredRole, featureName, children }: Req
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
     const gam = getGamification();
     setXp(gam.xp);

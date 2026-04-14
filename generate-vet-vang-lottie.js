@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Generate Lottie JSON for Vẹt Vàng v2 — Cuter, more detailed
  * Bigger eyes, clearer beak, better proportions

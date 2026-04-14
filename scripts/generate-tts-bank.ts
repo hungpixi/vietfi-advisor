@@ -184,9 +184,10 @@ async function main() {
       await generateAudio(item.ttsText, outPath);
       success++;
       console.log(`  ✅ ${item.id} (${item.ttsText.substring(0, 50)}...)`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       failed++;
-      console.error(`  ❌ ${item.id}: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ ${item.id}: ${message}`);
     }
     
     // Small delay to avoid rate limiting

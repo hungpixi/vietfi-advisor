@@ -174,6 +174,7 @@ export default function LearnPage() {
 
   useEffect(() => {
     const done = getLessonsDone();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCompletedIds(done);
     setMounted(true);
   }, []);

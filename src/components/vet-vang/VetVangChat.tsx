@@ -118,6 +118,31 @@ interface VetVangChatProps {
   levelName: string;
 }
 
+type ChatMessage = {
+  id: string;
+  role: "assistant" | "user";
+  parts?: Array<{ type: "text"; text: string }>;
+  content?: string;
+};
+
+interface SpeechRecognitionResultLike {
+  transcript: string;
+}
+
+interface SpeechRecognitionEventLike {
+  results: ArrayLike<ArrayLike<SpeechRecognitionResultLike>>;
+}
+
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+}
+
 export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: VetVangChatProps) {
   const [input, setInput] = useState("");
   const [persona, setPersona] = useState<PersonaMode>("mo_hon");
@@ -125,6 +150,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
   // Load saved persona on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPersona(getVetvangPersona());
   }, []);
 
@@ -137,9 +163,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
         id: "greet-1",
         role: "assistant",
         parts: [{ type: "text", text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
-      } as any
+      } as unknown as ChatMessage
     ]
   });
+  const typedMessages = messages as unknown as ChatMessage[];
   
   const isLoading = status === 'submitted' || status === 'streaming';
 
@@ -148,10 +175,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     if (error) {
       const fallbackItem = getScriptedResponse("motivate");
       const fallbackText = fallbackItem?.text || "Tao bận xíu, thử lại nha! 🦜";
-      setMessages((prev: any) => [
-        ...prev,
+      setMessages((prev) => [
+        ...(prev as unknown as ChatMessage[]),
         {
-          id: `bot-err-${Date.now()}`,
+          id: `bot-err-${crypto.randomUUID()}`,
           role: "assistant" as const,
           parts: [{ type: "text" as const, text: fallbackText }],
         },
@@ -168,7 +195,10 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Init sound muted state from localStorage
-  useEffect(() => { setSoundMutedState(getSoundMuted()); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSoundMutedState(getSoundMuted());
+  }, []);
 
   // ── TTS: On-demand tap-to-speak ──
   const speakMessage = useCallback(async (msgId: string, text: string) => {
@@ -222,18 +252,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
   // Play ding when new assistant message arrives
   useEffect(() => {
-    if (messages.length < 2) return;
-    const lastMsg = messages[messages.length - 1] as any;
+    if (typedMessages.length < 2) return;
+    const lastMsg = typedMessages[typedMessages.length - 1];
     if (lastMsg?.role === "assistant" && lastMsg.id !== "greet-1" && status !== "streaming") {
       playDing();
     }
-  }, [messages, status]);
+  }, [typedMessages, status]);
 
   // Stop speaking when chat closes
   useEffect(() => {
     if (!isOpen && audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSpeaking(false);
     }
   }, [isOpen]);
@@ -249,19 +280,24 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       alert("Trình duyệt không hỗ trợ nhận diện giọng nói!");
       return;
     }
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
     recognition.lang = 'vi-VN';
     recognition.interimResults = false;
     
     recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
       const raw = event.results[0][0].transcript as string;
       // Strip HTML special chars from speech recognition output (user-controlled)
       const transcript = raw.replace(/[<>&"']/g, "").trim();
       setInput((prev) => (prev + " " + transcript).trim());
     };
-    recognition.onerror = (e: any) => {
+    recognition.onerror = (e: unknown) => {
       console.error("Speech error", e);
       setIsListening(false);
     };
@@ -312,18 +348,24 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     return null; // → fallback to AI
   };
 
+  const localMessageSeqRef = useRef(0);
+  const nextLocalMessageId = (prefix: "user" | "bot") => {
+    localMessageSeqRef.current += 1;
+    return `${prefix}-${localMessageSeqRef.current}`;
+  };
+
   const addLocalMessage = (userText: string, botText: string) => {
     const userMsg = {
-      id: `user-${Date.now()}`,
+      id: nextLocalMessageId("user"),
       role: "user" as const,
       parts: [{ type: "text" as const, text: userText }],
     };
     const botMsg = {
-      id: `bot-${Date.now() + 1}`,
+      id: nextLocalMessageId("bot"),
       role: "assistant" as const,
       parts: [{ type: "text" as const, text: botText }],
     };
-    setMessages((prev: any) => [...prev, userMsg, botMsg]);
+    setMessages((prev) => [...(prev as unknown as ChatMessage[]), userMsg, botMsg]);
   };
 
   // ── Market-related intents that need live data ──
@@ -525,7 +567,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin">
-            {messages.map((msg: any) => (
+            {typedMessages.map((msg) => (
               <motion.div
                 key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
@@ -566,7 +608,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
             ))}
 
             {/* Typing indicator */}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            {isLoading && typedMessages[typedMessages.length - 1]?.role === "user" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -605,7 +647,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
           </div>
 
           {/* Quick Actions */}
-          {messages.length <= 1 && (
+          {typedMessages.length <= 1 && (
             <div className="px-4 pb-2">
               <div className="flex flex-wrap gap-1.5">
                 {QUICK_ACTIONS.map((action) => (
