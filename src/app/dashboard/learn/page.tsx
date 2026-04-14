@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, BookOpen, Sparkles } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { addXP } from "@/lib/gamification";
 import { ConfettiCannon } from "@/components/gamification/Celebration";

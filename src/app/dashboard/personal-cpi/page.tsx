@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calculator, AlertTriangle, ArrowUpRight, Info, Download } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Calculator, AlertTriangle, Download } from "lucide-react";
+import { useState } from "react";
 import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
 import { getBudgetPots, getExpenses } from "@/lib/storage";
 import RequireTier from "@/components/gamification/RequireTier";

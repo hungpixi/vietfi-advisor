@@ -1,5 +1,4 @@
 import { google } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { checkLlmRateLimit } from "./llm-limiter";
 

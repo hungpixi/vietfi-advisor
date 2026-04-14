@@ -518,7 +518,8 @@ export function getAllStaticResponses(): ScriptedResponseItem[] {
 }
 
 // ── Expense Roasts ──────────────────────────────────────────────
-export function getExpenseRoast(category: string, amount: number): string {
+export function getExpenseRoast(category: string, _amount: number): string {
+  void _amount;
   const roasts: Record<string, string[]> = {
     "Ăn uống": [
       "Bữa này ngon không? Ít ra cũng no bụng chứ no ví thì không!",

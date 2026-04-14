@@ -62,7 +62,7 @@ export function DailyQuestSection({ className }: DailyQuestSectionProps) {
     check();
     const t = setInterval(check, 2000);
     return () => clearInterval(t);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const completedCount = quests.filter((q) => q.completed).length;
   const allDone = completedCount === quests.length && quests.length > 0;

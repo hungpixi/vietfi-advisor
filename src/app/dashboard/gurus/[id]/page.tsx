@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { GURU_PERSONAS, GuruPersona } from "@/lib/guru-personas";
 import { spendXP, getGamification } from "@/lib/gamification";
-import { Lock, Unlock, ArrowLeft, TrendingUp, Target, AlertTriangle, CheckCircle2, Coffee, MessageSquare } from "lucide-react";
+import { Lock, Unlock, ArrowLeft, Target, AlertTriangle, CheckCircle2, Coffee, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from "recharts";
 
 // Mock data until Supabase is ready
 const mockPerformanceData = Array.from({ length: 30 }).map((_, i) => ({
@@ -17,7 +17,6 @@ const mockPerformanceData = Array.from({ length: 30 }).map((_, i) => ({
 
 export default function GuruDetailPage() {
   const { id } = useParams() as { id: string };
-  const router = useRouter();
   const [guru, setGuru] = useState<GuruPersona | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userXp, setUserXp] = useState(0);

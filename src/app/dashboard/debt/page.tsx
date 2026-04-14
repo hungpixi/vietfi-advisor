@@ -2,21 +2,15 @@
 
 import { motion } from "framer-motion";
 import {
-  CreditCard,
   Plus,
   AlertTriangle,
   ArrowDown,
-  ArrowRight,
   ArrowUp,
   TrendingDown,
   Banknote,
-  Home,
-  UserX,
   ShieldAlert,
-  Smartphone,
   Trash2,
   Check,
-  X,
   Download,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
@@ -24,13 +18,12 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveDebts as syncDebtsToSupabase } from "@/lib/supabase/user-data";
 import { analyzeDTI, snowballPlan, avalanchePlan, getFreedomMonth } from "@/lib/calculations/debt-optimizer";
-import { getDebts, setDebts as saveDebtsLocal } from "@/lib/storage";
+import { getDebts } from "@/lib/storage";
 
 import { UIDebt, ICON_MAP, formatVND } from "@/components/debt/types";
 import { AddDebtModal } from "@/components/debt/AddDebtModal";
 import { PayDebtModal } from "@/components/debt/PayDebtModal";
 import { ExtraPaymentSlider } from "@/components/debt/ExtraPaymentSlider";
-import { DTIDominoGauge } from "@/components/debt/DTIDominoGauge";
 import { FinancialTriageModal } from "@/components/debt/FinancialTriageModal";
 
 const defaultDebts: UIDebt[] = [
@@ -143,10 +136,6 @@ export default function DebtPage() {
 
   // ─── TÍNH TOÁN NGÀY ĐỘC LẬP (FREEDOM DAY) ───
   const freedomMonthStr = getFreedomMonth(maxMonth);
-
-  // ─── SMART REFINANCE ADVISOR (TÌM NỢ ĐỘC HẠI) ───
-  const toxicDebt = debts.find(d => d.rate >= 40);
-  const canRefinance = toxicDebt && dtiRatio < 50; // Còn dư địa DTI để vay NH
 
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>

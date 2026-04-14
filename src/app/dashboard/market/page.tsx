@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3,
+  TrendingUp, TrendingDown, Minus, ArrowRight,
   Sparkles, Target, Building2, Coins, Bitcoin, LineChart,
 } from "lucide-react";
 import Link from "next/link";
@@ -142,7 +142,7 @@ const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } }
 
 export default function MarketDeepDivePage() {
   const [assets, setAssets] = useState(fallbackAssets);
-  const [opportunities, setOpportunities] = useState(fallbackOpportunities);
+  const [opportunities] = useState(fallbackOpportunities);
   const [trendData, setTrendData] = useState(fallbackTrendData);
   const [activeChart, setActiveChart] = useState<"vnindex" | "gold" | "btc">("vnindex");
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);

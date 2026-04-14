@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Star, Zap, Trophy } from "lucide-react";
+import { Star, Zap, Trophy } from "lucide-react";
 import { playCoin, playFanfare } from "@/lib/sounds";
 
 interface XPToast {

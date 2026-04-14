@@ -6,7 +6,6 @@
  */
 
 import { createClient } from "./client";
-import type { BudgetPot } from "./user-data";
 import {
   getBudgetPots, getExpenses, getIncome, getOnboardingState,
   getGamificationState, getLessonsDone, getStreakFreeze,

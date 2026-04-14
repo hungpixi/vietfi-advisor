@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { UserRole, hasRole, ROLE_THRESHOLDS, ROLE_DESCRIPTIONS } from "@/lib/rbac";
 import { getGamification } from "@/lib/gamification";
-import { Lock, Zap, ArrowRight, ShieldAlert, Key } from "lucide-react";
+import { Lock, Zap, ShieldAlert, Key } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 

@@ -8,30 +8,6 @@ import type { MarketSnapshot } from "@/lib/market-data/crawler";
 import { getMarketCache, setMarketCache } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
-function usePersistentTime() {
-  const [time, setTime] = useState<string>(() =>
-    new Date().toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  );
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTime(
-        new Date().toLocaleTimeString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    }, 60_000);
-
-    return () => clearInterval(id);
-  }, []);
-
-  return time;
-}
-
 interface MarketCardData {
   label: string;
   value: string;

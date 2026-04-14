@@ -13,8 +13,6 @@ import {
   setBudgetPots as localSetBudgetPots,
   getExpenses as localGetExpenses,
   setExpenses as localSetExpenses,
-  getDebts as localGetDebts,
-  setDebts as localSetDebts,
 } from "@/lib/storage";
 
 // ── Types ──────────────────────────────────────────────────────────────

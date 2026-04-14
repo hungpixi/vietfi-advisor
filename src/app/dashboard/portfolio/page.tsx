@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, AlertTriangle, Loader2 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
@@ -46,8 +46,6 @@ export default function PortfolioPage() {
   const [riskType, setRiskType] = useState("balanced");
   const [hasRiskDNA, setHasRiskDNA] = useState(false);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const [aiInsight, setAiInsight] = useState<string>("");
-  const [aiLoading, setAiLoading] = useState(false);
   const [userContext, setUserContext] = useState<string>("");
 
   // ── Pull Risk DNA from localStorage on mount ──

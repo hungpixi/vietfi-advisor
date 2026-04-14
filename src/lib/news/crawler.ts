@@ -171,10 +171,6 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 function normalizeDate(raw: string): string {
   if (!raw) return new Date(0).toISOString() // Epoch 1970 — definitely stale
   const dt = new Date(raw)
@@ -467,13 +463,11 @@ export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSna
     limitPerSection = 5,
     maxChars = 10_000,
     includeContent = true,
-    rateLimitPerSec = 4,
     feeds = RSS_CAFEF,
     enableAiReview = process.env.ENABLE_NEWS_AI_REVIEW === '1',
     aiReviewLimit = 6,
   } = options
 
-  const interval = rateLimitPerSec > 0 ? Math.ceil(1000 / rateLimitPerSec) : 0
   const articles: NewsArticle[] = []
 
   // Fetch all feeds concurrently, relies on Next.js Data cache for speed

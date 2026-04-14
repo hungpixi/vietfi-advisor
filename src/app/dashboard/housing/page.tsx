@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Home, Calculator, ArrowRight, MapPin, Building2, Banknote,
-  TrendingUp, Scale, Clock, Sparkles, HelpCircle,
+  Calculator, ArrowRight, MapPin, Building2, Banknote,
+  Scale, Clock, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {

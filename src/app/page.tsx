@@ -1,19 +1,16 @@
 "use client";
 
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
   ChevronDown,
   AlertTriangle,
-  TrendingUp,
-  Brain,
   PiggyBank,
   LineChart,
   Zap,
   Shield,
   Users,
   Star,
-  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
@@ -27,8 +24,6 @@ import Image from "next/image";
 
 /* ─── Shared Animation Variants ─── */
 const EASE_SMOOTH = [0.25, 0.46, 0.45, 0.94] as const;
-const EASE_SPRING = [0.34, 1.56, 0.64, 1] as const;
-
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 0) => ({
@@ -36,51 +31,6 @@ const fadeInUp = {
     transition: { duration: 0.7, delay: i * 0.1, ease: EASE_SMOOTH }
   }),
 };
-
-const fadeInLeft = {
-  hidden: { opacity: 0, x: -40 },
-  visible: (i = 0) => ({
-    opacity: 1, x: 0,
-    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH }
-  }),
-};
-
-const fadeInRight = {
-  hidden: { opacity: 0, x: 40 },
-  visible: (i = 0) => ({
-    opacity: 1, x: 0,
-    transition: { duration: 0.7, delay: i * 0.12, ease: EASE_SMOOTH }
-  }),
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: (i = 0) => ({
-    opacity: 1, scale: 1,
-    transition: { duration: 0.6, delay: i * 0.08, ease: EASE_SPRING }
-  }),
-};
-
-/* ─── Counter Animation ─── */
-function AnimatedCounter({ target, suffix = "", duration = 2 }: { target: number; suffix?: string; duration?: number }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const step = target / (duration * 60);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [inView, target, duration]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-}
 
 /* ─── Word-by-word stagger ─── */
 function WordReveal({ text, className = "" }: { text: string; className?: string }) {

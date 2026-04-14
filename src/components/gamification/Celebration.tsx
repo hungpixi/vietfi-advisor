@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ─── Confetti Canvas ─── */
@@ -37,44 +37,6 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
   const particlesRef = useRef<Particle[]>([]);
   const rafRef = useRef<number>(0);
 
-  const animate = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let alive = 0;
-    // eslint-disable-next-line react-hooks/immutability
-    for (const p of particlesRef.current) {
-      p.x += p.vx;
-      p.vy += 0.3; // gravity
-      p.y += p.vy;
-      p.rotation += p.rotationSpeed;
-      p.opacity -= 0.008;
-      p.vx *= 0.99;
-
-      if (p.opacity <= 0) continue;
-      alive++;
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate((p.rotation * Math.PI) / 180);
-      ctx.globalAlpha = Math.max(0, p.opacity);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-      ctx.restore();
-    }
-
-    if (alive > 0) {
-      // eslint-disable-next-line react-hooks/immutability
-      rafRef.current = requestAnimationFrame(animate);
-    } else {
-      onDone();
-    }
-  }, [onDone]);
-
   useEffect(() => {
     if (!active) return;
     const canvas = canvasRef.current;
@@ -82,9 +44,44 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     particlesRef.current = createParticles(120, canvas.width, canvas.height);
+
+    const animate = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let alive = 0;
+      for (const p of particlesRef.current) {
+        p.x += p.vx;
+        p.vy += 0.3; // gravity
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+        p.opacity -= 0.008;
+        p.vx *= 0.99;
+
+        if (p.opacity <= 0) continue;
+        alive++;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
+
+      if (alive > 0) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        onDone();
+      }
+    };
+
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [active, animate]);
+  }, [active, onDone]);
 
   if (!active) return null;
 

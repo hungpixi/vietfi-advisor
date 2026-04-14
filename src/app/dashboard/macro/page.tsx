@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown, Minus,
   Globe, Sparkles, AlertCircle, RefreshCw, Clock,
 } from 'lucide-react';
 import type { MarketSnapshot } from '@/lib/market-data/crawler';
@@ -148,12 +148,10 @@ type FetchState = 'idle' | 'loading' | 'success' | 'error';
 export default function MacroPage() {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [fetchState, setFetchState] = useState<FetchState>('idle');
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
 
   const fetchData = async () => {
     setFetchState('loading');
-    setFetchError(null);
     try {
       const resp = await fetch('/api/market-data')
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
@@ -161,8 +159,7 @@ export default function MacroPage() {
       setSnapshot(data)
       setStale(Boolean((data as MarketSnapshot & { stale?: boolean }).stale))
       setFetchState('success')
-    } catch (err) {
-      setFetchError(err instanceof Error ? err.message : 'Unknown error')
+    } catch {
       setFetchState('error')
     }
   };

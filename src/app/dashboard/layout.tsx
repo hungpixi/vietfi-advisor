@@ -20,7 +20,6 @@ import {
   ChevronRight,
   Sparkles,
   BookOpen,
-  Plus,
   Flame,
   Zap,
   Trophy,
@@ -32,12 +31,11 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
-import { XPToastContainer, useXPToast } from "@/components/gamification/XPToast";
 import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
 import { getAuthUserId } from "@/lib/supabase/user-data";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 import { checkMarketAlerts } from "@/lib/market-alert";
-import { getBudgetPots, getDebts, getOnboardingState, getLessonsDone, getStreakFreeze as storageGetStreak, setStreakFreeze } from "@/lib/storage";
+import { getBudgetPots, getDebts, getOnboardingState } from "@/lib/storage";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -79,20 +77,12 @@ const navGroups = [
 ];
 /* ═══════════════════ GAMIFICATION BAR ═══════════════════ */
 function GamificationBar() {
-  const [mounted, setMounted] = useState(false);
-  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
-  const prevXPRef = useRef(0);
+  const [gam, setGam] = useState<ReturnType<typeof getGamification>>(() => getGamification());
+  const prevXPRef = useRef(gam.xp);
   const [xpFlash, setXpFlash] = useState(false);
   const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
-    // First mount: read from localStorage
-    const initial = getGamification();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGam(initial);
-    prevXPRef.current = initial.xp;
-    setMounted(true);
-
     const t = setInterval(() => {
       const newGam = getGamification();
       if (newGam.xp > prevXPRef.current) {
@@ -103,7 +93,7 @@ function GamificationBar() {
       setGam(newGam);
     }, 1000);
     return () => clearInterval(t);
-  }, [getGamification]); // Polling from the local storage helper function
+  }, []);
 
   const { current, next, progress, xpToNext } = getLevelProgress(gam.xp);
 

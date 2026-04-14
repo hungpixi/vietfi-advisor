@@ -22,7 +22,6 @@ const animateOnScroll = () => {
 // ── Navbar blur on scroll ──
 const handleNavScroll = () => {
   const nav = document.querySelector('.nav');
-  let lastScroll = 0;
   
   window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
@@ -31,7 +30,6 @@ const handleNavScroll = () => {
     } else {
       nav.classList.remove('nav--scrolled');
     }
-    lastScroll = scrollY;
   }, { passive: true });
 };
 

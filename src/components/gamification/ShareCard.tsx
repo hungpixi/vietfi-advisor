@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion } from "framer-motion";
-import { Download, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
 
 /* ─── Card Templates ─── */

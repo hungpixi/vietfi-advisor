@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, Flame, TrendingUp, ShieldAlert, ArrowUp, ArrowDown, Info } from "lucide-react";
 import { getGamification } from "@/lib/gamification";
@@ -35,82 +34,58 @@ interface LeaderboardEntry {
   trending: "up" | "down" | "flat";
 }
 
-export default function LeaderboardPage() {
-  const [mounted, setMounted] = useState(false);
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [userXP, setUserXP] = useState(0);
+function buildLeaderboardEntries(): LeaderboardEntry[] {
+  const gam = getGamification();
 
-  useEffect(() => {
-    const gam = getGamification();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUserXP(gam.xp);
-    
-    // We want the bots to have XP relative to the user's CURRENT xp,
-    // but we don't want them jumping around every time user earns 5 XP.
-    // Solution: Save bot offsets to localStorage once per week.
-    const currentWeekInfo = getWeekIdentifier();
+  const currentWeekInfo = getWeekIdentifier();
+  let botOffsets: number[] = getLeaderboardBots(currentWeekInfo);
 
-    let botOffsets: number[] = getLeaderboardBots(currentWeekInfo);
-
-    if (botOffsets.length === 0) {
-      // Generate offsets: some above, some below
-      botOffsets = Array.from({ length: 14 }).map((_, i) => {
-        // Create a spread from +200 to -100 XP relative to user's starting point
-        const offset = Math.floor(seededRandom(i + 1) * 300) - 100;
-        return offset;
-      });
-      // Sort them so they are nicely distributed
-      botOffsets.sort((a, b) => b - a);
-      setLeaderboardBots(currentWeekInfo, botOffsets);
-    }
-
-    // Now construct the full leaderboard
-    // The user's baseline XP when they first opened the leaderboard this week
-    let baselineXP = getLeaderboardBaseline(currentWeekInfo);
-    if (!baselineXP) {
-      baselineXP = Math.max(0, gam.xp - 20); // assume user just started climbing
-      setLeaderboardBaseline(currentWeekInfo, baselineXP);
-    }
-
-    const bots: LeaderboardEntry[] = botOffsets.map((offset, i) => {
-      // Bot's XP is baseline + offset + a tiny bit of random growth throughout the week
-      const currentDayOfWeek = new Date().getDay();
-      const randomGrowth = Math.floor(seededRandom(offset) * 10 * currentDayOfWeek);
-      const botXP = Math.max(0, baselineXP + offset + randomGrowth);
-      
-      return {
-        id: `bot-${i}`,
-        name: BOT_NAMES[i % BOT_NAMES.length],
-        xp: botXP,
-        isCurrentUser: false,
-        avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
-        avatarEmoji: ["🚀", "💎", "📉", "📈", "🐂", "🐻", "💰", "💸"][i % 8],
-        trending: seededRandom(botXP) > 0.5 ? "up" : "down"
-      };
+  if (botOffsets.length === 0) {
+    botOffsets = Array.from({ length: 14 }).map((_, i) => {
+      const offset = Math.floor(seededRandom(i + 1) * 300) - 100;
+      return offset;
     });
-
-    const userEntry: LeaderboardEntry = {
-      id: "current-user",
-      name: "Bạn",
-      xp: gam.xp,
-      isCurrentUser: true,
-      avatarColor: "from-primary to-yellow-500",
-      avatarEmoji: "😎",
-      trending: "up"
-    };
-
-    const combined = [...bots, userEntry].sort((a, b) => b.xp - a.xp);
-    setEntries(combined);
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-      </div>
-    );
+    botOffsets.sort((a, b) => b - a);
+    setLeaderboardBots(currentWeekInfo, botOffsets);
   }
+
+  let baselineXP = getLeaderboardBaseline(currentWeekInfo);
+  if (!baselineXP) {
+    baselineXP = Math.max(0, gam.xp - 20);
+    setLeaderboardBaseline(currentWeekInfo, baselineXP);
+  }
+
+  const bots: LeaderboardEntry[] = botOffsets.map((offset, i) => {
+    const currentDayOfWeek = new Date().getDay();
+    const randomGrowth = Math.floor(seededRandom(offset) * 10 * currentDayOfWeek);
+    const botXP = Math.max(0, baselineXP + offset + randomGrowth);
+
+    return {
+      id: `bot-${i}`,
+      name: BOT_NAMES[i % BOT_NAMES.length],
+      xp: botXP,
+      isCurrentUser: false,
+      avatarColor: AVATAR_COLORS[i % AVATAR_COLORS.length],
+      avatarEmoji: ["🚀", "💎", "📉", "📈", "🐂", "🐻", "💰", "💸"][i % 8],
+      trending: seededRandom(botXP) > 0.5 ? "up" : "down"
+    };
+  });
+
+  const userEntry: LeaderboardEntry = {
+    id: "current-user",
+    name: "Bạn",
+    xp: gam.xp,
+    isCurrentUser: true,
+    avatarColor: "from-primary to-yellow-500",
+    avatarEmoji: "😎",
+    trending: "up"
+  };
+
+  return [...bots, userEntry].sort((a, b) => b.xp - a.xp);
+}
+
+export default function LeaderboardPage() {
+  const entries = buildLeaderboardEntries();
 
   const userRank = entries.findIndex(e => e.isCurrentUser) + 1;
   const isPromotionZone = userRank <= 3;

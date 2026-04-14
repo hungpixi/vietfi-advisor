@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { getIncome, getBudgetPots, getDebts } from "@/lib/storage";
-import { Wallet, ShieldAlert, Target, HeartPulse, Brain, BatteryCharging, Flag } from "lucide-react";
+import { Wallet, ShieldAlert, Target, HeartPulse, BatteryCharging, Flag } from "lucide-react";
 
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };

@@ -5,12 +5,19 @@ import {
   Wallet, Plus, Coffee, ShoppingBag, Car, Home, Gamepad2, Heart,
   GraduationCap, TrendingUp, Trash2, X, Check, Edit3, Pencil, AlertTriangle, Download,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
 import type { BudgetPot, Expense } from "@/lib/types/budget";
-import { getBudgetPots, setBudgetPots, getExpenses, setExpenses, getIncome, setIncome } from "@/lib/storage";
+import {
+  getBudgetPots,
+  setBudgetPots,
+  getExpenses,
+  setExpenses as setExpensesStorage,
+  getIncome,
+  setIncome as setIncomeStorage,
+} from "@/lib/storage";
 
 /* ─── Local alias — budget page uses "Pot" internally ─── */
 type Pot = BudgetPot;
@@ -32,17 +39,6 @@ const ICON_OPTIONS = [
 ];
 
 const COLOR_OPTIONS = ["#FF6B35", "#AB47BC", "#00E5FF", "#22C55E", "#E6B84F", "#EF4444", "#3ECF8E", "#FFD700", "#FF69B4", "#6366F1"];
-
-const defaultPots: Pot[] = [
-  { id: "1", name: "Ăn uống", iconKey: "Coffee", allocated: 3600000, color: "#FF6B35" },
-  { id: "2", name: "Shopping", iconKey: "ShoppingBag", allocated: 1200000, color: "#AB47BC" },
-  { id: "3", name: "Đi lại", iconKey: "Car", allocated: 1000000, color: "#00E5FF" },
-  { id: "4", name: "Nhà ở", iconKey: "Home", allocated: 3000000, color: "#22C55E" },
-  { id: "5", name: "Giải trí", iconKey: "Gamepad2", allocated: 800000, color: "#E6B84F" },
-  { id: "6", name: "Sức khỏe", iconKey: "Heart", allocated: 600000, color: "#EF4444" },
-  { id: "7", name: "Học tập", iconKey: "GraduationCap", allocated: 800000, color: "#3ECF8E" },
-  { id: "8", name: "Tiết kiệm", iconKey: "TrendingUp", allocated: 1000000, color: "#FFD700" },
-];
 
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
@@ -193,26 +189,18 @@ function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => voi
 
 /* ─── Main Page ─── */
 export default function BudgetPage() {
-  const [pots, setPots] = useState<Pot[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [income, setIncome] = useState(12000000);
+  const [pots, setPots] = useState<Pot[]>(() => getBudgetPots());
+  const [expenses, setExpenses] = useState<Expense[]>(() => getExpenses());
+  const [income, setIncome] = useState(() => getIncome() || 12000000);
   const [showAddPot, setShowAddPot] = useState(false);
   const [logPot, setLogPot] = useState<Pot | null>(null);
   const [editIncome, setEditIncome] = useState(false);
 
-  // Load from localStorage
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPots(getBudgetPots());
-    setExpenses(getExpenses());
-    setIncome(getIncome());
-  }, []); // Initial load only
-
   // Save to localStorage + Supabase sync
   const save = useCallback((p: Pot[], e: Expense[], i: number) => {
     setBudgetPots(p);
-    setExpenses(e);
-    setIncome(i);
+    setExpensesStorage(e);
+    setIncomeStorage(i);
     // Background Supabase sync
     if (getCachedUserId()) {
       saveBudgetPots(p).catch(() => {});
@@ -336,7 +324,6 @@ export default function BudgetPage() {
                 <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={75} paddingAngle={2} dataKey="value" stroke="none">
                   {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                 </Pie>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tooltip contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }}
                   formatter={(value: unknown) => formatFull(value as number)} />
               </PieChart>

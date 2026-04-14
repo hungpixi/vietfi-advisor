@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import type { NewsArticle, NewsSentimentLabel } from "@/lib/news/crawler";
 import dynamic from "next/dynamic";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
-import { cn } from "@/lib/utils";
 import { getBudgetPots, getExpenses, getIncome, getRiskResult, getMarketCache } from "@/lib/storage";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
 import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
@@ -389,7 +388,6 @@ export default function DashboardOverview() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [aiBrief, setAiBrief] = useState<BriefData | null>(null);
   const [aiBriefLoading, setAiBriefLoading] = useState(true);
-  const [aiBriefError, setAiBriefError] = useState<string | null>(null);
   const [netWorth, setNetWorth] = useState<number | null>(null);
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
   const [assetSummary, setAssetSummary] = useState<string>("Chưa có dữ liệu");
@@ -399,7 +397,6 @@ export default function DashboardOverview() {
   useEffect(() => {
     const fetchMorningBrief = async () => {
       setAiBriefLoading(true);
-      setAiBriefError(null);
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
@@ -417,7 +414,6 @@ export default function DashboardOverview() {
           source: data.source ?? "heuristic",
         });
       } catch {
-        setAiBriefError("Không thể tải Morning Brief");
       } finally {
         setAiBriefLoading(false);
       }
@@ -496,7 +492,6 @@ export default function DashboardOverview() {
 
   // Init: run once on mount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (isFirstTimeUser()) setShowSetup(true);
     fetchNews();
@@ -524,7 +519,6 @@ export default function DashboardOverview() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const liveBrief = aiBrief;
