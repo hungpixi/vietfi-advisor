@@ -183,7 +183,7 @@ vietfi-advisor/
 ├── docs/                         # Project documentation
 ├── tests/
 │   └── e2e/                      # Playwright E2E (landing, budget, onboarding)
-├── vercel.json                   # Cron schedule + rewrites
+├── vercel.json                   # Vercel config (cron moved to external scheduler)
 ├── vitest.config.ts
 └── playwright.config.ts
 ```
@@ -195,24 +195,24 @@ vietfi-advisor/
 | `POST` | `/api/chat` | Gemini streaming chat (Vẹt Vàng) | — |
 | `POST` | `/api/tts` | Text-to-Speech (edge-tts-universal) | — |
 | `GET` | `/api/market-data` | Live: VN-Index, Gold SJC, USD/VND | — |
-| `POST` | `/api/cron/market-data` | Cron: market data refresh | `CRON_SECRET` |
+| `POST` | `/api/cron/market-data` | External cron trigger: market data refresh + persist Supabase cache | `CRON_SECRET` |
 | `GET` | `/api/news` | Tin tức + sentiment (CafeF RSS) | — |
 | `GET` | `/api/morning-brief` | AI Morning Brief (heuristic fallback) | — |
-| `POST` | `/api/cron/morning-brief` | Cron: morning brief prep (11pm) | `CRON_SECRET` |
-| `POST` | `/api/cron/macro-update` | Cron: macro data (1st monthly) | `CRON_SECRET` |
+| `POST` | `/api/cron/morning-brief` | External cron trigger: morning brief generation + persist Supabase cache | `CRON_SECRET` |
+| `POST` | `/api/cron/macro-update` | External cron trigger: monthly macro snapshot stub + persist Supabase cache | `CRON_SECRET` |
 | `GET` | `/api/stock-screener` | VN stock filter (TCBS, VN30 fallback) | — |
 | `GET` | `/auth/confirm` | Email OTP confirmation | — |
 | `POST` | `/auth/signout` | Sign out | Session |
 
-### Cron Schedule (Vercel Hobby)
+### Cron Schedule (External Scheduler)
 
-| Cron | Schedule | Mô tả | Limitation |
-|---|---|---|---|
-| Market Data | `30 8 * * 1-5` | 8:30am các ngày làm việc | 1/day hobby |
-| Morning Brief | `0 23 * * *` | 11pm hàng ngày | 1/day hobby |
-| Macro Update | `0 0 1 * *` | Ngày 1 hàng tháng | 1/day hobby |
+Vercel cron đã được tắt. Scheduler chạy ở repo GitHub Actions riêng và gọi các endpoint:
 
-> **Bypass:** GitHub Actions `vercel-deploy.yml` dùng Vercel CLI với token để deploy nhiều lần/ngày.
+- `POST /api/cron/market-data`
+- `POST /api/cron/morning-brief`
+- `POST /api/cron/macro-update`
+
+Contract chi tiết: `docs/operations/external-cron-contract.md`
 
 ### Data Crawlers
 
@@ -273,7 +273,7 @@ npm run test:e2e:headed # Visible browser
 
 ### Deployment
 
-- **Platform:** Vercel (Hobby + Hobby Plus)
+- **Platform:** Vercel (frontend + API runtime)
 - **CI/CD:** GitHub Actions — push to `master` + manual `workflow_dispatch`
 - **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 

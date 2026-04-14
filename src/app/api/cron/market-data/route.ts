@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { crawlMarketData } from '@/lib/market-data/crawler'
+import { writeCronCache } from '@/lib/cron-cache'
 
 export const runtime = 'nodejs'
 
@@ -26,13 +27,12 @@ export async function POST(request: Request) {
 
   try {
     const snapshot = await crawlMarketData()
-
-    // TODO: Persist to Supabase or localStorage cache
-    // For now, just return the snapshot
+    const persisted = await writeCronCache('market-data', snapshot, 'api/cron/market-data')
 
     return NextResponse.json(
       {
         status: 'ok',
+        persisted,
         fetchedAt: snapshot.fetchedAt,
         vnIndex: snapshot.vnIndex?.price ?? null,
         goldVnd: snapshot.goldSjc?.goldVnd ?? null,

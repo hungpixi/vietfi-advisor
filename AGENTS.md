@@ -30,6 +30,7 @@ GEMINI_API_KEY=          # Required — Google AI API key
 GEMINI_BASE_URL=         # Optional — proxy URL (e.g. Cloudflare Worker)
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
 ```
 
@@ -39,7 +40,7 @@ CRON_SECRET=
 
 ### Strategic Guidelines (WDA2026 Core Philosophy)
 
-1. **Vercel Cron Limits & Client-Side First:** Vercel Hobby limits cron jobs to 1/day and 10s execution. Therefore, MAXIMIZE client-side processing (localStorage) and avoid heavy server-side background tasks.
+1. **Client-Side First + External Scheduler:** Keep Vercel focused on frontend/API runtime. Schedule cron jobs from external GitHub Actions and trigger `/api/cron/*` endpoints with `CRON_SECRET`.
 2. **Generative AI Usage:** Use `gemini-batch.ts` for bulk AI processing (e.g., Morning Briefs, News summaries) to save costs and avoid timeouts. Reserve the interactive streaming `api/chat` strictly for user conversations.
 3. **Mascot Persona (CRITICAL VIRAL FEATURE):** Vẹt Vàng (Golden Parrot) MUST BE the most sarcastic, street-smart, and brutally honest financial advisor in Vietnam. Do not write polite, generic AI responses. The chat is the core viral loop to build user habits.
 
@@ -62,7 +63,7 @@ CRON_SECRET=
 - **Generation**: `src/lib/morning-brief.ts` with `getMorningBriefCached`
 - **Sources**: `'gemini'` (full AI) or `'heuristic'` (rule-based fallback)
 - **Cache**: 24-hour TTL to avoid redundant generation
-- **Cron**: `POST /api/cron/morning-brief` for Vercel scheduled generation
+- **Cron trigger**: `POST /api/cron/morning-brief` (called by external scheduler, not Vercel cron)
 
 ### Stock Screener
 
@@ -75,12 +76,12 @@ CRON_SECRET=
 - **`POST /api/chat`** — Edge Runtime. Custom Data Stream Protocol for Gemini streaming. Requires `GEMINI_API_KEY`.
 - **`POST /api/tts`** — Node.js Runtime. Edge TTS (Microsoft, free Vietnamese voice `vi-VN-HoaiMyNeural`). Returns audio blob.
 - **`GET /api/market-data`** — Node.js Runtime. Returns live `MarketSnapshot`: VN-Index (cafef), Gold SJC (Yahoo Finance USD/oz → VND/tael), USD/VND (SBV homepage with open.er-api.com fallback). Auto-refreshes every 5 minutes.
-- **`POST /api/cron/market-data`** — Node.js Runtime. CRON_SECRET Bearer auth. Same data as `/api/market-data` for Vercel cron scheduling.
+- **`POST /api/cron/market-data`** — Node.js Runtime. CRON_SECRET Bearer auth. Trigger endpoint for external scheduler; persists snapshot to Supabase cache.
 - **`GET /api/market`** — *(deprecated alias, points to `/api/market-data`)*
 - **`POST /api/morning-brief`** — Node.js Runtime. AI Morning Brief generation with 24h cache. Source: `'gemini'` or `'heuristic'`.
 - **`GET /api/news`** — Node.js Runtime. News crawl from CafeF RSS + Gemini sentiment analysis.
 - **`GET /api/stock-screener`** — Node.js Runtime. VN stock screening with 30-min cache. Params: `maxPE`, `maxPB`, `minROE`, `minMarketCap`, `minRating`, `exchange`.
-- **`POST /api/cron/morning-brief`** — Node.js Runtime. CRON_SECRET Bearer auth. Triggers morning brief generation on schedule.
+- **`POST /api/cron/morning-brief`** — Node.js Runtime. CRON_SECRET Bearer auth. Trigger endpoint for external scheduler; persists morning brief to Supabase cache.
 
 ### Data Persistence
 

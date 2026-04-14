@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { refreshMorningBriefCache } from '@/lib/morning-brief'
+import { writeCronCache } from '@/lib/cron-cache'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,8 @@ export async function POST(request: Request) {
 
   try {
     const brief = await refreshMorningBriefCache()
-    return NextResponse.json({ status: 'ok', brief }, { status: 200 })
+    const persisted = await writeCronCache('morning-brief', brief, 'api/cron/morning-brief')
+    return NextResponse.json({ status: 'ok', persisted, brief }, { status: 200 })
   } catch (err) {
     console.error('[cron/morning-brief] Error:', err)
     return NextResponse.json({ error: 'Cron failed' }, { status: 500 })

@@ -1,16 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/market-data",
-      "schedule": "30 8 * * 1-5"
-    },
-    {
-      "path": "/api/cron/morning-brief",
-      "schedule": "0 23 * * *"
-    },
-    {
-      "path": "/api/cron/macro-update",
-      "schedule": "0 0 1 * *"
-    }
-  ]
-}
+{}

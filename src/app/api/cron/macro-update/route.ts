@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { writeCronCache } from '@/lib/cron-cache'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -34,12 +35,16 @@ export async function POST(request: Request) {
     // - VN-Index monthly close for P/E band history
     // - G-bond yield tenor data from HNX or VBMA
 
+    const payload = {
+      status: 'ok',
+      note: 'Macro-update cron stub — implement in next iteration',
+      updatedAt: new Date().toISOString(),
+    }
+
+    const persisted = await writeCronCache('macro-update', payload, 'api/cron/macro-update')
+
     return NextResponse.json(
-      {
-        status: 'ok',
-        note: 'Macro-update cron stub — implement in next iteration',
-        updatedAt: new Date().toISOString(),
-      },
+      { ...payload, persisted },
       { status: 200 },
     )
   } catch (err) {

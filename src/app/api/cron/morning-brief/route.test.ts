@@ -5,9 +5,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/lib/morning-brief', () => ({
   refreshMorningBriefCache: vi.fn(),
 }))
+vi.mock('@/lib/cron-cache', () => ({
+  writeCronCache: vi.fn(),
+}))
 
 import { POST } from './route'
 import * as mbLib from '@/lib/morning-brief'
+import * as cronCache from '@/lib/cron-cache'
 
 describe('/api/cron/morning-brief', () => {
   beforeEach(() => {
@@ -37,12 +41,14 @@ describe('/api/cron/morning-brief', () => {
       source: 'gemini',
       takeaways: [],
     })
+    vi.spyOn(cronCache, 'writeCronCache').mockResolvedValue(true)
 
     const response = await POST(request)
     expect(response.status).toBe(200)
 
     const body = await response.json()
     expect(body.status).toBe('ok')
+    expect(body.persisted).toBe(true)
     expect(body.brief.summary).toBe('Test summary')
   })
 })
