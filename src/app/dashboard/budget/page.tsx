@@ -10,7 +10,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
 import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
 import type { BudgetPot, Expense } from "@/lib/types/budget";
-import { getBudgetPots, setBudgetPots, getExpenses, setExpenses, getIncome, setIncome } from "@/lib/storage";
+import { getBudgetPots, setBudgetPots, getExpenses, setExpenses, getIncome, setIncome, getLedgerEntries, setLedgerEntries } from "@/lib/storage";
 
 /* ─── Local alias — budget page uses "Pot" internally ─── */
 type Pot = BudgetPot;
@@ -237,9 +237,20 @@ export default function BudgetPage() {
     setExpenses(newExpenses);
     save(pots, newExpenses, income);
     addXP("log_expense"); // +10 XP
+    // Dual-write to ledger for unified transaction history
+    const pot = pots.find(p => p.id === expense.potId);
+    const ledgerEntry = {
+      id: expense.id,
+      amount: expense.amount,
+      type: "expense" as const,
+      category: pot?.name || "Khác",
+      note: expense.note || "",
+      date: new Date(expense.date).toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
+    };
+    setLedgerEntries([...getLedgerEntries(), ledgerEntry]);
     // Supabase sync
     if (getCachedUserId()) {
-      const pot = pots.find(p => p.id === expense.potId);
       addExpense({ amount: expense.amount, category: pot?.name || "Khác", note: expense.note, date: new Date().toISOString() }).catch(() => {});
     }
   };

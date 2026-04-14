@@ -51,10 +51,9 @@ const navGroups = [
   {
     label: "QUẢN LÝ TÀI CHÍNH",
     items: [
-      { href: "/dashboard/budget", label: "Quỹ Chi tiêu", icon: Wallet },
-      { href: "/dashboard/ledger", label: "Sổ Ghi", icon: BookOpen },
-      { href: "/dashboard/debt", label: "Quỹ Nợ", icon: CreditCard },
-      { href: "/dashboard/personal-cpi", label: "Lạm phát của tôi", icon: Calculator },
+      { href: "/dashboard/cashflow", label: "Dòng tiền", icon: Wallet },
+      { href: "/dashboard/debt", label: "Quỹ nợ", icon: CreditCard },
+      { href: "/dashboard/spending-insights", label: "Phân tích chi tiêu", icon: Calculator },
     ],
   },
   {
@@ -178,11 +177,9 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       const debts = getDebts();
       const onboarding = getOnboardingState();
       setSetupStatus({
-        "/dashboard/budget": pots.length > 0,
+        "/dashboard/cashflow": pots.length > 0,
         "/dashboard/debt": debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
-        "/dashboard/risk-profile": !!onboarding,
-        "/dashboard/portfolio": !!onboarding,
-        "/dashboard/personal-cpi": pots.length > 0,
+        "/dashboard/spending-insights": pots.length > 0,
       });
     };
     check();
