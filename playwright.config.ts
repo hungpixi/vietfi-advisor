@@ -34,8 +34,16 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
-        addInitScript: () => localStorage.setItem("vietfi_onboarding_done", "true"),
-      } as unknown, // addInitScript is supported at runtime for context bootstrap
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: process.env.BASE_URL || "http://localhost:3000",
+              localStorage: [{ name: "vietfi_onboarding_done", value: "true" }],
+            },
+          ],
+        },
+      },
     },
     // ── Onboarding tests ─────────────────────────────────────────────────────
     // addInitScript clears localStorage BEFORE context creation, ensuring
@@ -46,8 +54,8 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
-        addInitScript: () => localStorage.clear(),
-      } as unknown,
+        storageState: { cookies: [], origins: [] },
+      },
     },
     // ── Landing tests ─────────────────────────────────────────────────────────
     // No addInitScript — landing page doesn't need special localStorage state.

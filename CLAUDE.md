@@ -212,6 +212,30 @@ npm run test:e2e    # All E2E specs
 | Gemini mock returns hardcoded responses without `GEMINI_API_KEY` | Do not use mock for real conversations |
 | Vercel Hobby cron limit (1/day, 10s) | Use GitHub Actions `vercel-deploy.yml` with CLI token for bypass |
 
+## Handoff Notes (2026-04-14)
+
+### Priority UI/UX Fix (Landing Page)
+- Route: `/` (`src/app/page.tsx`)
+- Current issue: nhiều section đang tràn bố cục (overflow/căng full-width) và mật độ nội dung chưa cân đối theo từng section.
+- Yêu cầu cho Claude/team UI:
+  - Chuẩn hoá khung section theo cùng một layout container (`max-width`, `padding-x`, `gap`) để không bị lệch/đè trên desktop và mobile.
+  - Kiểm tra và xử lý `overflow-x` toàn trang (đặc biệt các khối animation, mascot, gradient/orb tuyệt đối vị trí).
+  - Thiết kế lại “content budget” cho từng section: mỗi section chỉ giữ số lượng yếu tố vừa đủ (headline, supporting text, 1 visual block, 1 CTA rõ ràng), tránh dồn quá nhiều card/chi tiết.
+  - Đảm bảo Hero, Features, HowItWorks, Vet, Stats, FAQ có nhịp dọc nhất quán và không bị kéo dài bất thường.
+  - Re-check responsive ở các breakpoint chính: 360px, 390px, 768px, 1024px, 1280px.
+
+### Build Status
+- `npm run build` đã pass (2026-04-14) sau khi fix typing ở:
+  - `playwright.config.ts`
+  - `src/components/vet-vang/AnimatedParrot.tsx`
+  - `src/components/vet-vang/VetVangChat.tsx`
+- Vẫn còn cảnh báo runtime Recharts trong quá trình build prerender (`width(-1)/height(-1)`), cần rà soát các `ResponsiveContainer` có thể mount khi parent chưa có kích thước.
+
+### TODO/FIXME còn trong source code
+- `src/app/api/cron/macro-update/route.ts`
+  - TODO: implement macro-economic data refresh.
+  - TODO: fetch và persist macro-economic indicators.
+
 ## Deployment
 
 - **Platform:** Vercel (Hobby + Hobby Plus)

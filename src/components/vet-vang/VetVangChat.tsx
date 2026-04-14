@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
+import { type UIMessage } from "ai";
 import { playPop, playDing, getSoundMuted, setSoundMuted } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
 import { getBudgetPots, getExpenses, getDebts, getIncome, getRiskResult } from "@/lib/storage";
@@ -118,13 +119,6 @@ interface VetVangChatProps {
   levelName: string;
 }
 
-type ChatMessage = {
-  id: string;
-  role: "assistant" | "user";
-  parts?: Array<{ type: "text"; text: string }>;
-  content?: string;
-};
-
 interface SpeechRecognitionResultLike {
   transcript: string;
 }
@@ -157,16 +151,20 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const activePersonaConfig = PERSONAS[persona];
 
   const greetingItem = getScriptedResponse("greeting");
-  const { messages, setMessages, sendMessage, status, error } = useChat({
+  const { messages, setMessages, sendMessage, status, error } = useChat<UIMessage>({
     messages: [
       {
         id: "greet-1",
         role: "assistant",
         parts: [{ type: "text", text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
-      } as unknown as ChatMessage
+      }
     ]
   });
-  const typedMessages = messages as unknown as ChatMessage[];
+  const typedMessages = messages;
+  const getMessageText = (msg: UIMessage): string => {
+    const textPart = msg.parts.find((part) => part.type === "text");
+    return textPart?.text ?? "";
+  };
   
   const isLoading = status === 'submitted' || status === 'streaming';
 
@@ -176,12 +174,12 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       const fallbackItem = getScriptedResponse("motivate");
       const fallbackText = fallbackItem?.text || "Tao bận xíu, thử lại nha! 🦜";
       setMessages((prev) => [
-        ...(prev as unknown as ChatMessage[]),
+        ...prev,
         {
           id: `bot-err-${crypto.randomUUID()}`,
-          role: "assistant" as const,
-          parts: [{ type: "text" as const, text: fallbackText }],
-        },
+          role: "assistant",
+          parts: [{ type: "text", text: fallbackText }],
+        } as UIMessage,
       ]);
     }
   }, [error, setMessages]);
@@ -355,17 +353,17 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   };
 
   const addLocalMessage = (userText: string, botText: string) => {
-    const userMsg = {
+    const userMsg: UIMessage = {
       id: nextLocalMessageId("user"),
-      role: "user" as const,
-      parts: [{ type: "text" as const, text: userText }],
+      role: "user",
+      parts: [{ type: "text", text: userText }],
     };
-    const botMsg = {
+    const botMsg: UIMessage = {
       id: nextLocalMessageId("bot"),
-      role: "assistant" as const,
-      parts: [{ type: "text" as const, text: botText }],
+      role: "assistant",
+      parts: [{ type: "text", text: botText }],
     };
-    setMessages((prev) => [...(prev as unknown as ChatMessage[]), userMsg, botMsg]);
+    setMessages((prev) => [...prev, userMsg, botMsg]);
   };
 
   // ── Market-related intents that need live data ──
@@ -588,11 +586,11 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                       border: `1px solid ${activePersonaConfig.color}30`
                     } : {}}
                   >
-                    {msg.parts?.[0]?.text || msg.content}
+                    {getMessageText(msg)}
                   </div>
                   {msg.role === "assistant" && msg.id !== "greet-1" && (
                     <button
-                      onClick={() => speakMessage(msg.id, msg.parts?.[0]?.text || msg.content || "")}
+                      onClick={() => speakMessage(msg.id, getMessageText(msg))}
                       className={`absolute -bottom-1 right-0 p-1 rounded-full transition-all ${
                         speakingMsgId === msg.id
                           ? "bg-[#E6B84F]/20 text-[#E6B84F] opacity-100"

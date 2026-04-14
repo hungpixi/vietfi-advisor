@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, type TargetAndTransition } from "framer-motion";
 
 type AnimState = "idle" | "celebrate" | "sleepy" | "angry" | "thinking" | "peek" | "welcome" | "scared" | "bounce" | "fly-across";
 
@@ -18,7 +18,7 @@ const PARTS = {
 };
 
 /* ─── Animation variants per state ─── */
-type PartAnimationMap = Record<string, unknown>;
+type PartAnimationMap = Record<string, TargetAndTransition>;
 const VARIANTS: Record<AnimState, PartAnimationMap> = {
   idle: {
     body: { y: [0, -4, 0], transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } },
@@ -98,7 +98,7 @@ export default function AnimatedParrot({ state = "idle", size = 200 }: AnimatedP
       {/* Render order: body first (back), then wings, then head (front) */}
       {(["body", "wing_l", "wing_r", "head"] as const).map((key) => {
         const part = PARTS[key];
-        const variant = variants[key] || {};
+        const variant = variants[key];
         return (
           <motion.div
             key={`${key}-${state}`}
