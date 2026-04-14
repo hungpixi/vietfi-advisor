@@ -232,9 +232,7 @@ npm run test:e2e    # All E2E specs
 - Vẫn còn cảnh báo runtime Recharts trong quá trình build prerender (`width(-1)/height(-1)`), cần rà soát các `ResponsiveContainer` có thể mount khi parent chưa có kích thước.
 
 ### TODO/FIXME còn trong source code
-- `src/app/api/cron/macro-update/route.ts`
-  - TODO: implement macro-economic data refresh.
-  - TODO: fetch và persist macro-economic indicators.
+- Không còn TODO/FIXME/HACK/TBD trong `src/`, `tests/`, `playwright.config.ts`, `next.config.ts` (đã rà soát bằng `rg` ngày 2026-04-14).
 
 ## Deployment
 
