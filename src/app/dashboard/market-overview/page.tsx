@@ -7,10 +7,9 @@ function normalizeTab(value: string | string[] | undefined): MarketTab {
     return "tam-ly";
 }
 
-export default function MarketOverviewPage({
-    searchParams,
-}: {
-    searchParams?: { tab?: string | string[] };
+export default async function MarketOverviewPage(props: {
+    searchParams?: Promise<{ tab?: string | string[] }>;
 }) {
+    const searchParams = await props.searchParams;
     return <MarketOverviewShell initialTab={normalizeTab(searchParams?.tab)} />;
 }

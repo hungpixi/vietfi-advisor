@@ -76,85 +76,94 @@ export function DailyQuestSection({ className }: DailyQuestSectionProps) {
       <motion.div
         variants={fadeIn}
         className={cn(
-          "glass-card p-4 mb-4 transition-all duration-500",
-          allDone && "border-[#22C55E]/20 shadow-[0_0_20px_rgba(34,197,94,0.08)]",
+          "glass-card p-12 mb-6 transition-all duration-500",
+          allDone && "border-[#22C55E]/30 shadow-[0_0_30px_rgba(34,197,94,0.12)]",
           className
         )}
       >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{allDone ? "🎉" : "🎯"}</span>
-            <h3 className="text-xs font-semibold text-white">Nhiệm vụ hôm nay</h3>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-6">
+            <span className="text-4xl">{allDone ? "🎉" : "🎯"}</span>
+            <h3 className="text-[18px] font-black text-white uppercase font-heading">Nhiệm vụ hôm nay</h3>
             {/* Progress ring */}
-            <div className="relative w-5 h-5">
-              <svg viewBox="0 0 20 20" className="w-5 h-5 -rotate-90">
-                <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
+            <div className="relative w-9 h-9">
+              <svg viewBox="0 0 20 20" className="w-9 h-9 -rotate-90">
+                <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
                 <circle
                   cx="10"
                   cy="10"
                   r="8"
                   fill="none"
                   stroke={allDone ? "#22C55E" : "#E6B84F"}
-                  strokeWidth="2"
+                  strokeWidth="3"
                   strokeDasharray={`${progress * 0.502} 50.2`}
                   strokeLinecap="round"
-                  className="transition-all duration-700"
+                  className="transition-all duration-1000 ease-out"
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-white/40">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white/40 font-mono">
                 {completedCount}/{quests.length}
               </span>
             </div>
           </div>
           {allDone && (
             <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="text-[10px] px-2 py-0.5 bg-[#22C55E]/10 text-[#22C55E] rounded-full font-bold"
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              className="text-xs px-4 py-2 bg-[#22C55E]/20 text-[#22C55E] rounded-full font-black uppercase tracking-[0.15em] shadow-[0_0_15px_rgba(34,197,94,0.2)]"
             >
               ✅ Xuất sắc!
             </motion.span>
           )}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-4">
           {quests.map((q) => (
             <Link
               key={q.id}
               href={questLinks[q.actionKey] || "/dashboard"}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
+                "flex items-center gap-5 px-6 py-5 rounded-3xl transition-all duration-300",
                 q.completed
-                  ? "bg-[#22C55E]/5 border border-[#22C55E]/10"
-                  : "bg-white/[0.02] border border-white/[0.04] hover:border-[#E6B84F]/20 hover:bg-[#E6B84F]/[0.02]"
+                  ? "bg-[#22C55E]/5 border border-[#22C55E]/20 opacity-80"
+                  : "bg-white/[0.04] border border-white/[0.08] hover:border-[#E6B84F]/40 hover:bg-[#E6B84F]/[0.05] hover:scale-[1.01] active:scale-[0.99]"
               )}
             >
               <motion.span
-                className="text-sm"
-                animate={q.completed ? { scale: [1, 1.3, 1] } : {}}
-                transition={{ duration: 0.3 }}
+                className="text-3xl"
+                animate={q.completed ? { scale: [1, 1.4, 1] } : {}}
+                transition={{ duration: 0.4 }}
               >
                 {q.completed ? "✅" : q.icon}
               </motion.span>
               <div className="flex-1">
                 <span
                   className={cn(
-                    "text-xs font-medium",
-                    q.completed ? "text-[#22C55E]/60 line-through" : "text-white/70"
+                    "text-[16px] font-black uppercase leading-tight block mb-1",
+                    q.completed ? "text-[#22C55E]/50 line-through" : "text-white/90"
                   )}
                 >
                   {q.title}
                 </span>
-                <p className="text-[10px] text-white/20">{q.description}</p>
+                <p className={cn(
+                  "text-[14px] font-medium opacity-50",
+                  q.completed ? "text-[#22C55E]/40" : "text-white/40"
+                )}>{q.description}</p>
               </div>
-              <span
-                className={cn(
-                  "text-[10px] font-mono font-bold",
-                  q.completed ? "text-[#22C55E]/40" : "text-[#E6B84F]"
-                )}
-              >
-                +{q.xp} XP
-              </span>
+              <div className="flex flex-col items-end gap-1 min-w-[60px]">
+                <span
+                  className={cn(
+                    "text-base md:text-lg font-black font-mono tracking-tighter",
+                    q.completed ? "text-[#22C55E]/40" : "text-[#E6B84F] drop-shadow-[0_0_8px_rgba(230,184,79,0.3)]"
+                  )}
+                >
+                  +{q.xp}
+                </span>
+                <span className={cn(
+                  "text-[10px] font-black uppercase tracking-widest",
+                  q.completed ? "text-[#22C55E]/30" : "text-[#E6B84F]/50"
+                )}>XP</span>
+              </div>
             </Link>
           ))}
         </div>

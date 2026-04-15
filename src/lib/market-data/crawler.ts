@@ -134,7 +134,16 @@ async function fetchWithCache(url: string, options: RequestInit = {}, timeoutMs 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...options, signal: controller.signal, next: { revalidate: 300, ...((options as any).next || {}) } } as RequestInit)
+    const start = Date.now();
+    const resp = await fetch(url, { ...options, signal: controller.signal, next: { revalidate: 300, ...((options as any).next || {}) } } as RequestInit)
+    return resp;
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.warn(`[crawler] Timeout (${timeoutMs}ms) khi gọi: ${url}`);
+    } else {
+      console.warn(`[crawler] Lỗi fetch gọi ${url}:`, err.message || err);
+    }
+    throw err; // Vẫn throw để các hàm fetchSjc, fetchSilver... tự xử lý bằng catch riêng của tụi nó
   } finally {
     clearTimeout(timer)
   }
@@ -392,14 +401,14 @@ export async function fetchSilver(usdVndRate: number): Promise<SilverData | null
   try {
     const resp = await fetchWithCache(YAHOO_SILVER_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    })
+    }, 4000)
 
     if (!resp.ok) return null
 
     const json = await resp.json() as Record<string, unknown>
     const chart = json.chart as Record<string, unknown> | undefined
     const result = Array.isArray(chart?.result) ? (chart.result[0] as Record<string, unknown>) : undefined
-    
+
     if (!result || !result.meta) return null
     const meta = result.meta as Record<string, unknown>
 
@@ -440,7 +449,7 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
       },
-    })
+    }, 3000)
     if (resp.ok) {
       const html = await resp.text()
       const parsed = parseSbvExchangeRate(html)
@@ -469,36 +478,43 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
 
 // ── News RSS ──────────────────────────────────────────────────────────────────
 
-const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
+const NEWS_SOURCES = [
+  'https://vnexpress.net/rss/kinh-doanh.rss',
+  'https://cafef.vn/thi-truong-chung-khoan.rss'
+]
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  try {
-    const resp = await fetchWithCache(VNEXPRESS_RSS_URL, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-    })
+  const allItems: NewsItem[] = []
 
-    if (!resp.ok) return []
-    const xml = await resp.text()
+  await Promise.allSettled(NEWS_SOURCES.map(async (url) => {
+    try {
+      const resp = await fetchWithCache(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      })
 
-    const $ = cheerio.load(xml, { xmlMode: true })
-    const items: NewsItem[] = []
+      if (!resp.ok) return
+      const xml = await resp.text()
 
-    $('item').slice(0, 5).each((_, el) => {
-      const titleRaw = $(el).find('title').text() || ''
-      const title = titleRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
-      const linkRaw = $(el).find('link').text() || ''
-      const link = linkRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
-      const pubDate = $(el).find('pubDate').text() || ''
+      const $ = cheerio.load(xml, { xmlMode: true })
 
-      if (title && link) {
-        items.push({ title, link, pubDate })
-      }
-    })
+      $('item').slice(0, 10).each((_, el) => {
+        const titleRaw = $(el).find('title').text() || ''
+        const title = titleRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+        const linkRaw = $(el).find('link').text() || ''
+        const link = linkRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+        const pubDate = $(el).find('pubDate').text() || ''
 
-    return items
-  } catch {
-    return []
-  }
+        if (title && link) {
+          allItems.push({ title, link, pubDate })
+        }
+      })
+    } catch {
+      // ignore
+    }
+  }))
+
+  // Sort by date (desc) if possible, or just return first 20
+  return allItems.slice(0, 20)
 }
 
 // ── Multi-Brand Gold Crawler ──────────────────────────────────────────────────
@@ -512,16 +528,16 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       next: { revalidate: 600 }
     }).then(r => r.text())
-    
+
     let dojiSjcBuy = 0, dojiSjcSell = 0
     let dojiRingBuy = 0, dojiRingSell = 0
-    
+
     const matches = [...dojiXml.matchAll(/<Row Name="(.*?)" .*?Buy="(.*?)" Sell="(.*?)"/g)]
     for (const m of matches) {
       const name = m[1]
       const buy = parseFloat(m[2].replace(/,/g, '')) * 1000000
       const sell = parseFloat(m[3].replace(/,/g, '')) * 1000000
-      
+
       if (name.includes('SJC') && dojiSjcBuy === 0 && buy > 10000000) {
         dojiSjcBuy = buy; dojiSjcSell = sell
       }
@@ -531,7 +547,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
     }
     if (dojiSjcBuy > 0) brands['DOJI_SJC'] = { buy: dojiSjcBuy, sell: dojiSjcSell }
     if (dojiRingBuy > 0) brands['DOJI_NHAN'] = { buy: dojiRingBuy, sell: dojiRingSell }
-  } catch {}
+  } catch { }
 
   // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
   const fetchWebgia = async (brandCode: string, urlId: string) => {
@@ -540,27 +556,27 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
         headers: { 'User-Agent': 'Mozilla/5.0' },
         next: { revalidate: 600 }
       }).then(r => r.text())
-      
+
       const $ = cheerio.load(html)
       let ringBuy = 0, ringSell = 0
       let sjcBuy = 0, sjcSell = 0
-      
+
       $('table tbody tr').each((_, el) => {
         const name = $(el).find('td').first().text().trim().toLowerCase()
         const buyStr = $(el).find('td').eq(1).text().replace(/\D/g, '')
         const sellStr = $(el).find('td').eq(2).text().replace(/\D/g, '')
         if (!buyStr) return
-        
+
         let buy = parseInt(buyStr, 10)
         let sell = parseInt(sellStr, 10)
-        
+
         // Cố gắng chuẩn hóa về giá 1 lượng (~80,000,000)
         // Nếu giá trị < 10,000,000 -> khả năng là giá 1 chỉ -> nhân 10
         if (buy > 100000 && buy < 10000000) buy *= 10
         if (sell > 100000 && sell < 10000000) sell *= 10
-        
+
         if (buy < 10000000 || buy > 150000000) return // Bỏ qua nếu giá vô lý
-        
+
         if ((name.includes('nhẫn') || name.includes('vàng rồng') || name.includes('trơn') || name.includes('9999')) && ringBuy === 0) {
           ringBuy = buy; ringSell = sell
         }
@@ -568,10 +584,10 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
           sjcBuy = buy; sjcSell = sell
         }
       })
-      
+
       if (sjcBuy > 0) brands[`${brandCode}_SJC`] = { buy: sjcBuy, sell: sjcSell }
       if (ringBuy > 0) brands[`${brandCode}_NHAN`] = { buy: ringBuy, sell: ringSell }
-    } catch {}
+    } catch { }
   }
 
   await Promise.allSettled([
@@ -633,19 +649,25 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
 export async function crawlMarketData(): Promise<MarketSnapshot> {
   const fetchedAt = new Date().toISOString()
 
-  // Fetch exchange rate first — needed for gold VND conversion
-  const usdVnd = await fetchExchangeRate()
-  const usdVndRate = usdVnd?.rate ?? 25085
-
-  // Fetch all data in parallel
-  const [vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
+  // Fetch all data in parallel — exchange rate is now parallel too
+  const [vnIndex, goldSjcData, btc, silver, news, goldBrands, usdVnd] = await Promise.all([
     fetchVnIndex(),
-    fetchGoldSjc(usdVndRate),
+    // We pass a default rate or null and handle conversion later or inside
+    fetchGoldSjc(25450),
     fetchBtc(),
-    fetchSilver(usdVndRate),
+    fetchSilver(25450),
     fetchNews(),
-    fetchMultiBrandGold()
+    fetchMultiBrandGold(),
+    fetchExchangeRate()
   ])
+
+  const usdVndRate = usdVnd?.rate ?? 25450
+
+  // Optional: refine gold prices if we got a real exchange rate
+  const goldSjc = goldSjcData ? {
+    ...goldSjcData,
+    goldUsd: Math.round((goldSjcData.goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
+  } : null
 
   const snapshot: MarketSnapshot = {
     fetchedAt,

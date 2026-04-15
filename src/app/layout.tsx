@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Merriweather } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
+const merriweather = Merriweather({
+  variable: "--font-merriweather",
+  weight: ["300", "400", "700", "900"],
   subsets: ["latin", "vietnamese"],
 });
 
@@ -44,7 +45,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/assets/icon-192.png" />
       </head>
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${merriweather.variable} font-serif antialiased`}>
         {children}
         <script src="/sw-register.js" />
       </body>

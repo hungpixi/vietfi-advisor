@@ -22,40 +22,42 @@ vi.mock("@/lib/market-overview/useMarketOverview", () => ({
 }));
 
 describe("MarketOverviewPage", () => {
-    it("renders the page title and default tab", () => {
-        // Note: Next.js App Router server components passed `searchParams` which is a promise in Next 15, but usually tested synchronously in simple vitest unless awaited. 
-        // In React 19 / Next.js 16 (App Router), `searchParams` is an async Promise.
-        // The plan gives sync props: `{ searchParams?: { tab?: string | string[] } }`. We'll follow the plan's sync signature for now.
-        render(<MarketOverviewPage searchParams={{}} />);
+    it("renders the page title and default tab", async () => {
+        const page = await MarketOverviewPage({ searchParams: Promise.resolve({}) });
+        render(page);
 
         expect(screen.getByRole("heading", { name: /Tổng quan thị trường/i })).toBeInTheDocument();
         expect(screen.getByRole("tab", { name: "Tâm lý" })).toHaveAttribute("aria-selected", "true");
     });
 
-    it("selects the assets tab from search params", () => {
-        render(<MarketOverviewPage searchParams={{ tab: "tai-san" }} />);
+    it("selects the assets tab from search params", async () => {
+        const page = await MarketOverviewPage({ searchParams: Promise.resolve({ tab: "tai-san" }) });
+        render(page);
 
         expect(screen.getByRole("tab", { name: "Tài sản" })).toHaveAttribute("aria-selected", "true");
     });
 
-    it("renders the sentiment lens when the default tab is active", () => {
+    it("renders the sentiment lens when the default tab is active", async () => {
         // useMarketOverview is already mocked at the top, returning the sentiment data
-        render(<MarketOverviewPage searchParams={{}} />);
+        const page = await MarketOverviewPage({ searchParams: Promise.resolve({}) });
+        render(page);
 
         expect(screen.getByText("Nhiệt độ thị trường hôm nay")).toBeInTheDocument();
         expect(screen.getByText("Đà giá")).toBeInTheDocument();
     });
 
-    it("renders asset cards and personalized alert on the assets tab", () => {
-        render(<MarketOverviewPage searchParams={{ tab: "tai-san" }} />);
+    it("renders asset cards and personalized alert on the assets tab", async () => {
+        const page = await MarketOverviewPage({ searchParams: Promise.resolve({ tab: "tai-san" }) });
+        render(page);
 
         expect(screen.getByText("4 lớp tài sản chính")).toBeInTheDocument();
         expect(screen.getByText("Chứng khoán")).toBeInTheDocument();
         expect(screen.getAllByText(/dòng tiền/i)[0]).toBeInTheDocument();
     });
 
-    it("renders macro cards and impact blocks on the macro tab", () => {
-        render(<MarketOverviewPage searchParams={{ tab: "vi-mo" }} />);
+    it("renders macro cards and impact blocks on the macro tab", async () => {
+        const page = await MarketOverviewPage({ searchParams: Promise.resolve({ tab: "vi-mo" }) });
+        render(page);
 
         expect(screen.getByText("Tín hiệu vĩ mô chính")).toBeInTheDocument();
         expect(screen.getByText("Ảnh hưởng tới gửi tiết kiệm")).toBeInTheDocument();

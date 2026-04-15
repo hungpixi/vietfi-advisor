@@ -55,7 +55,7 @@ export async function getMarketDataResponse(
     const snapshot = await Promise.race([
       crawl(),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Crawl timeout')), 10000),
+        setTimeout(() => reject(new Error('Crawl timeout')), 20000),
       ),
     ])
     cache = { snapshot, fetchedAt: Date.now() }

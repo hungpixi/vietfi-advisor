@@ -110,11 +110,11 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Greeting (chung, khi không nhận diện được giờ) ──
   greeting: [
     r("greeting", 0,
-      "Mở app lên ngắm tao hay gì? Nợ thì đầm đìa, ghi chi tiêu lẹ lên! 🦜",
-      "Mở app lên ngắm tao hay gì? Nợ thì đầm đìa, ghi chi tiêu lẹ lên!"),
+      "Chào bạn! Rất vui được gặp lại. 👋🦜",
+      "Chào bạn! Rất vui được gặp lại."),
     r("greeting", 1,
-      "Quay lại rồi hả? Ví tiền có đang gào thét kêu cứu không? 💸",
-      "Quay lại rồi hả? Ví tiền có đang gào thét kêu cứu không?"),
+      "Chào mừng quay lại! Đã ghi chi tiêu hôm nay chưa? 💸",
+      "Chào mừng quay lại! Đã ghi chi tiêu hôm nay chưa?"),
     r("greeting", 2,
       "Chào chủ tịch mõm! Hôm nay lại đốt tiền vào cái gì vô tri rồi? 🤡",
       "Chào chủ tịch mõm! Hôm nay lại đốt tiền vào cái gì vô lý rồi?"),
@@ -129,8 +129,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Morning ──
   morning: [
     r("morning", 0,
-      "Dậy đi ông cháu ơi! Sáng ra mở mắt là mất tiền nhà tiền mạng rồi, lo làm ăn đi! 🌅🦜",
-      "Dậy đi ông cháu ơi! Sáng ra mở mắt là mất tiền nhà tiền mạng rồi, lo làm ăn đi!"),
+      "Chào buổi sáng! Sẵn sàng theo dõi chi tiêu hôm nay chưa? 🌅🦜",
+      "Chào buổi sáng! Sẵn sàng theo dõi chi tiêu hôm nay chưa?"),
     r("morning", 1,
       "Sáng rồi! Cà phê xay hay sinh tố lúa mạch gì thì cũng nhớ ghi vô nghen ☕🦜",
       "Sáng rồi! Cà phê xay hay sinh tố lúa mạch gì thì cũng nhớ ghi vô nghen!"),
@@ -148,8 +148,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Afternoon ──
   afternoon: [
     r("afternoon", 0,
-      "Trưa rồi! Gặm bánh mì hay lùa tô phở bò kobe 100k? Khai ra mau 🍜",
-      "Trưa rồi! Gặm bánh mì hay lùa tô phở bò trăm cành? Khai ra mau."),
+      "Trưa rồi nhỉ! Đã ăn uống hôm nay chưa? 🍜",
+      "Trưa rồi nhỉ! Đã ăn uống hôm nay chưa?"),
     r("afternoon", 1,
       "Phê pha buổi chiều hả? Cẩn thận tiền mồ hôi nước mắt trôi theo rãnh nước đó 💰",
       "Phê pha buổi chiều hả? Cẩn thận tiền mồ hôi nước mắt trôi theo rãnh nước đó."),
@@ -164,8 +164,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Evening ──
   evening: [
     r("evening", 0,
-      "Tối rồi! Lôi cái bill cả ngày ra đây tao check. Tiêu hoang tao la ráng chịu 🌙",
-      "Tối rồi! Lôi cái biên lai cả ngày ra đây tao kiểm tra. Tiêu hoang tao la ráng chịu."),
+      "Chiều tối rồi! Kiểm tra chi tiêu hôm nay nhé? 🌙",
+      "Chiều tối rồi! Kiểm tra chi tiêu hôm nay nhé?"),
     r("evening", 1,
       "Buổi tối rảnh rỗi sinh nông nổi, khoá cái app Shopee lại giùm tạo 💧",
       "Buổi tối rảnh rỗi sinh nông nổi, khoá cái gian hàng sốp pi lại giùm tao."),
@@ -180,8 +180,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Night ──
   night: [
     r("night", 0,
-      "Khuya khoắt rồi còn thức chốt sale ảo tưởng à? Ngủ đi mai còn đi cày culi 😴🦜",
-      "Khuya khoắt rồi còn thức chốt sale ảo tưởng à? Ngủ đi mai còn đi cày."),
+      "Khuya rồi! Sẵn sàng ghi chi tiêu cuối ngày? 😴🦜",
+      "Khuya rồi! Sẵn sàng ghi chi tiêu cuối ngày?"),
     r("night", 1,
       "Thức đêm lướt tóp tóp chốt đơn SPayLater đúng không? Bỏ điện thoại xuống! 🌙",
       "Thức đêm lướt tóp tóp chốt trả góp đúng không? Bỏ điện thoại xuống!"),
@@ -193,8 +193,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Goodbye ──
   goodbye: [
     r("goodbye", 0,
-      "Đi đi, nhớ quay lại ghi chi tiêu ngày mai nha! 👋🦜",
-      "Đi đi, nhớ quay lại ghi chi tiêu ngày mai nha!"),
+      "Tạm biệt! Hẹn gặp lại ngày mai nhé! 👋🦜",
+      "Tạm biệt! Hẹn gặp lại ngày mai nhé!"),
     r("goodbye", 1,
       "Bye! Nhớ đừng mua cái gì vô lý khi tao không nhìn! 👀",
       "Bye! Nhớ đừng mua cái gì vô lý khi tao không nhìn!"),
@@ -209,8 +209,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Thanks ──
   thanks: [
     r("thanks", 0,
-      "Không có gì! Mày làm tao vui bằng cách ghi chi tiêu đầy đủ thôi 🦜",
-      "Không có gì! Mày làm tao vui bằng cách ghi chi tiêu đầy đủ thôi."),
+      "Không có gì! Bạn ghi chi tiêu đầy đủ là tôi vui rồi. 🦜",
+      "Không có gì! Bạn ghi chi tiêu đầy đủ là tôi vui rồi."),
     r("thanks", 1,
       "Đừng cảm ơn, trả ơn bằng cách tiết kiệm hơn đi! 💪",
       "Đừng cảm ơn, trả ơn bằng cách tiết kiệm hơn đi!"),
@@ -228,14 +228,14 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
     rd("expense_logged", 4, "Ghi! {item} — {amount}. Tháng này hũ {pot} còn {remaining} thôi đấy!"),
   ],
   expense_high: [
-    rd("expense_high", 0, "Trời ơi {amount} cho {item}? Mày giàu lắm à? 🤯"),
+    rd("expense_high", 0, "Chi tiêu hôm nay cao hơn thông thường. Có khoản nào cần review không? 🤯"),
     rd("expense_high", 1, "Chủ tịch chi {amount}! Đại gia thiệt. Hay là hết tiền rồi? 💸"),
     rd("expense_high", 2, "{amount} một phát! Suy nghĩ lại đi! 😱"),
     rd("expense_high", 3, "{amount}! Mày có chắc là CẦN không? Hay chỉ MUỐN thôi? 🤨"),
     rd("expense_high", 4, "{amount}?! Tiền này mua được {compare} nè! Suy nghĩ lại đi 🧠"),
   ],
   expense_low: [
-    rd("expense_low", 0, "Chỉ {amount}? Tiết kiệm dữ! Tao thích! ❤️🦜"),
+    rd("expense_low", 0, "Chỉ {amount}? Rất tốt! Tiếp tục nhé! ❤️🦜"),
     rd("expense_low", 1, "{amount} thôi à? Tốt lắm! Cứ vậy tiếp! 💪"),
     rd("expense_low", 2, "Ít vậy? Mày bắt đầu nghe lời tao rồi ha! 🦜"),
     rd("expense_low", 3, "{amount} — hợp lý! Tao tự hào về mày! 🌟"),
@@ -244,8 +244,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Financial Advice (STATIC) ──
   ask_spending: [
     r("ask_spending", 0,
-      "Mở trang Quỹ Chi tiêu đi! Tao đã tính sẵn hết rồi. Hũ nào cháy, hũ nào dư, rõ ràng! 📊🦜",
-      "Mở trang Quỹ Chi tiêu đi! Tao đã tính sẵn hết rồi. Hũ nào cháy, hũ nào dư, rõ ràng!"),
+      "Vào trang Quỹ Chi tiêu nhé! Tôi đã phân tích sẵn rồi. 📊🦜",
+      "Vào trang Quỹ Chi tiêu nhé! Tôi đã phân tích sẵn rồi."),
     r("ask_spending", 1,
       "Muốn biết tiền đi đâu? Mở Quỹ Chi tiêu ở menu bên trái! Tao đã phân chia hũ cho mày 💰",
       "Muốn biết tiền đi đâu? Mở Quỹ Chi tiêu ở menu bên trái! Tao đã phân chia hũ cho mày."),
@@ -259,8 +259,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Nợ à? Vào Quỹ Nợ — tao tính sẵn chi phí ẩn, lãi thực rồi! Cẩn thận kẻo vỡ nợ domino! 🏦🦜",
       "Nợ à? Vào trang Quỹ Nợ, tao tính sẵn chi phí ẩn và lãi thực rồi! Cẩn thận kẻo vỡ nợ domino!"),
     r("ask_debt", 1,
-      "Thẻ tín dụng lãi 25% mỗi năm mà chỉ trả minimum? Ngân hàng cảm ơn mày! Vào Quỹ Nợ xem ngay 🏦",
-      "Thẻ tín dụng lãi hai mươi lăm phần trăm mỗi năm mà chỉ trả tối thiểu? Ngân hàng cảm ơn mày lắm! Vào Quỹ Nợ xem ngay."),
+      "Tỷ lệ nợ trên thu nhập hiện tại khá cao. Vào Quỹ Nợ để xem chi tiết nhé! 🏦",
+      "Tỷ lệ nợ trên thu nhập hiện tại khá cao. Vào Quỹ Nợ để xem chi tiết nhé!"),
     r("ask_debt", 2,
       "Tao có 2 chiến thuật trả nợ: Avalanche là trả cái lãi cao nhất trước, hoặc Snowball là trả cái nhỏ nhất trước. Vào Quỹ Nợ chọn đi! ⚔️",
       "Tao có hai chiến thuật trả nợ. Một là trả cái lãi cao nhất trước. Hai là trả cái nhỏ nhất trước. Vào Quỹ Nợ chọn đi!"),
@@ -277,8 +277,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
       "Vào Cố vấn danh mục — tao đề xuất tỷ trọng portfolio dựa trên DNA rủi ro của mày. Đừng all-in 1 chỗ! 🥧",
       "Vào trang Cố vấn danh mục, tao đề xuất tỷ trọng đầu tư dựa trên khẩu vị rủi ro của mày. Đừng dồn hết vào một chỗ!"),
     r("ask_invest", 2,
-      "Dồn hết vào crypto à? Hoặc là siêu xe hoặc là xe đạp! Đa dạng hoá đi 🚲",
-      "Dồn hết vào crypto à? Hoặc là siêu xe hoặc là xe đạp! Đa dạng hoá đi."),
+      "Đa dạng hóa danh mục nhé! Đừng dồn hết vào một chỗ. 🚲",
+      "Đa dạng hóa danh mục nhé! Đừng dồn hết vào một chỗ."),
     r("ask_invest", 3,
       "Đa dạng hóa danh mục đi! Đừng bỏ trứng 1 rổ. Cơ bản vậy mà! 🥚",
       "Đa dạng hóa danh mục đi! Đừng bỏ trứng một rổ. Cơ bản vậy mà!"),
@@ -353,8 +353,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Emotional ──
   motivate: [
     r("motivate", 0,
-      "Mày uống trà sữa 50 nghìn, Warren Buffett uống Coca 10 nghìn. Thấy chưa? 🥤🦜",
-      "Mày uống trà sữa năm mươi nghìn, Oa-ren Bâu-phét uống Coca mười nghìn. Thấy chưa?"),
+      "Tiết kiệm từ những điều nhỏ nhất. Mỗi ngày tốt hơn 1%! 🥤🦜",
+      "Tiết kiệm từ những điều nhỏ nhất. Mỗi ngày tốt hơn một phần trăm!"),
     r("motivate", 1,
       "Ngày nào cũng tốt hơn 1%, 365 ngày sau mày mạnh hơn gấp 37 lần! Cứ bước tiếp đi 🚶‍♂️",
       "Ngày nào cũng tốt hơn một phần trăm, ba trăm sáu mươi lăm ngày sau mày mạnh hơn gấp ba mươi bảy lần! Cứ bước tiếp đi."),
@@ -398,8 +398,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
 
   sad: [
     r("sad", 0,
-      "Hết tiền à? Bình thường! Quan trọng là biết TẠI SAO hết. Mở Quỹ Chi tiêu xem nào 🔍🦜",
-      "Hết tiền à? Bình thường! Quan trọng là biết tại sao hết. Mở Quỹ Chi tiêu xem nào."),
+      "Hết tiền à? Bình thường thôi! Quan trọng là biết tại sao. Mở Quỹ Chi tiêu xem nào 🔍🦜",
+      "Hết tiền à? Bình thường thôi! Quan trọng là biết tại sao. Mở Quỹ Chi tiêu xem nào."),
     r("sad", 1,
       "Buồn thì buồn, nhưng tiền vẫn phải quản! Tao ở đây giúp mày mà 🦜❤️",
       "Buồn thì buồn, nhưng tiền vẫn phải quản! Tao ở đây giúp mày mà."),
@@ -426,8 +426,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Meta ──
   who_are_you: [
     r("who_are_you", 0,
-      "Tao là Vẹt Vàng 🦜 — AI cố vấn tài chính xéo sắc nhất Việt Nam! Nhiệm vụ: giúp mày đừng phá sản 💸",
-      "Tao là Vẹt Vàng, AI cố vấn tài chính xéo sắc nhất Việt Nam! Nhiệm vụ, giúp mày đừng phá sản."),
+      "Tôi là Vẹt Vàng 🦜 — cố vấn tài chính ảo của bạn! 💸",
+      "Tôi là Vẹt Vàng, cố vấn tài chính ảo của bạn!"),
     r("who_are_you", 1,
       "Vẹt Vàng đây! Tao không chỉ biết nói 'con vẹt muốn ăn bánh' — tao biết nói 'mày tiêu hết tiền rồi!' 🦜🔥",
       "Vẹt Vàng đây! Tao không chỉ biết nói con vẹt muốn ăn bánh. Tao biết nói, mày tiêu hết tiền rồi!"),
@@ -473,8 +473,8 @@ const RESPONSES: Record<string, ScriptedResponseItem[]> = {
   // ── Edge Cases ──
   zero_income_roast: [
     r("zero_income_roast", 0,
-      "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mạy? Đi kiếm tiền trước đi! 🤡🦜",
-      "Lương 0 đồng mà mộng du đòi làm sói già phố Wall hả mày? Đi kiếm tiền trước đi!"),
+      "Để tôi giúp bạn xây dựng kế hoạch tài chính từ đầu nhé! 🤡🦜",
+      "Để tôi giúp bạn xây dựng kế hoạch tài chính từ đầu nhé!"),
     r("zero_income_roast", 1,
       "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng vietlott á? Đi làm đi! 💼",
       "Tỉnh lại đi bạn eey! Không xu dính túi mà hỏi đầu tư như trúng số độc đắc á? Đi làm đi!"),

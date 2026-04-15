@@ -48,21 +48,21 @@ export function BadgeGrid() {
   if (!mounted) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {earned.length > 0 && (
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-wider text-white/20 mb-2">
+          <p className="text-[18px] font-black font-heading uppercase tracking-[0.3em] text-white/30 mb-6">
             ĐÃ MỞ KHOÁ ({earned.length}/{BADGES.length})
           </p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {earned.map((badge, i) => {
               const style = TIER_STYLES[badge.tier];
               return (
                 <motion.div key={badge.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border ${style.border} ${style.bg} ${style.glow}`}>
-                  <span className="text-2xl">{badge.emoji}</span>
-                  <span className={`text-[10px] font-bold ${style.text}`}>{badge.name}</span>
-                  <span className="text-[8px] text-white/20 text-center leading-tight">{badge.description}</span>
+                  className={`flex flex-col items-center gap-4 p-8 rounded-[32px] border ${style.border} ${style.bg} ${style.glow} hover:scale-105 transition-transform cursor-default group`}>
+                  <span className="text-5xl group-hover:scale-110 transition-transform duration-500">{badge.emoji}</span>
+                  <span className={`text-[16px] font-black uppercase tracking-widest ${style.text}`}>{badge.name}</span>
+                  <span className="text-[14px] text-white/30 text-center leading-relaxed font-black uppercase opacity-60">{badge.description}</span>
                 </motion.div>
               );
             })}
@@ -71,16 +71,16 @@ export function BadgeGrid() {
       )}
       {locked.length > 0 && (
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-wider text-white/20 mb-2">CHƯA MỞ KHOÁ</p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <p className="text-[18px] font-black font-heading uppercase tracking-[0.3em] text-white/30 mb-6">CHƯA MỞ KHOÁ</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {locked.map((badge) => (
-              <div key={badge.id} className="flex flex-col items-center gap-1 p-3 rounded-xl border border-white/[0.04] bg-white/[0.01] opacity-40">
+              <div key={badge.id} className="flex flex-col items-center gap-4 p-8 rounded-[32px] border border-white/[0.08] bg-white/[0.02] opacity-30 group grayscale hover:grayscale-0 transition-all duration-500">
                 <div className="relative">
-                  <span className="text-2xl grayscale">{badge.emoji}</span>
-                  <Lock className="absolute -bottom-0.5 -right-0.5 w-3 h-3 text-white/20" />
+                  <span className="text-5xl">{badge.emoji}</span>
+                  <Lock className="absolute -bottom-2 -right-2 w-6 h-6 text-white/60 drop-shadow-[0_0_8px_black]" />
                 </div>
-                <span className="text-[10px] font-medium text-white/30">{badge.name}</span>
-                <span className="text-[8px] text-white/15 text-center leading-tight">{badge.description}</span>
+                <span className="text-[16px] font-black text-white/40 uppercase tracking-widest">{badge.name}</span>
+                <span className="text-[14px] text-white/20 text-center leading-relaxed font-black uppercase">{badge.description}</span>
               </div>
             ))}
           </div>

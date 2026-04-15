@@ -46,16 +46,24 @@ export interface NewsSnapshot {
   metrics: NewsSentimentAggregate
 }
 
-const RSS_CAFEF: Record<string, string> = {
-  'Trang chủ': 'https://cafef.vn/home.rss',
-  'Chứng khoán': 'https://cafef.vn/thi-truong-chung-khoan.rss',
-  'Tài chính - Ngân hàng': 'https://cafef.vn/tai-chinh-ngan-hang.rss',
-  'Kinh tế vĩ mô': 'https://cafef.vn/vi-mo-dau-tu.rss',
-  'Tài chính quốc tế': 'https://cafef.vn/tai-chinh-quoc-te.rss',
-  'Bất động sản': 'https://cafef.vn/bat-dong-san.rss',
-  'Doanh nghiệp': 'https://cafef.vn/doanh-nghiep.rss',
-  'Kinh tế số': 'https://cafef.vn/kinh-te-so.rss',
-  'Thị trường': 'https://cafef.vn/thi-truong.rss',
+const RSS_FEEDS: Record<string, string> = {
+  // CaféF (Chuyên sâu Việt Nam)
+  'Chứng khoán (CafeF)': 'https://cafef.vn/thi-truong-chung-khoan.rss',
+  'Tài chính - Ngân hàng (CafeF)': 'https://cafef.vn/tai-chinh-ngan-hang.rss',
+  'Kinh tế vĩ mô (CafeF)': 'https://cafef.vn/vi-mo-dau-tu.rss',
+
+  // VnEconomy (Chính luận, chuyên sâu)
+  'Tài chính - Chứng khoán (VnEconomy)': 'https://vneconomy.vn/chung-khoan.rss',
+  'Kinh tế vĩ mô (VnEconomy)': 'https://vneconomy.vn/vi-mo.rss',
+
+  // VnExpress (Tin nhanh)
+  'Kinh doanh (VnExpress)': 'https://vnexpress.net/rss/kinh-doanh.rss',
+
+  // Tuổi Trẻ (Kinh doanh)
+  'Kinh tế (Tuổi Trẻ)': 'https://tuoitre.vn/rss/kinh-doanh.rss',
+
+  // Quốc tế (Bloomberg/Reuters/Yahoo Finance via Yahoo)
+  'Thị trường Quốc tế (Yahoo Finance)': 'https://finance.yahoo.com/rss/topstories',
 }
 
 const POSITIVE_KEYWORDS = [
@@ -342,12 +350,12 @@ export function aggregateNewsSentiment(articles: NewsArticle[], fetchedAt: strin
     overallNewsScore <= 20
       ? 'extreme_fear'
       : overallNewsScore <= 40
-      ? 'fear'
-      : overallNewsScore <= 60
-      ? 'neutral'
-      : overallNewsScore <= 80
-      ? 'greed'
-      : 'extreme_greed'
+        ? 'fear'
+        : overallNewsScore <= 60
+          ? 'neutral'
+          : overallNewsScore <= 80
+            ? 'greed'
+            : 'extreme_greed'
 
   const byAsset = new Map<string, NewsArticle[]>()
   for (const article of articles) {
@@ -459,11 +467,11 @@ function parseRssItems(xml: string, section: string, limit: number, maxChars: nu
 
 export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSnapshot> {
   const {
-    limitPerSection = 5,
+    limitPerSection = 12,
     maxChars = 10_000,
     includeContent = true,
     rateLimitPerSec = 4,
-    feeds = RSS_CAFEF,
+    feeds = RSS_FEEDS,
     enableAiReview = process.env.ENABLE_NEWS_AI_REVIEW === '1',
     aiReviewLimit = 6,
   } = options
@@ -475,7 +483,7 @@ export async function crawlNews(options: CrawlNewsOptions = {}): Promise<NewsSna
   await Promise.allSettled(
     Object.entries(feeds).map(async ([section, url]) => {
       try {
-        const resp = await fetchWithTimeout(url, {
+        const resp = await fetchWithTimeout(url as string, {
           headers: {
             'User-Agent': 'Mozilla/5.0',
             Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',

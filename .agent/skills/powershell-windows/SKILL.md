@@ -137,10 +137,26 @@ Write-Output "Value: $value"
 | "Unexpected token" | Unicode character | Use ASCII only |
 | "Cannot find property" | Null object | Check null first |
 | "Cannot convert" | Type mismatch | Use .ToString() |
+| "string '&&' is not a valid" | Used bash operator | Use `;` or subprocesses |
 
 ---
 
-## 10. Script Template
+## 11. Command Chaining
+
+### CRITICAL: No Bash Operators (&&, ||)
+
+In many Windows environments (PowerShell 5.1), bash operators like `&&` and `||` are NOT supported.
+
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| `git add . && git commit` | `git add . ; git commit` |
+| `npm run build && npm run test` | `npm run build ; npm run test` |
+
+**Rule:** Use `;` to chain commands sequentially, or run them as separate tool calls.
+
+---
+
+## 12. Script Template
 
 ```powershell
 # Strict mode

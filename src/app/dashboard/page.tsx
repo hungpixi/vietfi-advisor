@@ -130,27 +130,27 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
 function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
   const pctFormatter = (value: unknown) => `${value}%`;
   return (
-    <motion.div variants={fadeIn} className="glass-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Gợi ý phân bổ</h3>
+    <motion.div variants={fadeIn} className="glass-card p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[18px] font-black text-white uppercase font-heading">Gợi ý phân bổ</h3>
         <Link
           href="/dashboard/portfolio"
-          className="text-[10px] text-[#E6B84F] hover:underline flex items-center gap-0.5 font-mono uppercase tracking-wider"
+          className="text-xs text-[#E6B84F] hover:underline flex items-center gap-1 font-mono uppercase tracking-widest font-black"
         >
-          Chi tiết <ArrowUpRight className="w-3 h-3" />
+          Chi tiết <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="flex items-center gap-5">
-        <div className="w-28 h-28 flex-shrink-0">
+      <div className="flex items-center gap-8">
+        <div className="w-32 h-32 flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={allocation}
                 cx="50%"
                 cy="50%"
-                innerRadius={28}
-                outerRadius={50}
-                paddingAngle={3}
+                innerRadius={36}
+                outerRadius={60}
+                paddingAngle={4}
                 dataKey="percent"
                 stroke="none"
               >
@@ -161,24 +161,24 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
               <Tooltip
                 contentStyle={{
                   background: "#111318",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 12,
                   color: "#F5F3EE",
-                  fontSize: 11,
+                  fontSize: 13,
                 }}
                 formatter={pctFormatter}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 space-y-2.5">
           {allocation.map((item) => (
             <div key={item.asset} className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-xs text-white/50">{item.asset}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-[16px] text-white/70 font-black uppercase tracking-tight">{item.asset}</span>
               </div>
-              <span className="text-xs font-medium text-white/80">{item.percent}%</span>
+              <span className="text-[16px] font-black text-white/90 font-mono">{item.percent}%</span>
             </div>
           ))}
         </div>
@@ -192,14 +192,14 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
     return (
       <motion.div
         variants={fadeIn}
-        className="glass-card p-5 border-[#E6B84F]/10 col-span-full animate-pulse"
+        className="glass-card p-6 border-[#E6B84F]/10 col-span-full animate-pulse"
       >
-        <div className="h-4 bg-white/[0.06] rounded w-32 mb-3" />
-        <div className="h-6 bg-white/[0.06] rounded w-3/4 mb-2" />
-        <div className="h-4 bg-white/[0.06] rounded w-full mb-4" />
-        <div className="grid sm:grid-cols-2 gap-2">
+        <div className="h-4 bg-white/[0.06] rounded w-32 mb-4" />
+        <div className="h-8 bg-white/[0.06] rounded w-3/4 mb-3" />
+        <div className="h-5 bg-white/[0.06] rounded w-full mb-6" />
+        <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-white/[0.03] rounded-lg" />
+            <div key={i} className="h-20 bg-white/[0.03] rounded-xl" />
           ))}
         </div>
       </motion.div>
@@ -208,41 +208,32 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card p-5 border-[#E6B84F]/10 col-span-full relative overflow-hidden"
+      className="glass-card p-8 md:p-10 border-[#E6B84F]/10 col-span-full relative overflow-hidden"
     >
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="relative z-10">
-        {brief.source === "heuristic" && (
-          <div className="text-xs text-[#FFB300] mb-2">
-            Không lấy được Morning Brief Gemini, đang hiển thị dữ liệu dự phòng.
-          </div>
-        )}
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-3.5 h-3.5 text-[#E6B84F]" />
-          <span className="text-[10px] text-[#E6B84F] font-mono uppercase tracking-wider">
+        <div className="flex items-center gap-3 mb-6">
+          <Sparkles className="w-5 h-5 text-[#E6B84F]" />
+          <h2 className="text-[18px] font-black text-white uppercase font-heading">
             Morning Brief AI
-          </span>
-          <span
-            className={`text-[10px] font-mono ml-2 ${
-              brief.source === "gemini" ? "text-[#22C55E]" : "text-[#FFB300]"
-            }`}
-          >
-            {brief.source === "gemini" ? "Gemini" : "Fallback"}
-          </span>
-          <span className="text-[10px] text-white/20 ml-auto flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
+          </h2>
+          <span className="text-xs text-white/20 ml-auto flex items-center gap-2 font-mono uppercase font-black tracking-widest">
+            <Calendar className="w-4 h-4" />
             {brief.date}
           </span>
         </div>
-        <h2 className="text-lg font-bold text-white mb-2">{brief.title}</h2>
-        <p className="text-[13px] text-white/50 leading-relaxed mb-4">{brief.summary}</p>
-        <div className="grid sm:grid-cols-2 gap-2">
+
+        <p className="text-[16px] text-white/80 leading-relaxed mb-10 font-black uppercase tracking-tight w-full opacity-90">
+          {brief.summary}
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-6">
           {brief.takeaways.map((t: { emoji: string; asset: string; text: string }, i: number) => (
-            <div key={i} className="flex items-start gap-2 bg-white/[0.02] rounded-lg p-2.5">
-              <span className="text-sm flex-shrink-0">{t.emoji}</span>
-              <div>
-                <span className="text-[11px] font-semibold text-white/70">{t.asset}</span>
-                <p className="text-[11px] text-white/40 leading-relaxed">{t.text}</p>
+            <div key={i} className="flex items-start gap-5 bg-white/[0.03] hover:bg-white/[0.06] transition-all rounded-3xl p-6 border border-white/[0.06] group">
+              <span className="text-4xl flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
+              <div className="space-y-2">
+                <span className="text-[16px] font-mono uppercase tracking-widest text-[#E6B84F] font-black">{t.asset}</span>
+                <p className="text-[16px] text-white/60 leading-relaxed font-black uppercase tracking-tight">{t.text}</p>
               </div>
             </div>
           ))}
@@ -264,64 +255,63 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
   }, [items, activeTab, loading]);
 
   return (
-    <motion.div variants={fadeIn} className="glass-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Tin tức mới nhất</h3>
+    <motion.div variants={fadeIn} className="glass-card p-8">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-[18px] font-black text-white uppercase font-heading">Tin tức mới nhất</h3>
         <Link
           href="/dashboard/news"
-          className="text-[10px] text-[#E6B84F] hover:underline flex items-center gap-0.5 font-mono uppercase tracking-wider"
+          className="text-xs text-[#E6B84F] hover:underline flex items-center gap-1 font-mono uppercase tracking-widest font-black"
         >
-          Tất cả <ArrowUpRight className="w-3 h-3" />
+          Kế tiếp <ArrowUpRight className="w-4 h-4" />
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-3 mb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "-ms-autohiding-scrollbar" }}>
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "-ms-autohiding-scrollbar" }}>
         {TABS.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] font-semibold transition-colors ${
-              activeTab === tab
-                ? "bg-[#E6B84F] text-[#111318]"
-                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-            }`}
+            className={`whitespace-nowrap px-6 py-3 rounded-full text-[18px] font-black uppercase font-heading ${activeTab === tab
+              ? "bg-[#E6B84F] text-[#111318] shadow-[0_4px_20px_rgba(230,184,79,0.4)]"
+              : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+              }`}
           >
             {tab}
           </button>
         ))}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {loading ? (
           [1, 2, 3].map((i) => (
-            <div key={i} className="p-2.5 rounded-lg bg-white/[0.02] animate-pulse">
+            <div key={i} className="p-3 rounded-xl bg-white/[0.02] animate-pulse">
               <div className="h-4 bg-white/[0.06] rounded w-full mb-2" />
               <div className="h-3 bg-white/[0.06] rounded w-1/3" />
             </div>
           ))
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-6 text-xs text-white/30 italic">Không có tin tức nào trong danh mục này</div>
+          <div className="text-center py-10 text-sm text-white/30 italic">Không có tin tức nào trong danh mục này</div>
         ) : (
           filteredItems.map((n: NewsItem, i: number) => {
             const s = sentimentTag[n.sentiment] || sentimentTag.neutral;
             return (
               <div
                 key={i}
-                className="p-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                className="p-5 rounded-3xl bg-white/[0.04] border border-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.08] transition-all cursor-pointer group"
               >
-                <p className="text-[13px] text-white/80 line-clamp-2 mb-1.5 group-hover:text-white transition-colors">
+                <p className="text-[16px] text-white/80 line-clamp-2 md:line-clamp-none mb-3 group-hover:text-white font-black uppercase leading-relaxed">
                   {n.title}
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-white/25">{n.source}</span>
-                  <span className="text-[10px] text-white/25 flex items-center gap-0.5" title={n.time}>
-                    <Clock className="w-2.5 h-2.5" />
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-white/40 font-black uppercase font-mono">{n.source}</span>
+                  <span className="text-xs text-white/30 flex items-center gap-1.5 font-mono" title={n.time}>
+                    <Clock className="w-3.5 h-3.5" />
                     {n.time.includes("vừa xong") ? "Mới đây" : n.time}
                   </span>
                   <span
-                    className="text-[10px] px-1.5 py-0.5 rounded-full ml-auto whitespace-nowrap"
-                    style={{ color: s.color, backgroundColor: `${s.color}12` }}
+                    className="text-xs font-black px-2.5 py-1 rounded-lg ml-auto whitespace-nowrap uppercase tracking-widest"
+                    style={{ color: s.color, backgroundColor: `${s.color}15` }}
                   >
                     {s.label}
                   </span>
@@ -347,25 +337,25 @@ function VetVangFloatWidget() {
   const { current, progress } = getLevelProgress(gam.xp);
 
   return (
-    <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10">
-      <div className="flex items-center gap-2 mb-2">
-        <Flame className="w-4 h-4 text-[#E6B84F]" />
-        <h3 className="text-sm font-semibold text-white">Vẹt Vàng nói gì?</h3>
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-mono ml-auto">
+    <motion.div variants={fadeIn} className="glass-card p-6 border-[#E6B84F]/10">
+      <div className="flex items-center gap-3 mb-6">
+        <Flame className="w-5 h-5 text-[#E6B84F]" />
+        <h3 className="text-[18px] font-black text-white uppercase font-heading">Vẹt Vàng nói gì?</h3>
+        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-black font-mono ml-auto uppercase">
           {gam.streak >= 3 ? "🔥 Mổ Mode" : "💛 Khen Mode"}
         </span>
       </div>
-      <div className="bg-white/[0.02] rounded-xl p-3 mb-3">
-        <p className="text-[13px] text-white/60 italic leading-relaxed">
-          {gam.streak >= 3 
+      <div className="bg-white/[0.04] rounded-3xl p-6 mb-6 border border-white/[0.06]">
+        <p className="text-[16px] text-white/90 italic leading-relaxed font-black uppercase tracking-tight">
+          {gam.streak >= 3
             ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục xài app đi, tao thề sẽ không mổ cho đến khi mày giàu! 🦜&rdquo;`
             : `&ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu! Level ${current.name} rồi mà còn lười hả? 🦜&rdquo;`}
         </p>
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-white/30">Lvl {mounted ? gam.level + 1 : "--"}</span>
-          <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-white/40 font-bold uppercase tracking-tighter">Lvl {mounted ? gam.level + 1 : "--"}</span>
+          <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full"
               initial={{ width: 0 }}
@@ -373,9 +363,9 @@ function VetVangFloatWidget() {
               transition={{ duration: 1 }}
             />
           </div>
-          <span className="text-[10px] text-[#E6B84F]">{mounted ? gam.xp : "--"} XP</span>
+          <span className="text-xs font-black text-[#E6B84F] font-mono">{mounted ? gam.xp : "--"} XP</span>
         </div>
-        <span className="text-[10px] text-white/20">{mounted ? current.name : "🐣 Vẹt Teen"}</span>
+        <span className="text-xs font-bold text-white/30 uppercase tracking-widest">{mounted ? current.name : "🐣 Vẹt Teen"}</span>
       </div>
     </motion.div>
   );
@@ -474,7 +464,7 @@ export default function DashboardOverview() {
   const currentAllocation = useMemo(() => {
     const riskResult = getRiskResult();
     const marketSnapshot = getMarketCache();
-    
+
     // Calculate FG score from cache
     let fgScore = 50;
     if (marketSnapshot?.vnIndex) {
@@ -561,21 +551,21 @@ export default function DashboardOverview() {
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
               {/* Left: Identity + animated value */}
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-                  <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse shadow-[0_0_8px_#22C55E]" />
+                  <span className="text-xs font-black font-mono uppercase tracking-[0.25em] text-white/40">
                     Tổng tài sản ròng
                   </span>
                 </div>
 
                 {/* Wealthsimple big number */}
-                <div className="mt-2 mb-1">
-                  <span className="text-5xl md:text-6xl font-black text-white tracking-tight leading-none">
+                <div className="mt-4 mb-2">
+                  <span className="text-6xl md:text-7xl font-black text-white tracking-tighter leading-none">
                     {netWorth !== null ? (
                       <>
                         <AnimatedCounter target={Math.round(netWorth / 1_000_000 * 10) / 10} />
-                        <span className="text-2xl md:text-3xl text-white/40 font-semibold ml-1.5">triệu</span>
-                        <span className="text-base md:text-lg text-white/30 ml-1">₫</span>
+                        <span className="text-3xl md:text-4xl text-white/30 font-black ml-2 tracking-tight">triệu</span>
+                        <span className="text-xl md:text-2xl text-white/20 ml-1.5 font-mono">₫</span>
                       </>
                     ) : (
                       <span className="text-white/20">—</span>
@@ -584,53 +574,52 @@ export default function DashboardOverview() {
                 </div>
 
                 {/* Delta badge + date */}
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-4 mt-4">
                   {monthlyDeltaPct !== 0 && netWorth !== null && (
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono ${
-                        monthlyDeltaPct >= 0
-                          ? "bg-[#22C55E]/10 text-[#22C55E]"
-                          : "bg-[#EF4444]/10 text-[#EF4444]"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black font-mono uppercase tracking-wider ${monthlyDeltaPct >= 0
+                        ? "bg-[#22C55E]/10 text-[#22C55E]"
+                        : "bg-[#EF4444]/10 text-[#EF4444]"
+                        }`}
                     >
                       {monthlyDeltaPct >= 0 ? (
-                        <TrendingUp className="w-3 h-3" />
+                        <TrendingUp className="w-3.5 h-3.5" />
                       ) : (
-                        <span className="rotate-180"><TrendingUp className="w-3 h-3" /></span>
+                        <span className="rotate-180"><TrendingUp className="w-3.5 h-3.5" /></span>
                       )}
                       {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% tháng này
                     </span>
                   )}
-                  <span className="text-[10px] text-white/25 font-mono flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                  <span className="text-[11px] text-white/30 font-black font-mono flex items-center gap-1.5 uppercase tracking-widest">
+                    <Calendar className="w-3.5 h-3.5" />
                     {mounted ? new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-white/35 mt-2 font-mono">{assetSummary}</p>
+                <p className="text-xs text-white/40 mt-3 font-mono font-bold uppercase tracking-widest">{assetSummary}</p>
               </div>
 
               {/* Right: Quick Actions */}
-              <div className="flex flex-col gap-2 sm:items-end sm:justify-start min-w-[160px]">
+              <div className="flex flex-col gap-3 sm:items-end sm:justify-start min-w-[200px]">
                 <Link
                   href="/dashboard/budget"
-                  className="group flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold font-mono uppercase tracking-wide transition-all duration-200 bg-gradient-to-r from-[#E6B84F] to-[#F5A623] text-[#111318] hover:shadow-[0_0_20px_rgba(230,184,79,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                  className="group flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest transition-all duration-300 bg-gradient-to-r from-[#E6B84F] to-[#F5A623] text-[#111318] hover:shadow-[0_0_30px_rgba(230,184,79,0.4)] hover:scale-[1.05] active:scale-[0.98]"
                 >
-                  <PencilLine className="w-3.5 h-3.5" />
+                  <PencilLine className="w-4 h-4" />
                   Ghi chi tiêu
                 </Link>
                 <Link
                   href="/dashboard/budget"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold font-mono uppercase tracking-wide bg-white/[0.05] text-white/50 border border-white/[0.06] hover:bg-white/[0.09] hover:text-white/70 transition-all duration-200"
+                  className="flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest bg-white/[0.05] text-white/50 border border-white/[0.1] hover:bg-white/[0.1] hover:text-white/80 transition-all duration-300"
                 >
-                  <Wallet className="w-3.5 h-3.5" />
+                  <Wallet className="w-4 h-4" />
                   Cập nhật lương
                 </Link>
                 <Link
                   href="/dashboard/budget"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold font-mono uppercase tracking-wide bg-white/[0.05] text-white/50 border border-white/[0.06] hover:bg-white/[0.09] hover:text-white/70 transition-all duration-200"
+                  className="flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest bg-white/[0.05] text-white/50 border border-white/[0.1] hover:bg-white/[0.1] hover:text-white/80 transition-all duration-300"
                 >
-                  <BarChart3 className="w-3.5 h-3.5" />
+                  <BarChart3 className="w-4 h-4" />
                   Báo cáo tháng
                 </Link>
               </div>
@@ -655,10 +644,10 @@ export default function DashboardOverview() {
         <DailyQuestSection />
 
         {/* Achievement Badges */}
-        <motion.div variants={fadeIn} className="glass-card p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm">🏅</span>
-            <h3 className="text-xs font-semibold text-white">Huy hiệu</h3>
+        <motion.div variants={fadeIn} className="glass-card p-12 mb-6 transition-all">
+          <div className="flex items-center gap-6 mb-10">
+            <span className="text-4xl">🏅</span>
+            <h3 className="text-[18px] font-black text-white uppercase font-heading">Huy hiệu</h3>
           </div>
           <BadgeGrid />
         </motion.div>

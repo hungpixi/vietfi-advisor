@@ -13,3 +13,41 @@ export function createClient() {
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
+
+// OAuth sign in with Google
+export async function signInWithGoogle() {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.url) {
+    window.location.href = data.url;
+  }
+}
+
+// OAuth sign in with GitHub
+export async function signInWithGithub() {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.url) {
+    window.location.href = data.url;
+  }
+}

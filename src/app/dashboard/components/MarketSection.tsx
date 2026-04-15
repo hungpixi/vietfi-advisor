@@ -232,20 +232,20 @@ export function MarketCard({ label, value, change, icon: Icon }: MarketCardData)
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card glass-card-hover cursor-default p-4 transition-all"
+      className="glass-card glass-card-hover cursor-default p-6 transition-all"
       data-testid="market-card"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-white/30">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-[18px] font-black uppercase font-heading text-white/40">
           {label}
         </span>
         <Icon
-          className={cn("h-3.5 w-3.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
+          className={cn("h-6 w-6", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
         />
       </div>
-      <div className="text-xl font-bold tracking-tight text-white">{value}</div>
+      <div className="text-3xl font-black tracking-tight text-white mb-1.5">{value}</div>
       <span
-        className={cn("text-xs font-medium", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
+        className={cn("text-sm font-black font-mono", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
       >
         {positive ? "+" : ""}
         {change}%
@@ -281,24 +281,24 @@ export function FGGauge({
       className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-5 shadow-xl"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <h3 className="text-base font-bold tracking-tight text-white">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <h3 className="text-[18px] font-black text-white uppercase font-heading">
             Nhiệt kế thị trường
           </h3>
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-black text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
             LIVE
           </span>
-          <span className="rounded-full border border-[#f0cf7a]/20 bg-[#f0cf7a]/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f6dda0]">
+          <span className="rounded-full border border-[#f0cf7a]/20 bg-[#f0cf7a]/15 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#f6dda0]">
             VN
           </span>
         </div>
         <Link
           href="/dashboard/market-overview"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-[#f6dda0]"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1.5 text-xs font-black uppercase tracking-[0.2em] text-white/30 transition-all hover:text-[#f6dda0] hover:scale-105"
         >
-          Chi tiết <ArrowUpRight className="h-3 w-3" />
+          Chi tiết <ArrowUpRight className="h-4 w-4" />
         </Link>
       </div>
 
@@ -386,23 +386,23 @@ export function FGGauge({
         </div>
 
         {/* Right: 5 metric bars */}
-        <div className="flex flex-1 flex-col justify-center gap-4">
+        <div className="flex flex-1 flex-col justify-center gap-6">
           {indicators.map((indicator, index) => {
             const barColor = getIndicatorColor(indicator.value);
             return (
-              <div key={indicator.label} className="flex items-center gap-4">
-                <span className="w-28 flex-shrink-0 text-[12px] text-white/80 font-semibold tracking-tight">{indicator.label}</span>
-                <div className="flex flex-1 items-center gap-4">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
+              <div key={indicator.label} className="flex items-center gap-6">
+                <span className="w-40 flex-shrink-0 text-[16px] text-white/90 font-black uppercase font-mono opacity-80">{indicator.label}</span>
+                <div className="flex flex-1 items-center gap-5">
+                  <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${indicator.value}%` }}
                       transition={{ duration: 1, delay: index * 0.08, ease: "circOut" }}
-                      className="h-full rounded-full shadow-[0_0_8px_rgba(255,255,255,0.1)]"
+                      className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.15)]"
                       style={{ background: barColor }}
                     />
                   </div>
-                  <span className="w-6 flex-shrink-0 text-right text-[12px] font-bold text-white font-mono">
+                  <span className="w-8 flex-shrink-0 text-right text-[15px] font-black text-white font-mono">
                     {indicator.value}
                   </span>
                 </div>
@@ -411,16 +411,16 @@ export function FGGauge({
           })}
 
           {/* Professional Insight Box */}
-          <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 shadow-inner">
-            <div className="flex items-start gap-2.5">
-              <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
+          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] p-5 shadow-inner">
+            <div className="flex items-start gap-3.5">
+              <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
               </div>
-              <p className="text-[13px] font-medium leading-relaxed text-white/90">{quote}</p>
+              <p className="text-base font-bold leading-relaxed text-white/90">{quote}</p>
             </div>
-            <div className="flex items-center gap-2 pl-7">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">{action}</p>
+            <div className="flex items-center gap-2.5 pl-9">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">{action}</p>
             </div>
           </div>
         </div>
