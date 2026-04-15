@@ -59,12 +59,15 @@ const navGroups = [
   {
     label: "THỊ TRƯỜNG",
     items: [
-      { href: "/dashboard/sentiment", label: "Nhiệt kế thị trường", icon: Activity },
-      { href: "/dashboard/market", label: "Phân tích sâu", icon: LineChart },
-      { href: "/dashboard/screener", label: "Lọc Cổ Phiếu", icon: Search },
+      { href: "/dashboard/market-overview", label: "Tổng quan thị trường", icon: Activity },
+      { href: "/dashboard/screener", label: "Lọc cổ phiếu", icon: Search },
       { href: "/dashboard/news", label: "Tin tức AI", icon: Newspaper },
-      { href: "/dashboard/macro", label: "Xu hướng kinh tế", icon: BarChart3 },
-      { href: "/dashboard/housing", label: "Thông tin nhà ở", icon: Home },
+    ],
+  },
+  {
+    label: "KẾ HOẠCH LỚN",
+    items: [
+      { href: "/dashboard/housing", label: "Nhà ở", icon: Home },
     ],
   },
   {
@@ -189,7 +192,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   // ── Market volatility alerts (client-side, no cron needed) ──
   useEffect(() => {
-    checkMarketAlerts().catch(() => {});
+    checkMarketAlerts().catch(() => { });
   }, []);
 
   return (

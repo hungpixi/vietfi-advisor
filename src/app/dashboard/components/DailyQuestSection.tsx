@@ -14,9 +14,9 @@ const fadeIn = {
 
 const questLinks: Record<string, string> = {
   log_expense: "/dashboard/budget",
-  check_market: "/dashboard/sentiment",
+  check_market: "/dashboard/market-overview?tab=tam-ly",
   setup_budget: "/dashboard/budget",
-  read_knowledge: "/dashboard/macro",
+  read_knowledge: "/dashboard/market-overview?tab=vi-mo",
 };
 
 interface DailyQuestSectionProps {

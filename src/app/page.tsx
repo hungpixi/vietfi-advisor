@@ -167,11 +167,10 @@ function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
           ? "bg-[#0A0A0F]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_40px_rgba(0,0,0,0.5)]"
           : "bg-[#0A0A0F]/80 backdrop-blur-xl border-b border-white/[0.04]"
-      }`}
+        }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
@@ -229,7 +228,7 @@ function Navbar() {
             className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {[0,1,2].map(i => (
+            {[0, 1, 2].map(i => (
               <div key={i} className={`w-5 h-0.5 bg-white/60 rounded transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
             ))}
           </button>
@@ -545,49 +544,49 @@ function Features() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-            <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <div className="text-xs text-white/30 mb-1">Tháng 4, 2026</div>
-                  <div className="text-3xl font-black text-white font-mono">₫47,250,000</div>
-                  <div className="text-sm text-[#22C55E]">▲ +1.25%</div>
-                </div>
-                <div className="flex gap-2">
-                  {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map(label => (
-                    <div key={label} className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">{label}</div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chart area */}
-              <div className="mb-5">
-                <div className="text-xs text-white/30 mb-3">Dòng tiền 12 tháng</div>
-                <div className="flex items-end gap-1 h-24">
-                  {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map((h, i) => (
-                    <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)" }} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Pots */}
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: "Chi tiêu", val: "12.4M", color: "#22C55E", spent: "8.2M", pct: 66 },
-                  { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF", spent: "2.0M", pct: 25 },
-                  { label: "Đầu tư", val: "26.8M", color: "#FFD700", spent: "0M", pct: 0 },
-                ].map((pot) => (
-                  <div key={pot.label} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
-                    <div className="text-[10px] text-white/30 mb-1">{pot.label}</div>
-                    <div className="text-base font-black font-mono mb-1" style={{ color: pot.color }}>{pot.val}</div>
-                    <div className="text-[10px] text-white/30">đã dùng {pot.pct}%</div>
-                    <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pot.pct}%`, background: pot.color }} />
-                    </div>
+              <div className="glass-card rounded-2xl p-6 border-white/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="text-xs text-white/30 mb-1">Tháng 4, 2026</div>
+                    <div className="text-3xl font-black text-white font-mono">₫47,250,000</div>
+                    <div className="text-sm text-[#22C55E]">▲ +1.25%</div>
                   </div>
-                ))}
+                  <div className="flex gap-2">
+                    {["🟢 Chi", "🔴 Nợ", "🔵 Đầu tư"].map(label => (
+                      <div key={label} className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/30">{label}</div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chart area */}
+                <div className="mb-5">
+                  <div className="text-xs text-white/30 mb-3">Dòng tiền 12 tháng</div>
+                  <div className="flex items-end gap-1 h-24">
+                    {[35, 50, 42, 60, 55, 70, 65, 78, 72, 85, 80, 92].map((h, i) => (
+                      <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 11 ? "#FFD700" : "rgba(255,255,255,0.06)" }} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pots */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Chi tiêu", val: "12.4M", color: "#22C55E", spent: "8.2M", pct: 66 },
+                    { label: "Tiết kiệm", val: "8.0M", color: "#00E5FF", spent: "2.0M", pct: 25 },
+                    { label: "Đầu tư", val: "26.8M", color: "#FFD700", spent: "0M", pct: 0 },
+                  ].map((pot) => (
+                    <div key={pot.label} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]">
+                      <div className="text-[10px] text-white/30 mb-1">{pot.label}</div>
+                      <div className="text-base font-black font-mono mb-1" style={{ color: pot.color }}>{pot.val}</div>
+                      <div className="text-[10px] text-white/30">đã dùng {pot.pct}%</div>
+                      <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pot.pct}%`, background: pot.color }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
             </motion.div>
 
             {/* Overlay: DTI card */}
@@ -625,44 +624,44 @@ function Features() {
                 maxRotate={8}
                 className="glass-card p-6 border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 group cursor-default"
               >
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <div className="flex items-start gap-4">
-                  {/* Number + Icon */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
-                      style={{ backgroundColor: `${p.color}15`, color: p.color }}
-                    >
-                      {p.icon}
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.6, delay: i * 0.12, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Number + Icon */}
+                    <div className="flex-shrink-0">
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
+                        style={{ backgroundColor: `${p.color}15`, color: p.color }}
+                      >
+                        {p.icon}
+                      </div>
+                      <div className="text-xs font-mono text-white/15 font-bold text-center">{p.num}</div>
                     </div>
-                    <div className="text-xs font-mono text-white/15 font-bold text-center">{p.num}</div>
+
+                    {/* Content */}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-1.5">{p.title}</h3>
+                      <p className="text-sm text-white/45 mb-2 leading-relaxed">{p.desc}</p>
+                      <p className="text-xs text-white/25 leading-relaxed">{p.detail}</p>
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1.5">{p.title}</h3>
-                    <p className="text-sm text-white/45 mb-2 leading-relaxed">{p.desc}</p>
-                    <p className="text-xs text-white/25 leading-relaxed">{p.detail}</p>
+                  {/* Right arrow on hover */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="h-px flex-1 bg-white/[0.05]" />
+                    <motion.div
+                      initial={{ opacity: 0, x: -8 }}
+                      whileHover={{ opacity: 1, x: 0 }}
+                      className="ml-3 flex-shrink-0"
+                    >
+                      <ArrowRight className="w-4 h-4" style={{ color: p.color }} />
+                    </motion.div>
                   </div>
-                </div>
-
-                {/* Right arrow on hover */}
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="h-px flex-1 bg-white/[0.05]" />
-                  <motion.div
-                    initial={{ opacity: 0, x: -8 }}
-                    whileHover={{ opacity: 1, x: 0 }}
-                    className="ml-3 flex-shrink-0"
-                  >
-                    <ArrowRight className="w-4 h-4" style={{ color: p.color }} />
-                  </motion.div>
-                </div>
-              </motion.div>
+                </motion.div>
               </TiltCard>
             ))}
 

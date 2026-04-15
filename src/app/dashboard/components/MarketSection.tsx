@@ -295,7 +295,7 @@ export function FGGauge({
           </span>
         </div>
         <Link
-          href="/dashboard/sentiment"
+          href="/dashboard/market-overview"
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-[#f6dda0]"
         >
           Chi tiết <ArrowUpRight className="h-3 w-3" />
