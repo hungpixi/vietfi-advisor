@@ -389,11 +389,12 @@ function Hero() {
           {/* Left: Copy */}
           <div>
             {/* Headline — Wealthsimple style: clean, no word-by-word blur */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-5xl md:text-6xl font-black mb-6 leading-[1.05] tracking-tight">
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="text-5xl md:text-6xl font-black mb-6 leading-[1.18] md:leading-[1.14] tracking-tight"
+            >
               <span className="text-white">Tự do tài chính</span>
               <br />
               <span className="text-white/80">bắt đầu từ</span>
@@ -1461,7 +1462,8 @@ function FinalCTA() {
           />
           <Link
             href="/dashboard"
-            className="group relative z-10 inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-black rounded-2xl text-xl shadow-[0_0_24px_rgba(255,215,0,0.24)]">
+            className="group inline-flex items-center gap-4 px-14 py-5 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black font-bold rounded-2xl text-xl leading-none tracking-normal whitespace-nowrap shadow-[0_0_40px_rgba(255,215,0,0.2)]"
+          >
             Bắt đầu ngay — Miễn phí
             <motion.span
               animate={{ x: [0, 6, 0] }}
@@ -1580,13 +1582,6 @@ function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/20">
           <p>© 2026 VietFi Advisor — Cuộc thi WebDev Adventure 2026</p>
-          <a
-            href="https://comarai.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#FFD700] transition-colors">
-            by Comarai
-          </a>
         </div>
       </div>
     </footer>
