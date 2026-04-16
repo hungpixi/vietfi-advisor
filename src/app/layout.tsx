@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Merriweather } from "next/font/google";
+import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 
-const merriweather = Merriweather({
-  variable: "--font-merriweather",
-  weight: ["300", "400", "700", "900"],
+const notoSans = Noto_Sans({
+  variable: "--font-noto-sans",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin", "vietnamese"],
 });
 
@@ -42,10 +42,13 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0A0B0F" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <link rel="apple-touch-icon" href="/assets/icon-192.png" />
       </head>
-      <body className={`${merriweather.variable} font-serif antialiased`}>
+      <body className={`${notoSans.variable} font-sans antialiased`}>
         {children}
         <script src="/sw-register.js" />
       </body>
