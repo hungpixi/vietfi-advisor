@@ -239,32 +239,36 @@ export function MarketCard({ label, value, change, icon: Icon }: MarketCardData)
     <motion.div
       variants={fadeIn}
       className={cn(
-        "glass-card relative overflow-hidden group cursor-default p-6 transition-all duration-500 border border-white/[0.05]",
-        positive ? "hover:border-[#22C55E]/30" : "hover:border-[#EF4444]/30"
+        "group relative overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 cursor-default",
+        positive ? "hover:border-[#22C55E]/40" : "hover:border-[#EF4444]/40"
       )}
       data-testid="market-card"
     >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className={cn("pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-700 group-hover:opacity-100", positive ? "bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.12),transparent_46%)]" : "bg-[radial-gradient(circle_at_50%_35%,rgba(239,68,68,0.12),transparent_46%)]")} />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
       {/* Decors */}
       <div className="absolute top-0 left-0 w-24 h-24 blur-[40px] pointer-events-none opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundColor: color }} />
-      <div className="absolute top-0 left-0 w-12 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: `linear-gradient(90deg, ${color}, transparent)` }} />
-      <div className="absolute top-0 left-0 w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: `linear-gradient(180deg, ${color}, transparent)` }} />
+      <div className="pointer-events-none absolute right-3 top-3 h-3 w-3 border-r border-t border-white/20" />
+      <div className="pointer-events-none absolute bottom-3 left-3 h-3 w-3 border-b border-l border-white/10" />
 
-      <div className="mb-4 flex items-center justify-between relative z-10 border-b border-white/[0.03] pb-3">
-        <span className="text-[12px] font-black font-mono uppercase tracking-[0.2em] text-white/30 group-hover:text-white/50 transition-colors">
+      <div className="mb-1.5 flex items-center justify-between relative z-10 border-b border-white/[0.06] pb-1.5">
+        <span className="font-heading text-[12px] font-black uppercase tracking-wide text-white/90 transition-colors">
           {label}
         </span>
-        <div className={cn("p-1.5 rounded-lg bg-opacity-10", positive ? "bg-[#22C55E]/10" : "bg-[#EF4444]/10")}>
+        <div className={cn("p-1.5 rounded-lg border", positive ? "bg-[#22C55E]/10 border-[#22C55E]/20" : "bg-[#EF4444]/10 border-[#EF4444]/20")}>
           <Icon
-            className={cn("h-4 w-4", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
+            className={cn("h-3.5 w-3.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
           />
         </div>
       </div>
 
-      <div className="relative z-10">
-        <div className="text-3xl font-black tracking-tighter text-white mb-1 group-hover:translate-x-1 transition-transform duration-300">{value}</div>
+      <div className="relative z-10 pt-0.5">
+        <div className="font-heading text-[20px] tracking-wider font-black text-white mb-2 group-hover:translate-x-1 transition-transform duration-300 drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)]">{value}</div>
         <div className="flex items-center gap-2">
           <span
-            className={cn("text-[13px] font-black font-mono uppercase tracking-widest px-2 py-0.5 rounded", positive ? "bg-[#22C55E]/10 text-[#22C55E]" : "bg-[#EF4444]/10 text-[#EF4444]")}
+            className={cn("font-mono text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded border", positive ? "bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/30" : "bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/30")}
           >
             {positive ? "+" : ""}
             {change.toFixed(2)}%
@@ -300,21 +304,30 @@ export function FGGauge({
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden group border border-white/10 p-8 shadow-2xl h-full flex flex-col"
+      className="group relative h-full overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-white/20 md:p-8 flex flex-col"
     >
+      {/* Cyber-Technical Background Elements */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.03),transparent_46%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
       {/* Cyber Decor */}
       <div className="absolute top-0 right-0 w-64 h-64 blur-[100px] pointer-events-none opacity-20" style={{ backgroundColor: zone.color }} />
-      <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-white/20 to-transparent" />
-      <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-white/20 to-transparent" />
+      <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-white/30" />
+      <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-white/20" />
 
       {/* Header */}
-      <div className="mb-6 relative z-10 pb-4">
-        <h3 className="text-[18px] font-black text-white uppercase tracking-widest leading-none">
-          TÂM LÝ THỊ TRƯỜNG
-        </h3>
-        <p className="text-white/40 font-mono text-[12px] tracking-widest uppercase mt-1">
-          NHIỆT KẾ THỊ TRƯỜNG
-        </p>
+      <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
+        <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+          <div className="w-full text-left">
+            <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
+              TÂM LÝ THỊ TRƯỜNG
+            </h3>
+            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              NHIỆT KẾ THỊ TRƯỜNG
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 relative z-10 w-full h-full pb-4">
@@ -394,7 +407,7 @@ export function FGGauge({
             return (
               <div key={indicator.label} className="group/bar">
                 <div className="mb-1">
-                  <span className="text-[12px] font-bold font-mono uppercase tracking-widest text-white/80">{indicator.label}</span>
+                  <span className="font-heading text-[15px] font-black tracking-wide text-white/90">{indicator.label}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="h-1.5 w-full bg-[#1F222A] rounded-full overflow-hidden border border-white/[0.02]">
@@ -406,7 +419,7 @@ export function FGGauge({
                       style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
                     />
                   </div>
-                  <span className="text-[14px] font-bold text-white/60 font-mono w-6 text-right shrink-0">{indicator.value}</span>
+                  <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/60 w-8 text-right shrink-0">{indicator.value}</span>
                 </div>
               </div>
             );
@@ -434,9 +447,11 @@ export function FGGauge({
 export function MarketSection({
   onError,
   briefElement,
+  pinnedElement,
 }: {
   onError?: (e: string) => void;
   briefElement?: ReactNode;
+  pinnedElement?: ReactNode;
 }) {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<MarketSnapshot | null>(null);
@@ -536,17 +551,34 @@ export function MarketSection({
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <MarketSkeletonCard key={idx} />
-          ))}
+        <div className="grid lg:grid-cols-12 gap-4">
+          {pinnedElement && (
+            <div className="lg:col-span-8 h-full">
+              {pinnedElement}
+            </div>
+          )}
+          <div className={cn("grid grid-cols-2 gap-3", pinnedElement ? "lg:col-span-4" : "lg:grid-cols-4 lg:col-span-12")}>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <MarketSkeletonCard key={idx} />
+            ))}
+          </div>
         </div>
       ) : (
-        <motion.div variants={stagger} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {cards.map((card) => (
-            <MarketCard key={card.label} {...card} />
-          ))}
-        </motion.div>
+        <div className="grid lg:grid-cols-12 gap-4">
+          {pinnedElement && (
+            <div className="lg:col-span-8 h-full">
+              {pinnedElement}
+            </div>
+          )}
+          <motion.div
+            variants={stagger}
+            className={cn("grid grid-cols-2 gap-3", pinnedElement ? "lg:col-span-4" : "lg:grid-cols-4 lg:col-span-12")}
+          >
+            {cards.map((card) => (
+              <MarketCard key={card.label} {...card} />
+            ))}
+          </motion.div>
+        </div>
       )}
 
       <div className={cn("mt-4", briefElement ? "grid lg:grid-cols-3 gap-4" : "")}>

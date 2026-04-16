@@ -76,17 +76,17 @@ function validateGamification(raw: unknown): Partial<GamificationState> | null {
   const s = raw as Record<string, unknown>;
 
   // Type-check every field to block injected garbage
-  if (typeof s.xp           !== "number" || !Number.isFinite(s.xp)           || s.xp           < 0)      return null;
-  if (typeof s.level        !== "number" || !Number.isInteger(s.level)        || s.level        < 0)      return null;
-  if (typeof s.streak       !== "number" || !Number.isInteger(s.streak)        || s.streak       < 0)      return null;
-  if (typeof s.levelName    !== "string")                                                     return null;
-  if (typeof s.lastActiveDate !== "string")                                                  return null;
-  if (!Array.isArray(s.actions))                                                           return null;
+  if (typeof s.xp !== "number" || !Number.isFinite(s.xp) || s.xp < 0) return null;
+  if (typeof s.level !== "number" || !Number.isInteger(s.level) || s.level < 0) return null;
+  if (typeof s.streak !== "number" || !Number.isInteger(s.streak) || s.streak < 0) return null;
+  if (typeof s.levelName !== "string") return null;
+  if (typeof s.lastActiveDate !== "string") return null;
+  if (!Array.isArray(s.actions)) return null;
 
   // Cap xp and streak to reasonable bounds (prevent inflate via DevTools)
-  const xp     = Math.min(Math.max(s.xp, 0), 1_000_000);
+  const xp = Math.min(Math.max(s.xp, 0), 1_000_000);
   const streak = Math.min(Math.max(s.streak, 0), 365);
-  const level  = Math.min(Math.max(s.level, 0), LEVELS.length - 1);
+  const level = Math.min(Math.max(s.level, 0), LEVELS.length - 1);
 
   return { xp, level, streak, levelName: s.levelName, lastActiveDate: s.lastActiveDate, actions: s.actions, questCompleted: !!s.questCompleted };
 }
@@ -118,7 +118,7 @@ function save(state: GamificationState) {
   setGamificationState(state);
   // Background sync to Supabase (non-blocking)
   if (getCachedUserId()) {
-    saveGamificationState(state).catch(() => {});
+    saveGamificationState(state).catch(() => { });
   }
 }
 
@@ -166,7 +166,7 @@ export function spendXP(amount: number): boolean {
     const state = JSON.parse(raw) as GamificationState;
     if (state.xp >= amount) {
       state.xp -= amount;
-      
+
       const newLvl = getLevel(state.xp);
       state.level = LEVELS.indexOf(newLvl);
       state.levelName = newLvl.name;
@@ -208,7 +208,7 @@ export function getDailyQuests(): DailyQuest[] {
     },
     {
       id: "check_market",
-      title: "Check thị trường",
+      title: "Xem thị trường",
       description: "Xem Nhiệt kế thị trường hôm nay",
       xp: 5,
       actionKey: "check_market",

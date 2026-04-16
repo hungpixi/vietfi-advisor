@@ -21,12 +21,17 @@ VietFi Advisor is an AI-powered personal finance app for Vietnamese users, featu
 npm run dev     # Start dev server → http://localhost:3000
 npm run build   # Production build
 npm run lint    # ESLint (eslint.config.mjs, ESLint 9)
-npm test        # Vitest unit tests (57 tests across 10 files)
+npm test        # Vitest unit tests (watch mode)
+npm run test:run      # Vitest unit tests (single run)
+npm run test:e2e     # Playwright E2E tests
+npm run test:e2e:ui  # Playwright E2E with UI mode
+npm run test:e2e:headed # Playwright E2E in headed mode
+npm run test:e2e:debug  # Playwright E2E debug mode
 ```
 
 **Required env vars** (documented in README):
 ```
-GEMINI_API_KEY=          # Required — Google AI API key
+GEMINI_API_KEY=          # Required — Google AI API key (or VERTEX_API for Gemini on GCloud)
 GEMINI_BASE_URL=         # Optional — proxy URL (e.g. Cloudflare Worker)
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -162,7 +167,3 @@ All dashboard pages share `dashboard/layout.tsx` which mounts: sidebar navigatio
 - **Vietnamese context**: All UI text, canned responses, and financial logic must use Vietnamese currency (VND), Vietnamese financial terminology, and VN-specific financial context (SJC gold, VN-Index, USD/VND, Sacombank Eximbank rates).
 
 ---
-
-## Pending Work
-
-1. **Playwright E2E tests** — vitest covers unit tests (57 tests across 10 files); playwright needed for critical user flows.

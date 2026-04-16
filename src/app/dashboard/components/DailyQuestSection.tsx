@@ -22,9 +22,15 @@ const questLinks: Record<string, string> = {
 
 interface DailyQuestSectionProps {
   className?: string;
+  title?: string;
+  subtitle?: string;
 }
 
-export function DailyQuestSection({ className }: DailyQuestSectionProps) {
+export function DailyQuestSection({
+  className,
+  title = "Nhiệm vụ hàng ngày",
+  subtitle,
+}: DailyQuestSectionProps) {
   const [quests, setQuests] = useState<DailyQuest[]>([]);
   const prevDoneRef = useRef(0);
   const questsRef = useRef<DailyQuest[]>([]);
@@ -69,6 +75,9 @@ export function DailyQuestSection({ className }: DailyQuestSectionProps) {
   const progress = quests.length > 0 ? (completedCount / quests.length) * 100 : 0;
   const remainingCount = Math.max(quests.length - completedCount, 0);
   const remainingXp = quests.filter((item) => !item.completed).reduce((sum, item) => sum + item.xp, 0);
+  const statusText = allDone
+    ? "Đã hoàn tất toàn bộ quest hôm nay"
+    : subtitle ?? `Còn ${remainingCount} nhiệm vụ cần xử lý`;
 
   return (
     <>
@@ -78,64 +87,52 @@ export function DailyQuestSection({ className }: DailyQuestSectionProps) {
       <motion.section
         variants={fadeIn}
         className={cn(
-          "glass-card relative mb-6 overflow-hidden border border-white/10 p-6 transition-all duration-500 md:p-8",
-          allDone && "border-[#22C55E]/35 shadow-[0_0_28px_rgba(34,197,94,0.12)]",
+          "group relative mb-6 overflow-hidden rounded-xl border border-[#22C55E]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 md:p-8",
+          allDone && "border-[#22C55E]/50 shadow-[0_0_32px_rgba(34,197,94,0.18)]",
           className
         )}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/[0.05] to-transparent" />
-        <div className="pointer-events-none absolute -top-32 -right-16 h-64 w-64 rounded-full bg-[#E6B84F]/10 blur-[90px]" />
+        {/* Cyber-Technical Background Elements */}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.18),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(0,229,255,0.08),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
-        <div className="relative z-10 mb-8 border-b border-white/[0.06] pb-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5">
-                  <Target className={cn("h-5 w-5", allDone ? "text-emerald-400" : "text-[#E6B84F]")} />
-                </div>
-                <div>
-                  <h3 className="font-heading text-[18px] font-black uppercase tracking-widest text-white">
-                    Nhiệm vụ hàng ngày
-                  </h3>
-                  <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.2em] text-white/45">
-                    {allDone ? "Đã hoàn tất toàn bộ quest hôm nay" : `Còn ${remainingCount} nhiệm vụ cần xử lý`}
-                  </p>
-                </div>
-              </div>
+        {/* Corner Decor */}
+        <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#22C55E]/35" />
+        <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#22C55E]/20" />
 
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-44 overflow-hidden rounded-full bg-white/10">
+        <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
+          <div className="relative flex flex-col items-start px-6 pt-2">
+            <div className="w-full text-left">
+              <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
+                {title}
+              </h3>
+              <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+                {statusText}
+              </p>
+
+              <div className="mt-8 flex max-w-[400px] flex-col items-start gap-4">
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/5">
+                  <div className="absolute inset-0 opacity-20 bg-white/5" />
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", allDone ? "bg-emerald-400" : "bg-[#E6B84F]")}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className={cn(
+                      "relative h-full",
+                      allDone ? "bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.5)]" : "bg-[#E6B84F] shadow-[0_0_15px_rgba(230,184,79,0.3)]"
+                    )}
                   />
                 </div>
-                <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/55">
-                  {completedCount}/{quests.length} hoàn tất
+                <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/30">
+                  {completedCount}/{quests.length} ĐÃ HOÀN TẤT
                 </span>
               </div>
             </div>
-
-            {allDone ? (
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 font-mono text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Mission accomplished
-              </motion.div>
-            ) : (
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] font-black uppercase tracking-[0.18em] text-white/55">
-                +{remainingXp} XP còn lại
-              </span>
-            )}
           </div>
         </div>
 
-        <ul className="grid gap-3 md:grid-cols-2">
+        <ul className="grid gap-4">
           {quests.map((quest, index) => (
             <motion.li
               key={quest.id}
@@ -143,70 +140,107 @@ export function DailyQuestSection({ className }: DailyQuestSectionProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.04 }}
             >
-              <Link
-                href={questLinks[quest.actionKey] || "/dashboard"}
+              <motion.div
                 className={cn(
-                  "group/quest flex items-start gap-4 rounded-2xl border px-4 py-4 transition-all duration-300",
+                  "group/quest relative flex items-start gap-4 rounded-xl border px-4 py-4 transition-all duration-300",
                   quest.completed
-                    ? "border-emerald-400/20 bg-emerald-400/[0.06]"
-                    : "border-white/10 bg-white/[0.03] hover:-translate-y-0.5 hover:border-[#E6B84F]/35 hover:bg-white/[0.06]"
+                    ? "pointer-events-none border-slate-400/10 bg-slate-400/[0.03] cursor-default opacity-60"
+                    : "border-emerald-500/10 bg-emerald-500/[0.02] hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/5 cursor-pointer"
                 )}
+                animate={!quest.completed ? {
+                  boxShadow: [
+                    "0 0 15px rgba(16, 185, 129, 0.03)",
+                    "0 0 25px rgba(16, 185, 129, 0.12)",
+                    "0 0 15px rgba(16, 185, 129, 0.03)"
+                  ],
+                  borderColor: [
+                    "rgba(16, 185, 129, 0.1)",
+                    "rgba(16, 185, 129, 0.25)",
+                    "rgba(16, 185, 129, 0.1)"
+                  ]
+                } : {}}
+                transition={!quest.completed ? {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+                onClick={() => {
+                  if (!quest.completed) {
+                    window.location.href = questLinks[quest.actionKey] || "/dashboard";
+                  }
+                }}
               >
                 <div
                   className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-xl transition-colors",
-                    quest.completed ? "border-emerald-300/40 bg-emerald-400/10" : "border-white/15 bg-white/5"
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-xl transition-colors shadow-[0_0_15px_rgba(0,0,0,0.2)]",
+                    quest.completed ? "border-slate-500/20 bg-slate-500/10" : "border-white/10 bg-white/5"
                   )}
                 >
-                  {quest.completed ? "✅" : quest.icon}
+                  {quest.completed ? (
+                    <div className="relative opacity-60">
+                      <span>✅</span>
+                    </div>
+                  ) : (
+                    <span className="opacity-80 group-hover/quest:opacity-100 transition-opacity">{quest.icon}</span>
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p
                       className={cn(
-                        "text-[14px] font-black tracking-tight",
-                        quest.completed ? "text-emerald-200/70" : "text-white/90"
+                        "font-heading text-[15px] font-black uppercase tracking-wide",
+                        quest.completed ? "text-slate-400" : "text-white/90"
                       )}
                     >
                       {quest.title}
                     </p>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-[0.14em]",
+                        "shrink-0 rounded-md border px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider",
                         quest.completed
-                          ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-300"
-                          : "border-[#E6B84F]/30 bg-[#E6B84F]/10 text-[#E6B84F]"
+                          ? "border-slate-500/30 bg-slate-500/10 text-slate-400"
+                          : "border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
                       )}
                     >
                       +{quest.xp} XP
                     </span>
                   </div>
 
-                  <p className={cn("mt-1 text-[12px] leading-relaxed", quest.completed ? "text-emerald-100/45" : "text-white/45")}>
+                  <p className={cn("mt-1.5 text-[13px] leading-relaxed font-semibold", quest.completed ? "text-slate-500" : "text-white/60")}>
                     {quest.description}
                   </p>
 
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-4 flex items-center justify-between">
                     <span
                       className={cn(
-                        "font-mono text-[10px] uppercase tracking-[0.14em]",
-                        quest.completed ? "text-emerald-300/70" : "text-white/35"
+                        "font-mono text-[10px] font-black uppercase tracking-wider",
+                        quest.completed ? "text-slate-500" : "text-[#22C55E]/70"
                       )}
                     >
-                      {quest.completed ? "Đã hoàn tất" : "Mở nhiệm vụ"}
+                      {quest.completed ? "Trạng thái: Đã xong" : "Hành động: Khám phá"}
                     </span>
-                    <ArrowUpRight
-                      className={cn(
-                        "h-4 w-4 transition-transform duration-300",
-                        quest.completed
-                          ? "text-emerald-300/70"
-                          : "text-white/35 group-hover/quest:-translate-y-0.5 group-hover/quest:translate-x-0.5 group-hover/quest:text-[#E6B84F]"
-                      )}
-                    />
+                    <div className="flex items-center gap-1.5 opacity-40 group-hover/quest:opacity-100 transition-all duration-300">
+                      <div className="h-0.5 w-8 bg-current opacity-20" />
+                      <ArrowUpRight
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-300",
+                          quest.completed
+                            ? "text-slate-500"
+                            : "text-[#22C55E] group-hover/quest:-translate-y-0.5 group-hover/quest:translate-x-0.5"
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
-              </Link>
+
+                {/* Decorative dots in quest card */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-10 group-hover/quest:opacity-30 transition-opacity">
+                  <span className="h-0.5 w-0.5 rounded-full bg-white transition-all group-hover/quest:bg-[#22C55E]" />
+                  <span className="h-0.5 w-0.5 rounded-full bg-white transition-all group-hover/quest:bg-[#22C55E]" />
+                  <span className="h-0.5 w-0.5 rounded-full bg-white transition-all group-hover/quest:bg-[#22C55E]" />
+                </div>
+              </motion.div>
             </motion.li>
           ))}
 

@@ -80,7 +80,6 @@ const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 };
-
 /* ─── Animated Counter (Wealthsimple-style) ─── */
 function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
   target: number; prefix?: string; suffix?: string; duration?: number;
@@ -116,6 +115,112 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
     <span ref={ref}>
       {prefix}{count.toLocaleString("vi-VN")}{suffix}
     </span>
+  );
+}
+
+function NetWorthCard({
+  netWorthMillions,
+  monthlyDeltaPct,
+  mounted,
+}: {
+  netWorthMillions: number | null;
+  monthlyDeltaPct: number;
+  mounted: boolean;
+}) {
+  const chartData = [
+    { m: 'T1', v: 40, amount: '4.0 TRIỆU' },
+    { m: 'T2', v: 55, amount: '5.5 TRIỆU' },
+    { m: 'T4', v: 80, amount: netWorthMillions && netWorthMillions >= 1000 ? `${(netWorthMillions / 1000).toFixed(1)} TỶ` : `${netWorthMillions} TRIỆU` }
+  ];
+
+  return (
+    <div className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/20 group flex flex-col">
+      {/* Cyber-Technical Background Elements */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.08),transparent_46%)] opacity-80" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
+      <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-white/20" />
+      <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-white/10" />
+
+      <div className="relative z-10 mb-4 border-b border-white/[0.06] pb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between px-2 sm:px-6">
+        <div className="relative flex flex-col items-start pt-2">
+          <div className="w-full text-left">
+            <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
+              TỔNG TÀI SẢN RÒNG
+            </h3>
+            <p className="mt-3 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+              PHÂN TÍCH TÀI SẢN RÒNG
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2 pt-2">
+          <p className="font-mono text-[11px] font-black tracking-widest text-white/60">
+            {mounted ? new Date().toLocaleDateString("vi-VN").toUpperCase() : "--/--/----"}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-1 flex-col lg:flex-row items-center gap-8 px-2 sm:px-6 mb-4">
+        {/* Left column: Metrics */}
+        <div className="flex flex-col items-start min-w-[200px]">
+          <div className="flex items-baseline gap-3">
+            <span className="font-heading text-[48px] sm:text-[64px] font-black text-white leading-none tracking-tighter">
+              {netWorthMillions !== null ? (
+                <AnimatedCounter target={netWorthMillions >= 1000 ? netWorthMillions / 1000 : netWorthMillions} />
+              ) : (
+                <span className="text-white/20">—</span>
+              )}
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-heading text-[20px] sm:text-[24px] text-white/70 font-black uppercase tracking-tight leading-none">
+                {netWorthMillions && netWorthMillions >= 1000 ? "TỶ" : "TRIỆU"}
+              </span>
+              <span className="font-heading text-[16px] sm:text-[20px] text-white/40 font-black tracking-widest leading-none">VND</span>
+            </div>
+          </div>
+
+          <div className={cn(
+            "mt-4 flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-[12px] font-black uppercase tracking-wider",
+            monthlyDeltaPct > 0 ? "bg-[#22C55E]/5 border-[#22C55E]/20 text-[#22C55E]" :
+              monthlyDeltaPct < 0 ? "bg-[#EF4444]/5 border-[#EF4444]/20 text-[#EF4444]" :
+                "bg-white/5 border-white/10 text-white/40"
+          )}>
+            {monthlyDeltaPct > 0 ? `Tăng ${monthlyDeltaPct}% tháng này` :
+              monthlyDeltaPct < 0 ? `Giảm ${Math.abs(monthlyDeltaPct)}% tháng này` :
+                "Không thay đổi"}
+          </div>
+        </div>
+
+        {/* Right column: Chart section */}
+        <div className="flex-1 w-full flex flex-col justify-end h-full pt-4">
+          <div className="flex items-end gap-3 h-[130px] w-full">
+            {chartData.map((d, i) => (
+              <div key={i} className="flex flex-col items-center flex-1 group/bar h-full">
+                <div className="relative w-full h-full flex items-end">
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${d.v}%` }}
+                    transition={{ duration: 1.2, delay: i * 0.1, ease: "circOut" }}
+                    className={cn(
+                      "w-full rounded-t-md relative",
+                      d.m === 'T4'
+                        ? "bg-gradient-to-t from-[#22C55E]/40 to-[#22C55E] shadow-[0_0_24px_rgba(34,197,94,0.3)]"
+                        : "bg-white/10"
+                    )}
+                  >
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-black/90 border border-white/10 px-2.5 py-1 rounded shadow-xl text-[10px] text-white font-mono whitespace-nowrap z-20">
+                      {d.amount}
+                    </div>
+                  </motion.div>
+                </div>
+                <span className="mt-3 font-mono text-[11px] font-black text-white/60 uppercase tracking-widest">{d.m}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -158,36 +263,28 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
   return (
     <motion.div
       variants={fadeIn}
-      className="group relative h-full overflow-hidden rounded-lg border border-[#22C55E]/20 bg-[#08110f] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 sm:p-6 md:p-8"
+      className="group relative h-full overflow-hidden rounded-xl border border-[#22C55E]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 md:p-8"
     >
+      {/* Cyber-Technical Background Elements */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.18),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(0,229,255,0.08),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:38px_38px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
+      {/* Corner Decor */}
       <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#22C55E]/35" />
       <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#22C55E]/20" />
-      <div className="absolute right-3 top-1/2 hidden translate-y-[-50%] flex-col gap-1 opacity-30 sm:flex">
-        <span className="h-0.5 w-0.5 rounded-full bg-white" />
-        <span className="h-0.5 w-0.5 rounded-full bg-white" />
-        <span className="h-0.5 w-0.5 rounded-full bg-white" />
-      </div>
 
-      <div className="relative z-10 mb-8 min-h-20 pr-24">
-        <div>
-          <h3 className="font-heading text-[19px] font-black uppercase leading-[1.18] tracking-[0.22em] text-white/80 drop-shadow-[0_2px_18px_rgba(255,255,255,0.08)] sm:text-[21px]">
-            PHÂN BỔ<br />
-            DANH MỤC
-          </h3>
-          <p className="mt-3 max-w-[190px] font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/60">
-            Gợi ý phân bổ tài sản
-          </p>
+      <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6 max-w-full">
+        <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+          <div className="w-full text-left">
+            <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
+              PHÂN BỔ DANH MỤC
+            </h3>
+            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              Gợi ý phân bổ tài sản
+            </p>
+          </div>
         </div>
-        <Link
-          href="/dashboard/portfolio"
-          className="group/link absolute right-0 top-0 flex min-h-12 items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2.5 font-mono text-[9px] font-black uppercase leading-tight tracking-[0.18em] text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-[#22C55E]/35 hover:bg-[#22C55E]/10 hover:text-white"
-        >
-          Chi tiết <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
-        </Link>
       </div>
 
       <div className="relative z-10 flex flex-col items-center">
@@ -268,7 +365,7 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
                     style={{ backgroundColor: item.color }}
                   />
                 </div>
-                <span className="min-w-0 whitespace-nowrap font-heading text-[12px] font-black uppercase tracking-[0.14em] text-white/70 transition-colors group-hover/item:text-white sm:text-[13px]">
+                <span className="min-w-0 whitespace-nowrap font-heading text-[15px] font-black uppercase tracking-wide text-white/90 transition-colors group-hover/item:text-white">
                   {item.asset}
                 </span>
               </div>
@@ -355,24 +452,34 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
       className="col-span-full space-y-4 relative w-full h-full flex flex-col"
     >
       {/* Top Executive Summary Box */}
-      <div className="glass-card p-8 md:p-10 border-[#E6B84F]/10 relative overflow-hidden group">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#E6B84F]/30 to-transparent" />
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="group relative overflow-hidden rounded-xl border border-[#E6B84F]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#E6B84F]/40 md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(31,24,10,0.92)_0%,rgba(20,11,7,0.98)_72%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(230,184,79,0.12),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(255,229,0,0.06),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
-        <div className="relative z-10 flex flex-col">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-[#E6B84F]" />
-              <h2 className="text-[20px] font-black text-white font-heading uppercase tracking-widest flex flex-wrap items-center gap-2">
-                Bản tin sáng AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- TÓM TẮT ĐIỀU HÀNH</span>
-              </h2>
+        {/* Corner Decor */}
+        <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#E6B84F]/35" />
+        <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#E6B84F]/20" />
+
+        <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+            <div className="w-full text-left">
+              <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px] flex items-center gap-3">
+                <Sparkles className="w-6 h-6 text-[#E6B84F]" />
+                BẢN TIN SÁNG AI
+              </h3>
+              <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+                TÓM TẮT ĐIỀU HÀNH
+              </p>
             </div>
-            <span className="text-xs text-white/30 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest">
-              <Calendar className="w-3.5 h-3.5" />
-              {brief.date}
-            </span>
           </div>
-          <p className="text-[16px] text-white/80 leading-relaxed font-semibold tracking-normal w-full opacity-90 text-justify">
+          <span className="text-xs text-white/30 sm:mt-2 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest px-2 sm:px-6">
+            <Calendar className="w-3.5 h-3.5" />
+            {brief.date}
+          </span>
+        </div>
+        <div className="relative z-10">
+          <p className="text-[13px] text-white/60 leading-relaxed font-semibold tracking-normal w-full px-2 sm:px-6 text-justify">
             {brief.summary}
           </p>
         </div>
@@ -382,71 +489,85 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
       <div className="grid lg:grid-cols-2 gap-4 flex-1">
 
         {/* Left Panel - Chứng khoán (Green Focus) */}
-        <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#22C55E]/10 hover:border-[#22C55E]/30 transition-colors duration-500">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-[#22C55E]/10 blur-[60px] pointer-events-none group-hover:bg-[#22C55E]/20 transition-colors duration-500" />
-          <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#22C55E] to-transparent" />
-          <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#22C55E] to-transparent" />
+        <div className="group relative overflow-hidden rounded-xl border border-[#22C55E]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.18),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(0,229,255,0.08),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
-          <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#22C55E]/10 pb-4">
-            <div className="w-8 h-8 rounded-lg bg-[#22C55E]/10 flex items-center justify-center border border-[#22C55E]/20">
-              <TrendingUp className="w-4 h-4 text-[#22C55E]" />
+          <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
+            <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+              <div className="w-full text-left">
+                <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px] flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#22C55E]/10 flex items-center justify-center border border-[#22C55E]/20">
+                    <TrendingUp className="w-4 h-4 text-[#22C55E]" />
+                  </div>
+                  CHỨNG KHOÁN
+                </h3>
+                <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#22C55E]/50">
+                  PHÂN TÍCH
+                </p>
+              </div>
             </div>
-            <h3 className="text-[18px] font-black text-[#22C55E] font-heading uppercase tracking-widest flex items-center gap-2">
-              Chứng Khoán <span className="text-[#22C55E]/50 font-mono text-[14px] tracking-widest">- PHÂN TÍCH</span>
-            </h3>
           </div>
 
-          <div className="space-y-6 relative z-10 h-full">
+          <div className="space-y-6 relative z-10 h-full px-2 sm:px-6">
             {finalLeft.map((t, i) => (
               <div key={i} className="flex gap-4 items-start">
                 <span className="text-2xl mt-0.5 flex-shrink-0 opacity-90 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
                 <div className="space-y-1.5 flex-1">
-                  <h4 className="text-[14px] font-black text-white/90 font-mono uppercase tracking-widest text-[#22C55E]">
+                  <h4 className="font-heading text-[15px] font-black uppercase tracking-wide text-[#22C55E]/90">
                     {t.asset}
                   </h4>
-                  <p className="text-[15px] text-white/70 leading-relaxed font-semibold">
+                  <p className="mt-1.5 text-[13px] leading-relaxed font-semibold text-white/60">
                     {t.text}
                   </p>
                 </div>
               </div>
             ))}
             {finalLeft.length === 0 && (
-              <p className="text-white/30 text-sm italic py-4">Không có phân tích chứng khoán hôm nay.</p>
+              <p className="text-[13px] text-white/30 italic py-4">Không có phân tích chứng khoán hôm nay.</p>
             )}
           </div>
         </div>
 
         {/* Right Panel - Vàng & Vĩ mô (Gold Focus) */}
-        <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#E6B84F]/10 hover:border-[#E6B84F]/30 transition-colors duration-500">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-[#E6B84F]/8 blur-[60px] pointer-events-none group-hover:bg-[#E6B84F]/15 transition-colors duration-500" />
-          <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#E6B84F] to-transparent" />
-          <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#E6B84F] to-transparent" />
+        <div className="group relative overflow-hidden rounded-xl border border-[#E6B84F]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#E6B84F]/40 md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(31,24,10,0.92)_0%,rgba(20,11,7,0.98)_72%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(230,184,79,0.12),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(255,229,0,0.06),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
-          <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#E6B84F]/10 pb-4">
-            <div className="w-8 h-8 rounded-lg bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20">
-              <BarChart3 className="w-4 h-4 text-[#E6B84F]" />
+          <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
+            <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+              <div className="w-full text-left">
+                <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px] flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20">
+                    <BarChart3 className="w-4 h-4 text-[#E6B84F]" />
+                  </div>
+                  VÀNG & VĨ MÔ
+                </h3>
+                <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#E6B84F]/50">
+                  NHẬN ĐỊNH
+                </p>
+              </div>
             </div>
-            <h3 className="text-[18px] font-black text-[#E6B84F] font-heading uppercase tracking-widest flex items-center gap-2">
-              Vàng & Vĩ Mô <span className="text-[#E6B84F]/50 font-mono text-[14px] tracking-widest">- NHẬN ĐỊNH</span>
-            </h3>
           </div>
 
-          <div className="space-y-6 relative z-10 h-full">
+          <div className="space-y-6 relative z-10 h-full px-2 sm:px-6">
             {finalRight.map((t, i) => (
               <div key={i} className="flex gap-4 items-start">
                 <span className="text-2xl mt-0.5 flex-shrink-0 opacity-90 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
                 <div className="space-y-1.5 flex-1">
-                  <h4 className="text-[14px] font-black text-white/90 font-mono uppercase tracking-widest text-[#E6B84F]">
+                  <h4 className="font-heading text-[15px] font-black uppercase tracking-wide text-[#E6B84F]/90">
                     {t.asset}
                   </h4>
-                  <p className="text-[15px] text-white/70 leading-relaxed font-semibold">
+                  <p className="mt-1.5 text-[13px] leading-relaxed font-semibold text-white/60">
                     {t.text}
                   </p>
                 </div>
               </div>
             ))}
             {finalRight.length === 0 && (
-              <p className="text-white/30 text-sm italic py-4">Không có phân tích nào khác hôm nay.</p>
+              <p className="text-[13px] text-white/30 italic py-4">Không có phân tích nào khác hôm nay.</p>
             )}
           </div>
         </div>
@@ -483,25 +604,29 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card group relative h-full overflow-hidden border border-[#22C55E]/20 bg-[#0B0D17]/75 p-5 transition-all duration-500 hover:border-[#22C55E]/45 md:p-6"
+      className="group relative h-full overflow-hidden rounded-xl border border-[#22C55E]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 md:p-8"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),transparent_40%),radial-gradient(circle_at_92%_10%,rgba(0,229,255,0.12),transparent_28%)]" />
-      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#22C55E]/80 to-transparent" />
-      <div className="pointer-events-none absolute right-5 top-24 h-24 w-1 rounded-full bg-[#22C55E] shadow-[0_0_18px_rgba(34,197,94,0.8)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.18),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(0,229,255,0.08),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
 
-      <div className="relative z-10 mb-5 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#22C55E]/25 bg-[#22C55E]/10">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] shadow-[0_0_14px_rgba(34,197,94,0.9)]" />
-            </div>
-            <h3 className="font-heading text-[18px] font-black uppercase tracking-[0.18em] text-white md:text-[20px]">
-              Market News Terminal
+      {/* Corner Decor */}
+      <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#22C55E]/35" />
+      <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#22C55E]/20" />
+
+      <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between px-2 sm:px-6">
+        <div className="relative flex flex-col items-start pt-2">
+          <div className="w-full text-left">
+            <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px] flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#22C55E]/25 bg-[#22C55E]/10 flex-shrink-0">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] shadow-[0_0_14px_rgba(34,197,94,0.9)]" />
+              </div>
+              TIN TỨC THỊ TRƯỜNG
             </h3>
+            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              MARKET NEWS TERMINAL
+            </p>
           </div>
-          <p className="ml-11 mt-1 font-mono text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
-            Tin tức thị trường
-          </p>
         </div>
         <Link
           href="/dashboard/news"
@@ -568,8 +693,8 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
                     transition={{ delay: i * 0.03, duration: 0.22 }}
                     className="group/news relative grid cursor-pointer grid-cols-[1fr_auto] gap-4 py-4 transition-colors hover:bg-[#22C55E]/[0.03]"
                   >
-                    <div className="min-w-0">
-                      <p className="line-clamp-2 font-heading text-[14px] font-black leading-relaxed tracking-tight text-white/70 transition-colors group-hover/news:text-white md:text-[15px]">
+                    <div className="min-w-0 px-2">
+                      <p className="line-clamp-2 font-heading text-[15px] font-black leading-relaxed tracking-wide text-white/90 transition-colors group-hover/news:text-white">
                         {n.title}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-white/35">
@@ -765,139 +890,39 @@ export default function DashboardOverview() {
         />
       )}
       <motion.div initial="hidden" animate="visible" variants={stagger}>
-        {/* Net Worth Banner — Wealthsimple-style */}
-        {/* Net Worth Banner — Cyber-Editorial Style */}
-        <motion.div variants={fadeIn} className="mb-6">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B0D17] via-[#121525] to-[#0A0D1A] border border-white/[0.08] p-8 md:p-10 group">
-            {/* Cyber Corner Decor */}
-            <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#22C55E]/40 to-transparent" />
-            <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#22C55E]/40 to-transparent" />
-            <div className="absolute bottom-0 right-0 w-32 h-[2px] bg-gradient-to-l from-[#00E5FF]/40 to-transparent" />
-            <div className="absolute bottom-0 right-0 w-[2px] h-32 bg-gradient-to-t from-[#00E5FF]/40 to-transparent" />
-
-            {/* Layered orbs */}
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#E6B84F]/8 transition-colors duration-700" />
-            <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-[#00E5FF]/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-[#00E5FF]/8 transition-colors duration-700" />
-
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
-              {/* Left: Main Balance */}
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-                    <Wallet className="w-5 h-5 text-white/60" />
-                  </div>
-                  <div>
-                    <h3 className="text-[14px] font-black font-mono uppercase tracking-[0.3em] text-white/40">
-                      Tổng tài sản ròng <span className="text-white/20">- NET WORTH</span>
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse shadow-[0_0_8px_#22C55E]" />
-                      <span className="text-[10px] font-black text-[#22C55E]/60 uppercase tracking-widest font-mono">Vault Protected</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-baseline gap-4 mb-6">
-                  {netWorthAccessibleText ? <span className="sr-only">{netWorthAccessibleText}</span> : null}
-                  <span className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none group-hover:scale-[1.01] transition-transform duration-500">
-                    {netWorthMillions !== null ? (
-                      <AnimatedCounter target={netWorthMillions} />
-                    ) : (
-                      <span className="text-white/20">—</span>
-                    )}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-2xl md:text-3xl text-white/40 font-black uppercase tracking-tight">triệu</span>
-                    <span className="text-lg text-white/20 font-mono">VND</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-6">
-                  <span className="sr-only">{incomeAccessibleText}</span>
-                  {monthlyDeltaPct !== 0 && netWorth !== null && (
-                    <div className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-[12px] font-black uppercase tracking-widest",
-                      monthlyDeltaPct >= 0 ? "bg-[#22C55E]/5 border-[#22C55E]/20 text-[#22C55E]" : "bg-[#EF4444]/5 border-[#EF4444]/20 text-[#EF4444]"
-                    )}>
-                      {monthlyDeltaPct >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                      {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% <span className="opacity-40 ml-1">THÁNG NÀY</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-white/30 font-mono text-[11px] font-black uppercase tracking-[0.2em]">
-                    <Calendar className="w-4 h-4 text-white/20" />
-                    {mounted ? new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : "—"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Actions */}
-              <div className="flex flex-col gap-3 min-w-[220px]">
-                <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] font-mono mb-2 md:text-right">Thao tác nhanh</p>
-                <div className="grid grid-cols-1 gap-3">
-                  <Link
-                    href="/dashboard/budget"
-                    className="group/btn flex items-center justify-between px-6 py-4 rounded-xl text-[12px] font-black font-mono uppercase tracking-[0.2em] transition-all duration-300 bg-white/5 border border-white/10 text-white/80 hover:bg-[#E6B84F] hover:border-[#E6B84F] hover:text-[#111318] hover:shadow-[0_0_20px_rgba(230,184,79,0.3)]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <PencilLine className="w-4 h-4" />
-                      Ghi chi tiêu
-                    </div>
-                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                  </Link>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Link
-                      href="/dashboard/budget"
-                      className="flex items-center justify-center p-4 rounded-xl bg-white/[0.03] border border-white/5 text-white/40 hover:bg-white/10 hover:text-white/80 transition-all group/sub"
-                    >
-                      <Wallet className="w-4 h-4 group-hover/sub:scale-110 transition-transform" />
-                    </Link>
-                    <Link
-                      href="/dashboard/budget"
-                      className="flex items-center justify-center p-4 rounded-xl bg-white/[0.03] border border-white/5 text-white/40 hover:bg-white/10 hover:text-white/80 transition-all group/sub"
-                    >
-                      <BarChart3 className="w-4 h-4 group-hover/sub:scale-110 transition-transform" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Notification Permission Banner */}
         <NotificationBanner />
 
         {/* Market Metrics Grid + F&G Gauge + Morning Brief */}
         <div className="mb-4">
-          <MarketSection briefElement={<BriefCard brief={liveBrief} loading={briefLoading} />} />
+          <MarketSection
+            pinnedElement={
+              <NetWorthCard
+                netWorthMillions={netWorthMillions}
+                monthlyDeltaPct={monthlyDeltaPct}
+                mounted={mounted}
+              />
+            }
+            briefElement={<BriefCard brief={liveBrief} loading={briefLoading} />}
+          />
         </div>
 
-        {/* Daily Quests — Duolingo style */}
-        <DailyQuestSection />
-
-        {/* Achievement Badges */}
         <motion.div
           variants={fadeIn}
-          className="glass-card relative mb-6 overflow-hidden border border-white/10 p-6 transition-all duration-500 hover:border-[#E6B84F]/25 md:p-8"
+          className="mb-6 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]"
         >
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#E6B84F]/8 to-transparent pointer-events-none" />
-          <div className="absolute -top-24 -left-10 h-56 w-56 rounded-full bg-[#E6B84F]/10 blur-[90px] pointer-events-none" />
+          <DailyQuestSection className="mb-0 h-full" />
 
-          <div className="relative z-10 mb-6 flex items-start gap-4 border-b border-white/[0.06] pb-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#E6B84F]/30 bg-[#E6B84F]/12">
-              <span className="text-xl">🏅</span>
+          <div className="group relative overflow-hidden rounded-xl border border-[#E6B84F]/20 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#E6B84F]/40 md:p-8 h-full">
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(31,24,10,0.92)_0%,rgba(20,11,7,0.98)_72%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(230,184,79,0.12),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(255,229,0,0.06),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
+            <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#E6B84F]/35" />
+            <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#E6B84F]/20" />
+            <div className="relative z-10">
+              <BadgeGrid showProgress={false} compact />
             </div>
-            <div>
-              <h3 className="font-heading text-[18px] font-black uppercase tracking-widest text-white">
-                Thành tựu đạt được
-              </h3>
-              <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-white/45">
-                Mở khóa huy hiệu bằng cách duy trì thói quen tài chính mỗi ngày
-              </p>
-            </div>
-          </div>
-          <div className="relative z-10">
-            <BadgeGrid />
           </div>
         </motion.div>
         {/* Portfolio Allocation + News Terminal */}
