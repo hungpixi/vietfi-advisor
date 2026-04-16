@@ -139,11 +139,12 @@ All dashboard pages share `dashboard/layout.tsx` which mounts: sidebar navigatio
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| `MarketSection` | `src/app/dashboard/components/MarketSection.tsx` | Live market cards, FG gauge, auto-refresh, notification firing |
-| `DailyQuestSection` | `src/app/dashboard/components/DailyQuestSection.tsx` | Self-contained quest polling, completion toast, confetti |
-| `NotificationBanner` | `src/app/dashboard/components/NotificationBanner.tsx` | Push notification permission banner, self-managed dismissed state |
+| `MarketSection` | `src/app/dashboard/components/MarketSection.tsx` | High-fidelity market grid (lg:col-span-12), side-by-side pinned element support, FG gauge, and synchronized Cyber-Technical cards. |
+| `NetWorthCard` | `src/app/dashboard/page.tsx` | Signature feature: Large-scale metric display (Triệu/Tỷ VND), monthly growth bar chart with tooltips, and localized vault status. |
+| `DailyQuestSection` | `src/app/dashboard/components/DailyQuestSection.tsx` | Self-contained quest polling, completion toast, confetti using the Cyber-Technical design language. |
+| `NotificationBanner` | `src/app/dashboard/components/NotificationBanner.tsx` | Push notification permission banner, self-managed dismissed state. |
 
-> `src/app/dashboard/page.tsx` — refactored from 911 to ~500 lines by delegating to the above components. Uses `storage.ts` for all localStorage access.
+> `src/app/dashboard/page.tsx` — Orchestrates the master dashboard layout. Uses a logic-driven side-by-side grid for Net Worth and Market metrics. All components follow the synchronized "Cyber-Technical" aesthetic.
 
 ### Animations & Mascot
 
