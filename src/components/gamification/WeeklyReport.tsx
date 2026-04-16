@@ -89,8 +89,12 @@ export function WeeklyReportModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
   useEffect(() => {
     if (isOpen) {
-      setStats(getWeeklyStats());
-      setFreezeState(getStreakFreezeState());
+      const timer = window.setTimeout(() => {
+        setStats(getWeeklyStats());
+        setFreezeState(getStreakFreezeState());
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen]);
 

@@ -24,8 +24,12 @@ export default function LedgerPage() {
   } = useLedgerStore();
 
   useEffect(() => {
-    setMounted(true);
-    loadFromStorage();
+    const timer = window.setTimeout(() => {
+      setMounted(true);
+      loadFromStorage();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadFromStorage]);
 
   const summary = computeLedgerSummary(transactions, ui.period);

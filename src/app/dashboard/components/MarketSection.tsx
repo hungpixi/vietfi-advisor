@@ -236,7 +236,7 @@ export function MarketCard({ label, value, change, icon: Icon }: MarketCardData)
       data-testid="market-card"
     >
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-[18px] font-black uppercase font-heading text-white/40">
+        <span className="text-[16px] font-black font-heading text-white/40">
           {label}
         </span>
         <Icon
@@ -283,7 +283,7 @@ export function FGGauge({
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <h3 className="text-[18px] font-black text-white uppercase font-heading">
+          <h3 className="text-[20px] font-black text-white font-heading">
             Nhiệt kế thị trường
           </h3>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-black text-emerald-300">
@@ -391,7 +391,7 @@ export function FGGauge({
             const barColor = getIndicatorColor(indicator.value);
             return (
               <div key={indicator.label} className="flex items-center gap-6">
-                <span className="w-40 flex-shrink-0 text-[16px] text-white/90 font-black uppercase font-mono opacity-80">{indicator.label}</span>
+                <span className="w-40 flex-shrink-0 text-[16px] text-white/90 font-black font-mono opacity-80">{indicator.label}</span>
                 <div className="flex flex-1 items-center gap-5">
                   <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
                     <motion.div
@@ -416,7 +416,7 @@ export function FGGauge({
               <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
               </div>
-              <p className="text-base font-bold leading-relaxed text-white/90">{quote}</p>
+              <p className="text-base font-semibold leading-relaxed text-white/90">{quote}</p>
             </div>
             <div className="flex items-center gap-2.5 pl-9">
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />

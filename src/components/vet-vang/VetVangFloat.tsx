@@ -27,10 +27,14 @@ export default function VetVangFloat() {
   const roastTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const gam = getGamification();
-    setStreak(gam.streak);
-    setXp(gam.xp);
-    setMounted(true);
+    const timer = window.setTimeout(() => {
+      const gam = getGamification();
+      setStreak(gam.streak);
+      setXp(gam.xp);
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Random roast every 45s

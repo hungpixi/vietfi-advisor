@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const notoSans = Noto_Sans({
@@ -50,7 +51,7 @@ export default function RootLayout({
       </head>
       <body className={`${notoSans.variable} font-sans antialiased`}>
         {children}
-        <script src="/sw-register.js" />
+        <Script src="/sw-register.js" strategy="afterInteractive" />
       </body>
     </html>
   );

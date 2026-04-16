@@ -192,51 +192,123 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
     return (
       <motion.div
         variants={fadeIn}
-        className="glass-card p-6 border-[#E6B84F]/10 col-span-full animate-pulse"
+        className="col-span-full space-y-4 animate-pulse relative"
       >
-        <div className="h-4 bg-white/[0.06] rounded w-32 mb-4" />
-        <div className="h-8 bg-white/[0.06] rounded w-3/4 mb-3" />
-        <div className="h-5 bg-white/[0.06] rounded w-full mb-6" />
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 bg-white/[0.03] rounded-xl" />
-          ))}
+        <div className="glass-card p-6 md:p-8 flex flex-col items-center border border-white/[0.05]">
+          <div className="h-6 bg-white/[0.06] rounded w-64 mb-4" />
+          <div className="h-[72px] bg-white/[0.06] rounded w-full max-w-4xl" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="glass-card p-6 h-64 border border-white/[0.05]" />
+          <div className="glass-card p-6 h-64 border border-white/[0.05]" />
         </div>
       </motion.div>
     );
   }
+
+  const leftTakeaways = brief.takeaways.filter(
+    (t) => t.asset.toLowerCase().includes("chứng khoán") || t.asset.toLowerCase().includes("cổ phiếu")
+  );
+  const rightTakeaways = brief.takeaways.filter((t) => !leftTakeaways.includes(t));
+
+  const hasLeft = leftTakeaways.length > 0;
+  const finalLeft = hasLeft ? leftTakeaways : brief.takeaways.slice(0, 2);
+  const finalRight = hasLeft ? rightTakeaways : brief.takeaways.slice(2);
+
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card p-8 md:p-10 border-[#E6B84F]/10 col-span-full relative overflow-hidden"
+      className="col-span-full space-y-4 relative w-full"
     >
-      <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <Sparkles className="w-5 h-5 text-[#E6B84F]" />
-          <h2 className="text-[18px] font-black text-white uppercase font-heading">
-            Morning Brief AI
-          </h2>
-          <span className="text-xs text-white/20 ml-auto flex items-center gap-2 font-mono uppercase font-black tracking-widest">
-            <Calendar className="w-4 h-4" />
-            {brief.date}
-          </span>
+      {/* Top Executive Summary Box */}
+      <div className="glass-card p-8 md:p-10 border-[#E6B84F]/10 relative overflow-hidden group">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#E6B84F]/30 to-transparent" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Sparkles className="w-5 h-5 text-[#E6B84F]" />
+            <h2 className="text-[20px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
+              Morning Brief AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- EXECUTIVE SUMMARY</span>
+            </h2>
+          </div>
+          <p className="text-[16px] text-white/80 leading-relaxed font-semibold tracking-normal max-w-4xl mx-auto opacity-90">
+            {brief.summary}
+          </p>
+        </div>
+      </div>
+
+      {/* Two Column Detail Area */}
+      <div className="grid lg:grid-cols-2 gap-4">
+
+        {/* Left Panel - Chứng khoán (Green Focus) */}
+        <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#22C55E]/10 hover:border-[#22C55E]/30 transition-colors duration-500">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-[#22C55E]/10 blur-[60px] pointer-events-none group-hover:bg-[#22C55E]/20 transition-colors duration-500" />
+          <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#22C55E] to-transparent" />
+          <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#22C55E] to-transparent" />
+
+          <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#22C55E]/10 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#22C55E]/10 flex items-center justify-center border border-[#22C55E]/20">
+              <TrendingUp className="w-4 h-4 text-[#22C55E]" />
+            </div>
+            <h3 className="text-[18px] font-black text-[#22C55E] font-heading uppercase tracking-widest flex items-center gap-2">
+              Chứng Khoán <span className="text-[#22C55E]/50 font-mono text-[14px] tracking-widest">- ANALYSIS</span>
+            </h3>
+          </div>
+
+          <div className="space-y-6 relative z-10 h-full">
+            {finalLeft.map((t, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <span className="text-2xl mt-0.5 flex-shrink-0 opacity-90 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
+                <div className="space-y-1.5 flex-1">
+                  <h4 className="text-[14px] font-black text-white/90 font-mono uppercase tracking-widest text-[#22C55E]">
+                    {t.asset}
+                  </h4>
+                  <p className="text-[15px] text-white/70 leading-relaxed font-semibold">
+                    {t.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {finalLeft.length === 0 && (
+              <p className="text-white/30 text-sm italic py-4">Không có phân tích chứng khoán hôm nay.</p>
+            )}
+          </div>
         </div>
 
-        <p className="text-[16px] text-white/80 leading-relaxed mb-10 font-black uppercase tracking-tight w-full opacity-90">
-          {brief.summary}
-        </p>
+        {/* Right Panel - Vĩ mô/Vàng (Gold Focus) */}
+        <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#E6B84F]/10 hover:border-[#E6B84F]/30 transition-colors duration-500">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-[#E6B84F]/8 blur-[60px] pointer-events-none group-hover:bg-[#E6B84F]/15 transition-colors duration-500" />
+          <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#E6B84F] to-transparent" />
+          <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#E6B84F] to-transparent" />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {brief.takeaways.map((t: { emoji: string; asset: string; text: string }, i: number) => (
-            <div key={i} className="flex items-start gap-5 bg-white/[0.03] hover:bg-white/[0.06] transition-all rounded-3xl p-6 border border-white/[0.06] group">
-              <span className="text-4xl flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
-              <div className="space-y-2">
-                <span className="text-[16px] font-mono uppercase tracking-widest text-[#E6B84F] font-black">{t.asset}</span>
-                <p className="text-[16px] text-white/60 leading-relaxed font-black uppercase tracking-tight">{t.text}</p>
-              </div>
+          <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#E6B84F]/10 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20">
+              <BarChart3 className="w-4 h-4 text-[#E6B84F]" />
             </div>
-          ))}
+            <h3 className="text-[18px] font-black text-[#E6B84F] font-heading uppercase tracking-widest flex items-center gap-2">
+              Vàng & Vĩ Mô <span className="text-[#E6B84F]/50 font-mono text-[14px] tracking-widest">- INSIGHTS</span>
+            </h3>
+          </div>
+
+          <div className="space-y-6 relative z-10 h-full">
+            {finalRight.map((t, i) => (
+              <div key={i} className="flex gap-4 items-start">
+                <span className="text-2xl mt-0.5 flex-shrink-0 opacity-90 group-hover:scale-110 transition-transform duration-300">{t.emoji}</span>
+                <div className="space-y-1.5 flex-1">
+                  <h4 className="text-[14px] font-black text-white/90 font-mono uppercase tracking-widest text-[#E6B84F]">
+                    {t.asset}
+                  </h4>
+                  <p className="text-[15px] text-white/70 leading-relaxed font-semibold">
+                    {t.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {finalRight.length === 0 && (
+              <p className="text-white/30 text-sm italic py-4">Không có phân tích nào khác hôm nay.</p>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

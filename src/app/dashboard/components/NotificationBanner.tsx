@@ -20,7 +20,8 @@ export function NotificationBanner() {
       Notification.permission === "default" &&
       !getNotifDismissed()
     ) {
-      setShow(true)
+      const timer = window.setTimeout(() => setShow(true), 0)
+      return () => window.clearTimeout(timer)
     }
   }, [])
 

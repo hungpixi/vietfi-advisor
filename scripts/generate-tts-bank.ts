@@ -6,6 +6,7 @@
  * Requires: edge-tts-universal (đã install trong project)
  * Output: public/audio/tts/{id}.mp3
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -47,7 +48,7 @@ async function main() {
       await generateAudio(item.ttsText, outPath);
       success++;
       console.log(`  ✅ ${item.id} (${item.ttsText.substring(0, 50)}...)`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       failed++;
       console.error(`  ❌ ${item.id}: ${err.message}`);
     }

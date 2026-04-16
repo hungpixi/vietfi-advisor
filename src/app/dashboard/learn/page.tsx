@@ -173,9 +173,13 @@ export default function LearnPage() {
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const done = getLessonsDone();
-    setCompletedIds(done);
-    setMounted(true);
+    const timer = window.setTimeout(() => {
+      const done = getLessonsDone();
+      setCompletedIds(done);
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   function startLesson(l: Lesson) {

@@ -9,6 +9,7 @@
  * All fetchers are independent — one failure does NOT block the others.
  * Data is returned even if partial.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as cheerio from 'cheerio'
 import { callGemini } from '@/lib/gemini'

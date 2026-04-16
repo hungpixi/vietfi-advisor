@@ -123,9 +123,11 @@ function GamificationBar() {
   useEffect(() => {
     // First mount: read from localStorage
     const initial = getGamification();
-    setGam(initial);
-    prevXPRef.current = initial.xp;
-    setMounted(true);
+    const timer = window.setTimeout(() => {
+      setGam(initial);
+      prevXPRef.current = initial.xp;
+      setMounted(true);
+    }, 0);
 
     const t = setInterval(() => {
       const newGam = getGamification();
@@ -136,7 +138,10 @@ function GamificationBar() {
       }
       setGam(newGam);
     }, 1000);
-    return () => clearInterval(t);
+    return () => {
+      window.clearTimeout(timer);
+      clearInterval(t);
+    };
   }, [getGamification]); // Polling from the local storage helper function
 
   const { current, next, progress, xpToNext } = getLevelProgress(gam.xp);

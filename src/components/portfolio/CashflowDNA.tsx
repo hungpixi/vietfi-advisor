@@ -27,21 +27,25 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setIncome(getIncome());
-    
-    // Tính tổng chi phí thiết yếu từ pots (giả định các mục cơ bản)
-    const pots = getBudgetPots();
-    const essentials = pots.filter(p => 
-      ['Ăn uống', 'Nhà cửa', 'Đi lại', 'Hoá đơn', 'Sức khoẻ'].some(k => p.name.includes(k))
-    ).reduce((sum, p) => sum + p.allocated, 0);
-    // Dự phòng nếu không có tên khớp: Lấy 50% tổng allocated
-    setEssentialExpense(essentials > 0 ? essentials : pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5);
-    
-    // Tính tổng tiền trả nợ tối thiểu
-    const debts = getDebts();
-    const minD = debts.reduce((sum, d) => sum + d.min_payment, 0);
-    setDebtMin(minD);
+    const timer = window.setTimeout(() => {
+      setMounted(true);
+      setIncome(getIncome());
+      
+      // T?nh t?ng chi ph? thi?t y?u t? pots (gi? ??nh c?c m?c c? b?n)
+      const pots = getBudgetPots();
+      const essentials = pots.filter(p => 
+        ['?n u?ng', 'Nh? c?a', '?i l?i', 'Ho? ??n', 'S?c kho?'].some(k => p.name.includes(k))
+      ).reduce((sum, p) => sum + p.allocated, 0);
+      // D? ph?ng n?u kh?ng c? t?n kh?p: L?y 50% t?ng allocated
+      setEssentialExpense(essentials > 0 ? essentials : pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5);
+      
+      // T?nh t?ng ti?n tr? n? t?i thi?u
+      const debts = getDebts();
+      const minD = debts.reduce((sum, d) => sum + d.min_payment, 0);
+      setDebtMin(minD);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (!mounted) return null;

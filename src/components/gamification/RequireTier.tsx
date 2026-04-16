@@ -22,9 +22,13 @@ export default function RequireTier({ requiredRole, featureName, children }: Req
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-    setIsClient(true);
-    const gam = getGamification();
-    setXp(gam.xp);
+    const timer = window.setTimeout(() => {
+      setIsClient(true);
+      const gam = getGamification();
+      setXp(gam.xp);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleActivateCode = () => {

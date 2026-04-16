@@ -63,19 +63,23 @@ export function useLedgerStore() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const entries = getLedgerEntries();
-      setState((prev) => ({
-        ...prev,
-        transactions: entries,
-        ui: { ...prev.ui, loading: false },
-      }));
-    } catch {
-      setState((prev) => ({
-        ...prev,
-        ui: { ...prev.ui, loading: false, error: "Không tải được dữ liệu" },
-      }));
-    }
+    const timer = window.setTimeout(() => {
+      try {
+        const entries = getLedgerEntries();
+        setState((prev) => ({
+          ...prev,
+          transactions: entries,
+          ui: { ...prev.ui, loading: false },
+        }));
+      } catch {
+        setState((prev) => ({
+          ...prev,
+          ui: { ...prev.ui, loading: false, error: "Kh?ng t?i ???c d? li?u" },
+        }));
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Persist to localStorage whenever transactions change

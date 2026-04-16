@@ -39,10 +39,14 @@ export function BadgeGrid() {
   const [locked, setLocked] = useState<Badge[]>([]);
 
   useEffect(() => {
-    const gam = getGamification();
-    setEarned(BADGES.filter((b) => b.condition(gam)));
-    setLocked(BADGES.filter((b) => !b.condition(gam)));
-    setMounted(true);
+    const timer = window.setTimeout(() => {
+      const gam = getGamification();
+      setEarned(BADGES.filter((b) => b.condition(gam)));
+      setLocked(BADGES.filter((b) => !b.condition(gam)));
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (!mounted) return null;
@@ -94,8 +98,12 @@ export function BadgeGrid() {
 export function BadgeMiniRow() {
   const [earned, setEarned] = useState<Badge[]>([]);
   useEffect(() => {
-    const gam = getGamification();
-    setEarned(BADGES.filter((b) => b.condition(gam)).slice(0, 5));
+    const timer = window.setTimeout(() => {
+      const gam = getGamification();
+      setEarned(BADGES.filter((b) => b.condition(gam)).slice(0, 5));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
   if (earned.length === 0) return null;
   return (

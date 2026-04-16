@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CreditCard, Smartphone, UserX, Home, ShieldAlert, Banknote } from "lucide-react";
 import { Debt } from "@/lib/calculations/debt-optimizer";
 

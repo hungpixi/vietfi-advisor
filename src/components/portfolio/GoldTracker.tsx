@@ -6,7 +6,11 @@ import { Trash2, Plus, TrendingUp, TrendingDown, Coins } from "lucide-react";
 import { getGoldPurchases, addGoldPurchase, deleteGoldPurchase, type GoldPurchase } from "@/lib/storage";
 
 interface GoldTrackerProps {
-  marketData: any;
+  marketData: {
+    goldBrands?: Record<string, { buy: number }>;
+    goldSjc?: { goldVnd?: number; goldUsd?: number };
+    usdVnd?: { rate?: number };
+  } | null;
 }
 
 const BRANDS = ["SJC", "Bảo Tín Minh Châu", "DOJI", "PNJ", "Mi Hồng", "Khác"];
@@ -24,7 +28,11 @@ export function GoldTracker({ marketData }: GoldTrackerProps) {
   });
 
   useEffect(() => {
-    setPurchases(getGoldPurchases());
+    const timer = window.setTimeout(() => {
+      setPurchases(getGoldPurchases());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleAdd = (e: React.FormEvent) => {

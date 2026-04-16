@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { parseVNDInput, formatVND } from '@/lib/stores/ledger-store';
 import type { LedgerEntry } from '@/lib/calculations/ledger-summary';
@@ -47,10 +47,6 @@ export default function InputCard({ onAdd, isOpen, onToggle }: Props) {
 
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
-  // Reset category when type changes
-  useEffect(() => {
-    setCategory('');
-  }, [type]);
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
@@ -125,7 +121,10 @@ export default function InputCard({ onAdd, isOpen, onToggle }: Props) {
                 {(['expense', 'income'] as EntryType[]).map((t) => (
                   <button
                     key={t}
-                    onClick={() => setType(t)}
+                    onClick={() => {
+                      setType(t);
+                      setCategory('');
+                    }}
                     className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all border ${
                       type === t
                         ? t === 'income'

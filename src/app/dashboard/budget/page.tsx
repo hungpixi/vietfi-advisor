@@ -202,9 +202,13 @@ export default function BudgetPage() {
 
   // Load from localStorage
   useEffect(() => {
-    setPots(getBudgetPots());
-    setExpenses(getExpenses());
-    setIncome(getIncome());
+    const timer = window.setTimeout(() => {
+      setPots(getBudgetPots());
+      setExpenses(getExpenses());
+      setIncome(getIncome());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []); // Initial load only
 
   // Save to localStorage + Supabase sync

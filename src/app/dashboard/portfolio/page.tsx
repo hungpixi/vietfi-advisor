@@ -57,38 +57,42 @@ export default function PortfolioPage() {
   // ── Pull Risk DNA from localStorage on mount ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const riskResult = getRiskResult();
-    if (riskResult) {
-      setHasRiskDNA(true);
-      // Map Risk DNA score to risk type
-      if (riskResult.score <= 6) setRiskType("conservative");
-      else if (riskResult.score <= 10) setRiskType("balanced");
-      else setRiskType("growth");
-    }
+    const timer = window.setTimeout(() => {
+      const riskResult = getRiskResult();
+      if (riskResult) {
+        setHasRiskDNA(true);
+        // Map Risk DNA score to risk type
+        if (riskResult.score <= 6) setRiskType("conservative");
+        else if (riskResult.score <= 10) setRiskType("balanced");
+        else setRiskType("growth");
+      }
 
-    // Pull income for capital suggestion
-    const income = getIncome();
-    if (income > 0) {
-      setCapital(income * 6); // Suggest 6 months income as starting capital
-    }
+      // Pull income for capital suggestion
+      const income = getIncome();
+      if (income > 0) {
+        setCapital(income * 6); // Suggest 6 months income as starting capital
+      }
 
-    // Build user context for AI
-    const parts: string[] = [];
-    const pots = getBudgetPots();
-    if (pots.length > 0) {
-      const totalBudget = pots.reduce((s, p) => s + p.allocated, 0);
-      parts.push(`Ngân sách tháng: ${totalBudget.toLocaleString("vi-VN")}đ`);
-    }
-    const debts = getDebts();
-    if (debts.length > 0) {
-      const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
-      parts.push(`Tổng nợ: ${totalDebt.toLocaleString("vi-VN")}đ`);
-    }
-    if (income > 0) parts.push(`Thu nhập: ${income.toLocaleString("vi-VN")}đ/tháng`);
-    if (riskResult) {
-      parts.push(`Risk DNA: ${riskResult.label} (score ${riskResult.score}/15)`);
-    }
-    setUserContext(parts.join(", "));
+      // Build user context for AI
+      const parts: string[] = [];
+      const pots = getBudgetPots();
+      if (pots.length > 0) {
+        const totalBudget = pots.reduce((s, p) => s + p.allocated, 0);
+        parts.push(`Ng?n s?ch th?ng: ${totalBudget.toLocaleString("vi-VN")}?`);
+      }
+      const debts = getDebts();
+      if (debts.length > 0) {
+        const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
+        parts.push(`T?ng n?: ${totalDebt.toLocaleString("vi-VN")}?`);
+      }
+      if (income > 0) parts.push(`Thu nh?p: ${income.toLocaleString("vi-VN")}?/th?ng`);
+      if (riskResult) {
+        parts.push(`Risk DNA: ${riskResult.label} (score ${riskResult.score}/15)`);
+      }
+      setUserContext(parts.join(", "));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   // ── Fetch live market data ──
