@@ -11,7 +11,6 @@ import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/c
 
 import { motion } from "framer-motion";
 import {
-  ArrowUpRight,
   Sparkles,
   Flame,
   Clock,
@@ -20,6 +19,8 @@ import {
   PencilLine,
   BarChart3,
   TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -130,25 +131,39 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
 function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
   const pctFormatter = (value: unknown) => `${value}%`;
   return (
-    <motion.div variants={fadeIn} className="glass-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[18px] font-black text-white uppercase font-heading">Gợi ý phân bổ</h3>
+    <motion.div variants={fadeIn} className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#00E5FF]/10 hover:border-[#00E5FF]/30 transition-all duration-500">
+      {/* Cyber Decor */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#00E5FF]/5 blur-[60px] pointer-events-none group-hover:bg-[#00E5FF]/10 transition-colors" />
+      <div className="absolute top-0 right-0 w-24 h-[1px] bg-gradient-to-l from-[#00E5FF] to-transparent" />
+      <div className="absolute top-0 right-0 w-[1px] h-24 bg-gradient-to-b from-[#00E5FF] to-transparent" />
+
+      <div className="flex items-center justify-between mb-8 relative z-10 border-b border-[#00E5FF]/10 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#00E5FF]/10 flex items-center justify-center border border-[#00E5FF]/20">
+            <TrendingUp className="w-4 h-4 text-[#00E5FF]" />
+          </div>
+          <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
+            Gợi ý phân bổ <span className="text-[#00E5FF]/50 font-mono text-[14px] tracking-widest">- PORTFOLIO</span>
+          </h3>
+        </div>
         <Link
           href="/dashboard/portfolio"
-          className="text-xs text-[#E6B84F] hover:underline flex items-center gap-1 font-mono uppercase tracking-widest font-black"
+          className="text-[11px] text-[#00E5FF] hover:underline flex items-center gap-1 font-mono uppercase tracking-[0.2em] font-black group/link"
         >
-          Chi tiết <ArrowUpRight className="w-3.5 h-3.5" />
+          Chi tiết <ArrowUpRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
         </Link>
       </div>
-      <div className="flex items-center gap-8">
-        <div className="w-32 h-32 flex-shrink-0">
+
+      <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
+        <div className="w-32 h-32 flex-shrink-0 relative">
+          <div className="absolute inset-0 bg-[#00E5FF]/5 rounded-full blur-xl" />
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={allocation}
                 cx="50%"
                 cy="50%"
-                innerRadius={36}
+                innerRadius={38}
                 outerRadius={60}
                 paddingAngle={4}
                 dataKey="percent"
@@ -164,21 +179,33 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 12,
                   color: "#F5F3EE",
-                  fontSize: 13,
+                  fontSize: 12,
+                  fontWeight: "900",
+                  fontFamily: "monospace"
                 }}
                 formatter={pctFormatter}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex-1 space-y-2.5">
+        <div className="flex-1 w-full space-y-3">
           {allocation.map((item) => (
-            <div key={item.asset} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-[16px] text-white/70 font-black uppercase tracking-tight">{item.asset}</span>
+            <div key={item.asset} className="flex items-center justify-between group/item">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" style={{ color: item.color, backgroundColor: item.color }} />
+                <span className="text-[14px] text-white/50 font-black uppercase tracking-widest group-hover/item:text-white/80 transition-colors">{item.asset}</span>
               </div>
-              <span className="text-[16px] font-black text-white/90 font-mono">{item.percent}%</span>
+              <div className="flex items-center gap-3 flex-1 px-4">
+                <div className="h-[2px] flex-1 bg-white/5 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.percent}%` }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                </div>
+                <span className="text-[14px] font-black text-white font-mono min-w-[40px] text-right">{item.percent}%</span>
+              </div>
             </div>
           ))}
         </div>
@@ -282,7 +309,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
           </div>
         </div>
 
-        {/* Right Panel - Vĩ mô/Vàng (Gold Focus) */}
+        {/* Right Panel - Vàng & Vĩ mô (Gold Focus) */}
         <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#E6B84F]/10 hover:border-[#E6B84F]/30 transition-colors duration-500">
           <div className="absolute top-0 left-0 w-40 h-40 bg-[#E6B84F]/8 blur-[60px] pointer-events-none group-hover:bg-[#E6B84F]/15 transition-colors duration-500" />
           <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#E6B84F] to-transparent" />
@@ -419,35 +446,51 @@ function VetVangFloatWidget() {
   const { current, progress } = getLevelProgress(gam.xp);
 
   return (
-    <motion.div variants={fadeIn} className="glass-card p-6 border-[#E6B84F]/10">
-      <div className="flex items-center gap-3 mb-6">
-        <Flame className="w-5 h-5 text-[#E6B84F]" />
-        <h3 className="text-[18px] font-black text-white uppercase font-heading">Vẹt Vàng nói gì?</h3>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-black font-mono ml-auto uppercase">
-          {gam.streak >= 3 ? "🔥 Mổ Mode" : "💛 Khen Mode"}
+    <motion.div variants={fadeIn} className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#FF6B35]/10 hover:border-[#FF6B35]/30 transition-all duration-500">
+      {/* Cyber Decor */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/5 blur-[60px] pointer-events-none group-hover:bg-[#FF6B35]/10 transition-colors" />
+      <div className="absolute top-0 right-0 w-24 h-[1px] bg-gradient-to-l from-[#FF6B35] to-transparent" />
+      <div className="absolute top-0 right-0 w-[1px] h-24 bg-gradient-to-b from-[#FF6B35] to-transparent" />
+
+      <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#FF6B35]/10 pb-4">
+        <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
+          <Flame className="w-4 h-4 text-[#FF6B35]" />
+        </div>
+        <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
+          Vẹt Vàng <span className="text-[#FF6B35]/50 font-mono text-[14px] tracking-widest">- CONSOLE</span>
+        </h3>
+        <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#FF6B35]/10 text-[#FF6B35] font-black font-mono ml-auto uppercase tracking-widest border border-[#FF6B35]/20">
+          {gam.streak >= 3 ? "STREAK ON 🔥" : "STANDBY 💛"}
         </span>
       </div>
-      <div className="bg-white/[0.04] rounded-3xl p-6 mb-6 border border-white/[0.06]">
-        <p className="text-[16px] text-white/90 italic leading-relaxed font-black uppercase tracking-tight">
+
+      <div className="bg-white/[0.02] rounded-2xl p-6 mb-8 border border-white/[0.05] relative group/speech">
+        <div className="absolute top-2 left-2 w-1 h-1 bg-[#FF6B35]/40 rounded-full" />
+        <p className="text-[15px] text-white/80 italic leading-relaxed font-semibold tracking-normal font-mono">
+          <span className="text-[#FF6B35] mr-2 opacity-50">&gt;</span>
           {gam.streak >= 3
             ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục xài app đi, tao thề sẽ không mổ cho đến khi mày giàu! 🦜&rdquo;`
             : `&ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu! Level ${current.name} rồi mà còn lười hả? 🦜&rdquo;`}
         </p>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-white/40 font-bold uppercase tracking-tighter">Lvl {mounted ? gam.level + 1 : "--"}</span>
-          <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#E6B84F] to-[#FF6B35] rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${mounted ? progress : 0}%` }}
-              transition={{ duration: 1 }}
-            />
-          </div>
-          <span className="text-xs font-black text-[#E6B84F] font-mono">{mounted ? gam.xp : "--"} XP</span>
+
+      <div className="space-y-4 relative z-10 font-mono text-[12px] font-black uppercase tracking-widest">
+        <div className="flex items-center justify-between text-white/40">
+          <span>Experience Points</span>
+          <span className="text-[#FF6B35]">{mounted ? gam.xp : "--"} / 1000 XP</span>
         </div>
-        <span className="text-xs font-bold text-white/30 uppercase tracking-widest">{mounted ? current.name : "🐣 Vẹt Teen"}</span>
+        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+          <motion.div
+            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#E6B84F] rounded-full shadow-[0_0_10px_rgba(255,107,53,0.3)]"
+            initial={{ width: 0 }}
+            animate={{ width: `${mounted ? progress : 0}%` }}
+            transition={{ duration: 1.5, ease: "circOut" }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-white/30">Current Rank:</span>
+          <span className="text-white/60">{mounted ? current.name.toUpperCase() : "🐣 VẸT TEEN"}</span>
+        </div>
       </div>
     </motion.div>
   );
@@ -624,86 +667,97 @@ export default function DashboardOverview() {
       )}
       <motion.div initial="hidden" animate="visible" variants={stagger}>
         {/* Net Worth Banner — Wealthsimple-style */}
-        <motion.div variants={fadeIn} className="mb-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F1120] via-[#161929] to-[#0D1020] border border-white/[0.07] p-6">
-            {/* Layered gradient orbs */}
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#E6B84F]/8 rounded-full blur-[80px] pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-[#00E5FF]/4 rounded-full blur-[60px] pointer-events-none" />
+        {/* Net Worth Banner — Cyber-Editorial Style */}
+        <motion.div variants={fadeIn} className="mb-6">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B0D17] via-[#121525] to-[#0A0D1A] border border-white/[0.08] p-8 md:p-10 group">
+            {/* Cyber Corner Decor */}
+            <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-[#22C55E]/40 to-transparent" />
+            <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-[#22C55E]/40 to-transparent" />
+            <div className="absolute bottom-0 right-0 w-32 h-[2px] bg-gradient-to-l from-[#00E5FF]/40 to-transparent" />
+            <div className="absolute bottom-0 right-0 w-[2px] h-32 bg-gradient-to-t from-[#00E5FF]/40 to-transparent" />
 
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
-              {/* Left: Identity + animated value */}
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse shadow-[0_0_8px_#22C55E]" />
-                  <span className="text-xs font-black font-mono uppercase tracking-[0.25em] text-white/40">
-                    Tổng tài sản ròng
-                  </span>
+            {/* Layered orbs */}
+            <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#E6B84F]/8 transition-colors duration-700" />
+            <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-[#00E5FF]/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-[#00E5FF]/8 transition-colors duration-700" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
+              {/* Left: Main Balance */}
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+                    <Wallet className="w-5 h-5 text-white/60" />
+                  </div>
+                  <div>
+                    <h3 className="text-[14px] font-black font-mono uppercase tracking-[0.3em] text-white/40">
+                      Tổng tài sản ròng <span className="text-white/20">- NET WORTH</span>
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse shadow-[0_0_8px_#22C55E]" />
+                      <span className="text-[10px] font-black text-[#22C55E]/60 uppercase tracking-widest font-mono">Vault Protected</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Wealthsimple big number */}
-                <div className="mt-4 mb-2">
-                  <span className="text-6xl md:text-7xl font-black text-white tracking-tighter leading-none">
+                <div className="flex flex-wrap items-baseline gap-4 mb-6">
+                  <span className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none group-hover:scale-[1.01] transition-transform duration-500">
                     {netWorth !== null ? (
-                      <>
-                        <AnimatedCounter target={Math.round(netWorth / 1_000_000 * 10) / 10} />
-                        <span className="text-3xl md:text-4xl text-white/30 font-black ml-2 tracking-tight">triệu</span>
-                        <span className="text-xl md:text-2xl text-white/20 ml-1.5 font-mono">₫</span>
-                      </>
+                      <AnimatedCounter target={Math.round(netWorth / 1_000_000 * 10) / 10} />
                     ) : (
                       <span className="text-white/20">—</span>
                     )}
                   </span>
+                  <div className="flex flex-col">
+                    <span className="text-2xl md:text-3xl text-white/40 font-black uppercase tracking-tight">triệu</span>
+                    <span className="text-lg text-white/20 font-mono">VND</span>
+                  </div>
                 </div>
 
-                {/* Delta badge + date */}
-                <div className="flex items-center gap-4 mt-4">
+                <div className="flex flex-wrap items-center gap-6">
                   {monthlyDeltaPct !== 0 && netWorth !== null && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black font-mono uppercase tracking-wider ${monthlyDeltaPct >= 0
-                        ? "bg-[#22C55E]/10 text-[#22C55E]"
-                        : "bg-[#EF4444]/10 text-[#EF4444]"
-                        }`}
-                    >
-                      {monthlyDeltaPct >= 0 ? (
-                        <TrendingUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <span className="rotate-180"><TrendingUp className="w-3.5 h-3.5" /></span>
-                      )}
-                      {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% tháng này
-                    </span>
+                    <div className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-[12px] font-black uppercase tracking-widest",
+                      monthlyDeltaPct >= 0 ? "bg-[#22C55E]/5 border-[#22C55E]/20 text-[#22C55E]" : "bg-[#EF4444]/5 border-[#EF4444]/20 text-[#EF4444]"
+                    )}>
+                      {monthlyDeltaPct >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                      {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% <span className="opacity-40 ml-1">THIS MONTH</span>
+                    </div>
                   )}
-                  <span className="text-[11px] text-white/30 font-black font-mono flex items-center gap-1.5 uppercase tracking-widest">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {mounted ? new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
-                  </span>
+                  <div className="flex items-center gap-2 text-white/30 font-mono text-[11px] font-black uppercase tracking-[0.2em]">
+                    <Calendar className="w-4 h-4 text-white/20" />
+                    {mounted ? new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase() : "—"}
+                  </div>
                 </div>
-
-                <p className="text-xs text-white/40 mt-3 font-mono font-bold uppercase tracking-widest">{assetSummary}</p>
               </div>
 
-              {/* Right: Quick Actions */}
-              <div className="flex flex-col gap-3 sm:items-end sm:justify-start min-w-[200px]">
-                <Link
-                  href="/dashboard/budget"
-                  className="group flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest transition-all duration-300 bg-gradient-to-r from-[#E6B84F] to-[#F5A623] text-[#111318] hover:shadow-[0_0_30px_rgba(230,184,79,0.4)] hover:scale-[1.05] active:scale-[0.98]"
-                >
-                  <PencilLine className="w-4 h-4" />
-                  Ghi chi tiêu
-                </Link>
-                <Link
-                  href="/dashboard/budget"
-                  className="flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest bg-white/[0.05] text-white/50 border border-white/[0.1] hover:bg-white/[0.1] hover:text-white/80 transition-all duration-300"
-                >
-                  <Wallet className="w-4 h-4" />
-                  Cập nhật lương
-                </Link>
-                <Link
-                  href="/dashboard/budget"
-                  className="flex items-center gap-3 px-5 py-3 rounded-2xl text-[13px] font-black font-mono uppercase tracking-widest bg-white/[0.05] text-white/50 border border-white/[0.1] hover:bg-white/[0.1] hover:text-white/80 transition-all duration-300"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Báo cáo tháng
-                </Link>
+              {/* Right: Actions */}
+              <div className="flex flex-col gap-3 min-w-[220px]">
+                <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] font-mono mb-2 md:text-right">Quick Operations</p>
+                <div className="grid grid-cols-1 gap-3">
+                  <Link
+                    href="/dashboard/budget"
+                    className="group/btn flex items-center justify-between px-6 py-4 rounded-xl text-[12px] font-black font-mono uppercase tracking-[0.2em] transition-all duration-300 bg-white/5 border border-white/10 text-white/80 hover:bg-[#E6B84F] hover:border-[#E6B84F] hover:text-[#111318] hover:shadow-[0_0_20px_rgba(230,184,79,0.3)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <PencilLine className="w-4 h-4" />
+                      Ghi chi tiêu
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                  </Link>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      href="/dashboard/budget"
+                      className="flex items-center justify-center p-4 rounded-xl bg-white/[0.03] border border-white/5 text-white/40 hover:bg-white/10 hover:text-white/80 transition-all group/sub"
+                    >
+                      <Wallet className="w-4 h-4 group-hover/sub:scale-110 transition-transform" />
+                    </Link>
+                    <Link
+                      href="/dashboard/budget"
+                      className="flex items-center justify-center p-4 rounded-xl bg-white/[0.03] border border-white/5 text-white/40 hover:bg-white/10 hover:text-white/80 transition-all group/sub"
+                    >
+                      <BarChart3 className="w-4 h-4 group-hover/sub:scale-110 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -725,13 +779,25 @@ export default function DashboardOverview() {
         {/* Daily Quests — Duolingo style */}
         <DailyQuestSection />
 
-        {/* Achievement Badges */}
-        <motion.div variants={fadeIn} className="glass-card p-12 mb-6 transition-all">
-          <div className="flex items-center gap-6 mb-10">
-            <span className="text-4xl">🏅</span>
-            <h3 className="text-[18px] font-black text-white uppercase font-heading">Huy hiệu</h3>
+        {/* Achievement Badges — Cyber-Editorial style */}
+        <motion.div variants={fadeIn} className="glass-card p-8 md:p-12 mb-6 relative overflow-hidden group border border-white/10 transition-all duration-500 hover:border-[#E6B84F]/20">
+          <div className="absolute top-0 right-0 w-32 h-[1px] bg-gradient-to-l from-[#E6B84F]/30 to-transparent" />
+          <div className="absolute top-0 right-0 w-[1px] h-32 bg-gradient-to-b from-[#E6B84F]/30 to-transparent" />
+
+          <div className="flex items-center gap-6 mb-12 border-b border-white/[0.05] pb-8 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20">
+              <span className="text-2xl">🏅</span>
+            </div>
+            <div>
+              <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-3">
+                Thành tựu đạt được <span className="text-[#E6B84F]/30 font-mono text-[14px] tracking-widest">- BADGES</span>
+              </h3>
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] font-mono mt-1">Unlock tiers by engaging with AI Advisor</p>
+            </div>
           </div>
-          <BadgeGrid />
+          <div className="relative z-10 px-2 sm:px-6">
+            <BadgeGrid />
+          </div>
         </motion.div>
 
         {/* 2-Column: Portfolio + Vẹt Vàng */}

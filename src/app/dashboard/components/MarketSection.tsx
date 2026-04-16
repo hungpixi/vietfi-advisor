@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, ArrowUpRight } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, Sparkles } from "lucide-react";
 import type { MarketSnapshot } from "@/lib/market-data/crawler";
 import { getMarketCache, setMarketCache } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -228,28 +228,45 @@ function getIndicatorColor(value: number) {
 
 export function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
   const positive = change >= 0;
+  const color = positive ? "#22C55E" : "#EF4444";
 
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card glass-card-hover cursor-default p-6 transition-all"
+      className={cn(
+        "glass-card relative overflow-hidden group cursor-default p-6 transition-all duration-500 border border-white/[0.05]",
+        positive ? "hover:border-[#22C55E]/30" : "hover:border-[#EF4444]/30"
+      )}
       data-testid="market-card"
     >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-[16px] font-black font-heading text-white/40">
+      {/* Decors */}
+      <div className="absolute top-0 left-0 w-24 h-24 blur-[40px] pointer-events-none opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundColor: color }} />
+      <div className="absolute top-0 left-0 w-12 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: `linear-gradient(90deg, ${color}, transparent)` }} />
+      <div className="absolute top-0 left-0 w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundImage: `linear-gradient(180deg, ${color}, transparent)` }} />
+
+      <div className="mb-4 flex items-center justify-between relative z-10 border-b border-white/[0.03] pb-3">
+        <span className="text-[12px] font-black font-mono uppercase tracking-[0.2em] text-white/30 group-hover:text-white/50 transition-colors">
           {label}
         </span>
-        <Icon
-          className={cn("h-6 w-6", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
-        />
+        <div className={cn("p-1.5 rounded-lg bg-opacity-10", positive ? "bg-[#22C55E]/10" : "bg-[#EF4444]/10")}>
+          <Icon
+            className={cn("h-4 w-4", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
+          />
+        </div>
       </div>
-      <div className="text-3xl font-black tracking-tight text-white mb-1.5">{value}</div>
-      <span
-        className={cn("text-sm font-black font-mono", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
-      >
-        {positive ? "+" : ""}
-        {change}%
-      </span>
+
+      <div className="relative z-10">
+        <div className="text-3xl font-black tracking-tighter text-white mb-1 group-hover:translate-x-1 transition-transform duration-300">{value}</div>
+        <div className="flex items-center gap-2">
+          <span
+            className={cn("text-[13px] font-black font-mono uppercase tracking-widest px-2 py-0.5 rounded", positive ? "bg-[#22C55E]/10 text-[#22C55E]" : "bg-[#EF4444]/10 text-[#EF4444]")}
+          >
+            {positive ? "+" : ""}
+            {change.toFixed(2)}%
+          </span>
+          <div className="h-[1px] flex-1 bg-white/5" />
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -278,58 +295,60 @@ export function FGGauge({
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-5 shadow-xl"
+      className="glass-card relative overflow-hidden group border border-white/10 p-8 shadow-2xl"
     >
+      {/* Cyber Decor */}
+      <div className="absolute top-0 right-0 w-64 h-64 blur-[100px] pointer-events-none opacity-20" style={{ backgroundColor: zone.color }} />
+      <div className="absolute top-0 left-0 w-32 h-[2px] bg-gradient-to-r from-white/20 to-transparent" />
+      <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-white/20 to-transparent" />
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <h3 className="text-[20px] font-black text-white font-heading">
-            Nhiệt kế thị trường
-          </h3>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[11px] font-black text-emerald-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
-            LIVE
-          </span>
-          <span className="rounded-full border border-[#f0cf7a]/20 bg-[#f0cf7a]/15 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-[#f6dda0]">
-            VN
-          </span>
+      <div className="flex items-center justify-between mb-12 relative z-10 border-b border-white/[0.05] pb-6">
+        <div className="flex items-center gap-5">
+          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
+            <TrendingUp className="w-5 h-5 text-white/60" />
+          </div>
+          <div>
+            <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-3">
+              Nhiệt kế thị trường <span className="text-white/20 font-mono text-[14px] tracking-widest">- MARKET PHASES</span>
+            </h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] font-mono">Real-time Analysis</span>
+            </div>
+          </div>
         </div>
         <Link
           href="/dashboard/market-overview"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1.5 text-xs font-black uppercase tracking-[0.2em] text-white/30 transition-all hover:text-[#f6dda0] hover:scale-105"
+          className="text-[11px] text-white/30 hover:text-white transition-colors flex items-center gap-2 font-black uppercase tracking-[0.2em] font-mono group/link"
         >
-          Chi tiết <ArrowUpRight className="h-4 w-4" />
+          Toàn cảnh <ArrowUpRight className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
         </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-12 relative z-10">
         {/* Left: 180-degree semi-circle gauge */}
-        <div className="relative flex w-full md:w-64 flex-shrink-0 flex-col items-center justify-center p-2">
-          {/* Main Semi-circle Gauge */}
+        <div className="relative flex w-full lg:w-72 flex-shrink-0 flex-col items-center justify-center pt-4">
           <svg viewBox="0 0 160 100" className="w-full overflow-visible">
-            {/* Background Arc - Track */}
             <path
               d="M 20 60 A 60 60 0 0 1 140 60"
               fill="none"
               stroke="white"
-              strokeWidth="14"
+              strokeWidth="10"
               strokeLinecap="round"
               opacity="0.05"
             />
 
-            {/* Color Segments */}
             {ZONES.map((z, i) => {
               const radius = 60;
               const angleStart = -180 + (z.min / 100) * 180;
               const angleEnd = -180 + (z.max / 100) * 180;
-
               const startRad = (angleStart * Math.PI) / 180;
               const endRad = (angleEnd * Math.PI) / 180;
               const x1 = 80 + radius * Math.cos(startRad);
               const y1 = 60 + radius * Math.sin(startRad);
               const x2 = 80 + radius * Math.cos(endRad);
               const y2 = 60 + radius * Math.sin(endRad);
-
               const isActive = score >= z.min && (score < z.max || (z.max > 100 && score <= 100));
 
               return (
@@ -338,46 +357,30 @@ export function FGGauge({
                   d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
                   fill="none"
                   stroke={z.color}
-                  strokeWidth={isActive ? 18 : 12}
+                  strokeWidth={isActive ? 16 : 8}
                   strokeLinecap="round"
-                  opacity={isActive ? 1 : 0.25}
-                  style={{
-                    transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-                    filter: isActive ? `drop-shadow(0 0 12px ${z.color}40)` : "none"
-                  }}
+                  opacity={isActive ? 1 : 0.2}
+                  className="transition-all duration-1000"
                 />
               );
             })}
 
-            {/* Needle indicator */}
             {(() => {
               const rotation = (score / 100) * 180 - 180;
               return (
-                <g
-                  style={{
-                    transformOrigin: "80px 60px",
-                    transform: `rotate(${rotation}deg)`,
-                    transition: "transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                  }}
-                >
-                  <polygon
-                    points="80,58 80,62 142,60"
-                    fill="white"
-                    stroke="#1E293B"
-                    strokeWidth="0.5"
-                    className="shadow-xl"
-                  />
-                  <circle cx="80" cy="60" r="5" fill="#1E293B" stroke="white" strokeWidth="2" />
+                <g style={{ transformOrigin: "80px 60px", transform: `rotate(${rotation}deg)`, transition: "transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
+                  <circle cx="80" cy="60" r="4" fill="white" />
+                  <line x1="80" y1="60" x2="140" y2="60" stroke="white" strokeWidth="2" strokeLinecap="round" strokeDasharray="2,2" />
+                  <path d="M 135 60 L 142 60" stroke="white" strokeWidth="3" strokeLinecap="round" />
                 </g>
               );
             })()}
           </svg>
 
-          {/* Integrated Score & Label - Positioned below pivot to avoid overlap */}
-          <div className="absolute top-[68%] flex flex-col items-center">
-            <span className="text-[52px] font-black leading-none tracking-tighter text-white drop-shadow-2xl">{score}</span>
+          <div className="absolute top-[60%] flex flex-col items-center">
+            <span className="text-[64px] font-black leading-none tracking-tighter text-white">{score}</span>
             <span
-              className="mt-1 text-[11px] font-black uppercase tracking-[0.25em]"
+              className="mt-2 text-[11px] font-black uppercase tracking-[0.3em] font-mono px-3 py-1 rounded-full bg-white/5 border border-white/10"
               style={{ color: zone.color }}
             >
               {zone.label}
@@ -385,42 +388,45 @@ export function FGGauge({
           </div>
         </div>
 
-        {/* Right: 5 metric bars */}
-        <div className="flex flex-1 flex-col justify-center gap-6">
+        {/* Right: Metric bars */}
+        <div className="flex-1 space-y-7 py-2">
           {indicators.map((indicator, index) => {
             const barColor = getIndicatorColor(indicator.value);
             return (
-              <div key={indicator.label} className="flex items-center gap-6">
-                <span className="w-40 flex-shrink-0 text-[16px] text-white/90 font-black font-mono opacity-80">{indicator.label}</span>
-                <div className="flex flex-1 items-center gap-5">
-                  <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${indicator.value}%` }}
-                      transition={{ duration: 1, delay: index * 0.08, ease: "circOut" }}
-                      className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.15)]"
-                      style={{ background: barColor }}
-                    />
-                  </div>
-                  <span className="w-8 flex-shrink-0 text-right text-[15px] font-black text-white font-mono">
-                    {indicator.value}
-                  </span>
+              <div key={indicator.label} className="group/bar">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[12px] font-black font-mono uppercase tracking-widest text-white/40 group-hover/bar:text-white/60 transition-colors">{indicator.label}</span>
+                  <span className="text-[14px] font-black text-white font-mono">{indicator.value}</span>
+                </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${indicator.value}%` }}
+                    transition={{ duration: 1.2, delay: index * 0.1, ease: "circOut" }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
+                  />
                 </div>
               </div>
             );
           })}
 
           {/* Professional Insight Box */}
-          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] p-5 shadow-inner">
-            <div className="flex items-start gap-3.5">
-              <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
-              </div>
-              <p className="text-base font-semibold leading-relaxed text-white/90">{quote}</p>
+          <div className="mt-8 relative p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-hidden group/insight">
+            <div className="absolute top-0 right-0 p-3 opacity-20 group-hover/insight:opacity-40 transition-opacity">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="flex items-center gap-2.5 pl-9">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">{action}</p>
+            <div className="flex gap-4 items-start relative z-10">
+              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mt-1">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-[15px] font-semibold text-white/90 leading-relaxed italic">&ldquo;{quote}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-[1px] w-4 bg-emerald-400/30" />
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400 font-mono">{action}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
