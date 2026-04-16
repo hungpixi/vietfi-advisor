@@ -1,9 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkFixedWindowRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/api-security';
+
+type RiskType = 'conservative' | 'balanced' | 'growth';
+
+const DEFAULT_CAPITAL = 100_000_000;
+const MIN_CAPITAL = 1;
+const MAX_CAPITAL = 1_000_000_000_000;
+const RATE_LIMIT = 60;
+const WINDOW_MS = 60_000;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function normalizeCapital(value: string | null): number {
+    const parsed = Number(value ?? DEFAULT_CAPITAL);
+    if (!Number.isFinite(parsed)) return DEFAULT_CAPITAL;
+    return Math.round(Math.min(MAX_CAPITAL, Math.max(MIN_CAPITAL, parsed)));
+}
+
+function normalizeRiskType(value: string | null): RiskType {
+    if (value === 'conservative' || value === 'growth') return value;
+    return 'balanced';
+}
 
 export async function GET(req: NextRequest) {
+    const clientId = getClientIdentifier(req);
+    const rateLimit = checkFixedWindowRateLimit(
+        rateLimitMap,
+        `portfolio:backtest:${clientId}`,
+        RATE_LIMIT,
+        WINDOW_MS,
+    );
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
+
     const searchParams = req.nextUrl.searchParams;
-    const capital = parseFloat(searchParams.get('capital') || '100000000');
-    const riskType = searchParams.get('riskType') || 'balanced';
+    const capital = normalizeCapital(searchParams.get('capital'));
+    const riskType = normalizeRiskType(searchParams.get('riskType'));
 
     // We define 5 asset classes:
     // 1. Tiết kiệm (Deposit): steady ~7% per year.
@@ -94,5 +124,7 @@ export async function GET(req: NextRequest) {
         cagr: Math.round(((Math.pow(finalMultiplier, 1 / 5) - 1) * 100) * 10) / 10,  // 5 years duration
         allocations,
         history: historicalData
+    }, {
+        headers: { 'Cache-Control': 'no-store' },
     });
 }

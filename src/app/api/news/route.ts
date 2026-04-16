@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
+import { checkFixedWindowRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/api-security'
 import { crawlNews, type NewsSnapshot } from '@/lib/news/crawler'
 
 export const runtime = 'nodejs'
 
 const CACHE_TTL_MS = 10 * 60 * 1000
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 60
+const WINDOW_MS = 60_000
 
 interface CacheEntry {
   snapshot: NewsSnapshot
@@ -51,7 +55,15 @@ export async function getNewsResponse(crawl: () => Promise<NewsSnapshot>) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const rl = checkFixedWindowRateLimit(
+    rateLimitMap,
+    getClientIdentifier(request),
+    RATE_LIMIT,
+    WINDOW_MS,
+  )
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter)
+
   return getNewsResponse(() =>
     crawlNews({ includeContent: false, enableAiReview: false }),
   )

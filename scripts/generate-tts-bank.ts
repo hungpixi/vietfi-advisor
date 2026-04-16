@@ -6,8 +6,6 @@
  * Requires: edge-tts-universal (đã install trong project)
  * Output: public/audio/tts/{id}.mp3
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -50,7 +48,8 @@ async function main() {
       console.log(`  ✅ ${item.id} (${item.ttsText.substring(0, 50)}...)`);
     } catch (err: unknown) {
       failed++;
-      console.error(`  ❌ ${item.id}: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ ${item.id}: ${message}`);
     }
 
     // Small delay to avoid rate limiting

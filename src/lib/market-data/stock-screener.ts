@@ -243,31 +243,44 @@ const MOCK_VN30: StockOverview[] = [
   { ticker: "TCB", exchange: "HOSE", shortName: "Techcombank", industry: "Ngân hàng", stockPrice: 41.5, deltaInDay: 1.8, pe: 6.8, pb: 1.1, roe: 18.5, eps: 6100, marketCap: 145000, dividend: 0, stockRating: 4.5 }
 ];
 
+const STOCK_UNIVERSE_CACHE_TTL = 30 * 60 * 1000;
+const stockUniverseCache = new Map<string, { stocks: StockOverview[]; fetchedAt: number }>();
+
+async function getStockUniverse(exchange = ""): Promise<StockOverview[]> {
+  const cacheKey = exchange || "ALL";
+  const cached = stockUniverseCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < STOCK_UNIVERSE_CACHE_TTL) {
+    return cached.stocks;
+  }
+
+  let stocks = await fetchScreeningData();
+
+  if (stocks.length === 0) {
+    const listing = await fetchStockListing();
+
+    if (listing.length > 0) {
+      const tickers = listing
+        .filter((listingItem) => !exchange || listingItem.comGroupCode === exchange)
+        .slice(0, 200)
+        .map((listingItem) => listingItem.ticker);
+      stocks = await fetchStockOverviews(tickers);
+    }
+
+    if (stocks.length === 0) {
+      stocks = MOCK_VN30;
+    }
+  }
+
+  stockUniverseCache.set(cacheKey, { stocks, fetchedAt: Date.now() });
+  return stocks;
+}
+
 /**
  * Run stock screener with filters.
  * Returns sorted results best-first.
  */
 export async function runScreener(filters: ScreenerFilters = DEFAULT_FILTERS): Promise<ScreenerResult[]> {
-  // Fetch all stock data
-  let stocks = await fetchScreeningData();
-
-  // If screening endpoint returned nothing, try listing + batch overview
-  if (stocks.length === 0) {
-    const listing = await fetchStockListing();
-    
-    if (listing.length > 0) {
-      const hoseTickers = listing
-        .filter(l => !filters.exchange || l.comGroupCode === filters.exchange)
-        .slice(0, 200) // limit for API rate
-        .map(l => l.ticker);
-      stocks = await fetchStockOverviews(hoseTickers);
-    }
-    
-    // Fallback Mock if TCBS API is completely dead (404 Not Found)
-    if (stocks.length === 0) {
-      stocks = MOCK_VN30;
-    }
-  }
+  const stocks = await getStockUniverse(filters.exchange || "");
 
   // Apply filters
   const filtered = stocks.filter(s => {

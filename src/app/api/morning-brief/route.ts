@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
+import { checkFixedWindowRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/api-security'
 import { getMorningBriefCached, resetMorningBriefCache } from '@/lib/morning-brief'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 30
+const WINDOW_MS = 60_000
 
 export async function getMorningBriefResponse() {
   try {
@@ -18,6 +23,14 @@ export function resetMorningBriefRouteCache() {
   resetMorningBriefCache()
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const rl = checkFixedWindowRateLimit(
+    rateLimitMap,
+    getClientIdentifier(request),
+    RATE_LIMIT,
+    WINDOW_MS,
+  )
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter)
+
   return getMorningBriefResponse()
 }

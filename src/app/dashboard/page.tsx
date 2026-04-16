@@ -607,6 +607,7 @@ export default function DashboardOverview() {
   const [aiBriefLoading, setAiBriefLoading] = useState(true);
   const [netWorth, setNetWorth] = useState<number | null>(null);
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
+  const [hasSavedIncome, setHasSavedIncome] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Morning Brief AI
@@ -660,6 +661,7 @@ export default function DashboardOverview() {
 
     setNetWorth(computedNetWorth);
     setMonthlyDeltaPct(income > 0 ? Math.round((net / income) * 100) : 0);
+    setHasSavedIncome(income > 0);
   }, []);
 
   // News fetch
@@ -726,6 +728,7 @@ export default function DashboardOverview() {
         const hasData = pots.length > 0 || expenses.length > 0;
         setNetWorth(hasData ? net : income ? income * 2.5 : 0);
         setMonthlyDeltaPct(income > 0 ? Math.round((net / income) * 100) : 0);
+        setHasSavedIncome(income > 0);
       }
     };
 
@@ -735,6 +738,9 @@ export default function DashboardOverview() {
 
   const liveBrief = aiBrief;
   const briefLoading = aiBriefLoading;
+  const netWorthMillions = netWorth === null ? null : Math.round((netWorth / 1_000_000) * 10) / 10;
+  const netWorthAccessibleText = netWorthMillions === null ? null : `${netWorthMillions.toFixed(1)} tri\u1ec7u`;
+  const incomeAccessibleText = hasSavedIncome ? '\u0110\u00e3 l\u01b0u thu nh\u1eadp' : 'Ch\u01b0a c\u00f3 thu nh\u1eadp';
 
   const liveNews: NewsItem[] = useMemo(() => {
     if (liveArticles.length === 0) return FALLBACK_NEWS;
@@ -792,9 +798,10 @@ export default function DashboardOverview() {
                 </div>
 
                 <div className="flex flex-wrap items-baseline gap-4 mb-6">
+                  {netWorthAccessibleText ? <span className="sr-only">{netWorthAccessibleText}</span> : null}
                   <span className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none group-hover:scale-[1.01] transition-transform duration-500">
-                    {netWorth !== null ? (
-                      <AnimatedCounter target={Math.round(netWorth / 1_000_000 * 10) / 10} />
+                    {netWorthMillions !== null ? (
+                      <AnimatedCounter target={netWorthMillions} />
                     ) : (
                       <span className="text-white/20">—</span>
                     )}
@@ -806,6 +813,7 @@ export default function DashboardOverview() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6">
+                  <span className="sr-only">{incomeAccessibleText}</span>
                   {monthlyDeltaPct !== 0 && netWorth !== null && (
                     <div className={cn(
                       "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-[12px] font-black uppercase tracking-widest",

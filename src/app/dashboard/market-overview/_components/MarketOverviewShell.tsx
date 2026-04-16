@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from "react";
 import { addXP } from "@/lib/gamification";
@@ -23,15 +22,17 @@ export function MarketOverviewShell({ initialTab }: { initialTab: MarketTab }) {
     if (state.status === "loading") return <MarketLoadingState />;
     if (state.status === "error") return <MarketErrorState message={state.error} />;
 
+    const { data } = state;
+
     const tabContent = activeTab === "tam-ly"
-        ? <SentimentTab score={state.data.sentiment.score as number} drivers={state.data.sentiment.drivers as any} assetSentiments={state.data.sentiment.assetSentiments as any} />
+        ? <SentimentTab score={data.sentiment.score} drivers={data.sentiment.drivers} assetSentiments={data.sentiment.assetSentiments} />
         : activeTab === "tai-san"
-            ? <AssetsTab cards={state.data.assets.cards as any} personalizedAlert={state.data.assets.personalizedAlert as any} />
-            : <MacroTab cards={state.data.macro.cards as any} commentary={state.data.macro.commentary as any} trendSummary={state.data.macro.trendSummary as any} />;
+            ? <AssetsTab cards={data.assets.cards} personalizedAlert={data.assets.personalizedAlert} />
+            : <MacroTab cards={data.macro.cards} commentary={data.macro.commentary} trendSummary={data.macro.trendSummary} />;
 
     return (
         <div>
-            <MarketHero lastUpdated={state.data.lastUpdated as string | null} stale={state.data.stale as boolean} narrative={state.data.macro.commentary as string | null} />
+            <MarketHero lastUpdated={data.lastUpdated} stale={data.stale} narrative={data.macro.commentary} />
             <MarketTabNav activeTab={activeTab} onChange={setActiveTab} />
             <div className="mt-6">{tabContent}</div>
         </div>

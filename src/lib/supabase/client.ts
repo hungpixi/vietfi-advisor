@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { getBrowserAuthCallbackUrl } from "@/lib/security/origin";
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,7 +21,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: getBrowserAuthCallbackUrl("/dashboard"),
     },
   });
 
@@ -29,7 +30,7 @@ export async function signInWithGoogle() {
   }
 
   if (data.url) {
-    window.location.href = data.url;
+    window.location.assign(data.url);
   }
 }
 
@@ -39,7 +40,7 @@ export async function signInWithGithub() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: getBrowserAuthCallbackUrl("/dashboard"),
     },
   });
 
@@ -48,6 +49,6 @@ export async function signInWithGithub() {
   }
 
   if (data.url) {
-    window.location.href = data.url;
+    window.location.assign(data.url);
   }
 }

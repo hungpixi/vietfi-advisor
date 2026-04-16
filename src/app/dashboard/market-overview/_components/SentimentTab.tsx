@@ -1,4 +1,5 @@
 import { getZone } from "@/lib/market-overview/formatters";
+import type { AssetMoodCard, SentimentDriver } from "@/lib/market-overview/types";
 
 export function SentimentTab({
     score,
@@ -6,11 +7,11 @@ export function SentimentTab({
     assetSentiments,
 }: {
     score: number;
-    drivers: Array<{ label: string; value: number; tone: "fear" | "neutral" | "greed" }>;
-    assetSentiments: Array<{ asset: string; score: number; trend: "up" | "down" | "neutral"; news: string }>;
+    drivers: SentimentDriver[];
+    assetSentiments: AssetMoodCard[];
 }) {
     const zone = getZone(score);
-    const fallbackAssetSentiments = [
+    const fallbackAssetSentiments: AssetMoodCard[] = [
         {
             asset: "Chứng khoán",
             score,

@@ -1,10 +1,45 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
+import { checkFixedWindowRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/api-security';
+
+type RiskType = 'conservative' | 'balanced' | 'growth';
+type ProjectionPoint = {
+    year: string;
+    optimistic: number;
+    base: number;
+    pessimistic: number;
+};
+
+const DEFAULT_CAPITAL = 100_000_000;
+const MIN_CAPITAL = 1;
+const MAX_CAPITAL = 1_000_000_000_000;
+const RATE_LIMIT = 60;
+const WINDOW_MS = 60_000;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function normalizeCapital(value: string | null): number {
+    const parsed = Number(value ?? DEFAULT_CAPITAL);
+    if (!Number.isFinite(parsed)) return DEFAULT_CAPITAL;
+    return Math.round(Math.min(MAX_CAPITAL, Math.max(MIN_CAPITAL, parsed)));
+}
+
+function normalizeRiskType(value: string | null): RiskType {
+    if (value === 'conservative' || value === 'growth') return value;
+    return 'balanced';
+}
 
 export async function GET(req: NextRequest) {
+    const clientId = getClientIdentifier(req);
+    const rateLimit = checkFixedWindowRateLimit(
+        rateLimitMap,
+        `portfolio:projection:${clientId}`,
+        RATE_LIMIT,
+        WINDOW_MS,
+    );
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit.retryAfter);
+
     const searchParams = req.nextUrl.searchParams;
-    const capital = parseFloat(searchParams.get('capital') || '100000000');
-    const riskType = searchParams.get('riskType') || 'balanced';
+    const capital = normalizeCapital(searchParams.get('capital'));
+    const riskType = normalizeRiskType(searchParams.get('riskType'));
 
     const currentYear = 2026;
     const yearsToProject = 10;
@@ -24,17 +59,18 @@ export async function GET(req: NextRequest) {
         bear: { cagr: rates.bear, label: `Bear Market (${rates.bear * 100}% CAGR)` },
     };
 
-    const projectionData = [];
+    const projectionData: ProjectionPoint[] = [];
 
     for (let year = 0; year <= yearsToProject; year++) {
         const projectedYear = currentYear + year;
-        const dataPoint: any = { year: projectedYear.toString() };
+        const dataPoint: ProjectionPoint = {
+            year: projectedYear.toString(),
+            optimistic: capital,
+            base: capital,
+            pessimistic: capital,
+        };
 
-        if (year === 0) {
-            dataPoint.optimistic = capital;
-            dataPoint.base = capital;
-            dataPoint.pessimistic = capital;
-        } else {
+        if (year !== 0) {
             dataPoint.optimistic = Math.round(capital * Math.pow(1 + scenarios.bull.cagr, year));
             dataPoint.base = Math.round(capital * Math.pow(1 + scenarios.base.cagr, year));
             dataPoint.pessimistic = Math.round(capital * Math.pow(1 + scenarios.bear.cagr, year));
@@ -48,5 +84,7 @@ export async function GET(req: NextRequest) {
         scenarios: Object.values(scenarios).map(s => s.label),
         currentValue: capital,
         data: projectionData
+    }, {
+        headers: { 'Cache-Control': 'no-store' },
     });
 }

@@ -373,7 +373,7 @@ export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null>
       const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
       const world = body?.world as Record<string, unknown> | undefined
       const worldPct = typeof world?.change_pct === 'number' ? Number(world.change_pct) : null
-      return { goldUsd, goldVnd, changePct: worldPct !== null ? worldPct : 0, source: 'giaVang' }
+      return { goldUsd, goldVnd, changePct: worldPct !== null ? worldPct : 0, source: 'giaVang /wp-json/giavang/v1/all' }
     } catch { return null }
   }
 

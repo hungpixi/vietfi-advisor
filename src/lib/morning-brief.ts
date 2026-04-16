@@ -49,16 +49,56 @@ function formatTakeaways(articles: NewsArticle[]): MorningBriefTakeaway[] {
   }))
 }
 
-function normalizeMorningBrief(aiRes: MorningBriefResponse, market: MarketSnapshot, articles: NewsArticle[], source: 'gemini' | 'heuristic'): MorningBriefData {
+function normalizeAiMorningBriefResponse(aiRes: unknown, articles: NewsArticle[]): MorningBriefResponse {
+  if (typeof aiRes === 'string' && aiRes.trim()) {
+    return {
+      summary: aiRes.trim().slice(0, 2500),
+      takeaways: formatTakeaways(articles),
+    }
+  }
+
+  if (!aiRes || typeof aiRes !== 'object') {
+    throw new Error('Invalid Morning Brief AI payload')
+  }
+
+  const raw = aiRes as Partial<MorningBriefResponse>
+  if (typeof raw.summary !== 'string' || !raw.summary.trim()) {
+    throw new Error('Invalid Morning Brief AI summary')
+  }
+
+  const takeaways = Array.isArray(raw.takeaways)
+    ? raw.takeaways
+      .filter((item): item is MorningBriefTakeaway =>
+        Boolean(item)
+        && typeof item.emoji === 'string'
+        && typeof item.asset === 'string'
+        && typeof item.text === 'string',
+      )
+      .slice(0, 4)
+      .map((item) => ({
+        emoji: item.emoji.slice(0, 8),
+        asset: item.asset.slice(0, 48),
+        text: item.text.slice(0, 240),
+      }))
+    : []
+
+  return {
+    summary: raw.summary.trim().slice(0, 2500),
+    takeaways: takeaways.length > 0 ? takeaways : formatTakeaways(articles),
+  }
+}
+
+function normalizeMorningBrief(aiRes: unknown, articles: NewsArticle[], source: 'gemini' | 'heuristic'): MorningBriefData {
   const now = new Date()
+  const normalized = normalizeAiMorningBriefResponse(aiRes, articles)
   
   return {
     date: `Hôm nay, ${now.toLocaleDateString('vi-VN')}`,
     title: 'Morning Brief AI',
-    summary: aiRes.summary,
-    raw: JSON.stringify(aiRes),
+    summary: normalized.summary,
+    raw: JSON.stringify(normalized),
     source,
-    takeaways: aiRes.takeaways,
+    takeaways: normalized.takeaways,
   }
 }
 
@@ -121,7 +161,7 @@ export async function buildMorningBrief(): Promise<MorningBriefData> {
       topNews: topNewsTitles,
     })
 
-    return normalizeMorningBrief(aiResponse, marketSnapshot, newsSnapshot.articles, 'gemini')
+    return normalizeMorningBrief(aiResponse, newsSnapshot.articles, 'gemini')
   } catch (err) {
     console.error('[morning-brief] Gemini generation failed, using simulated Gemini brief for smooth demo:', err)
     return buildSimulatedGeminiBrief(marketSnapshot, newsSnapshot)

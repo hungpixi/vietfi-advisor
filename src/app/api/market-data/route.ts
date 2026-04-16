@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkFixedWindowRateLimit, getClientIdentifier, rateLimitResponse } from '@/lib/api-security'
 import { crawlMarketData, type MarketSnapshot } from '@/lib/market-data/crawler'
 
 export const runtime = 'nodejs'
@@ -7,6 +8,9 @@ export const runtime = 'nodejs'
 // Persists across requests within the same serverless function instance.
 // On Vercel/serverless: cleared on cold start. On Node: persists indefinitely.
 const CACHE_TTL_MS = 1 * 60 * 1000 // 1 minute
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 60
+const WINDOW_MS = 60_000
 
 interface CacheEntry {
   snapshot: MarketSnapshot
@@ -70,6 +74,14 @@ export async function getMarketDataResponse(
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const rl = checkFixedWindowRateLimit(
+    rateLimitMap,
+    getClientIdentifier(request),
+    RATE_LIMIT,
+    WINDOW_MS,
+  )
+  if (!rl.allowed) return rateLimitResponse(rl.retryAfter)
+
   return getMarketDataResponse(crawlMarketData)
 }

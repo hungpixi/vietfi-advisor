@@ -17,11 +17,29 @@ import {
     buildTrendSummary,
 } from "./mappers";
 import { formatMarketTime } from "./formatters";
+import type { AssetOpportunity } from "./types";
 
 type HookState =
     | { status: "loading"; data: null; error: null }
     | { status: "error"; data: null; error: string }
-    | { status: "ready"; data: Record<string, unknown>; error: null };
+    | { status: "ready"; data: MarketOverviewData; error: null };
+
+type MarketOverviewData = {
+    lastUpdated: string | null;
+    stale: boolean;
+    sentiment: ReturnType<typeof buildSentimentSnapshot>;
+    assets: {
+        cards: ReturnType<typeof buildAssetCards>;
+        trendData: unknown[];
+        opportunities: AssetOpportunity[];
+        personalizedAlert: ReturnType<typeof buildPersonalizedAlert>;
+    };
+    macro: {
+        cards: ReturnType<typeof buildMacroCards>;
+        commentary: ReturnType<typeof buildMacroNarrative>;
+        trendSummary: ReturnType<typeof buildTrendSummary>;
+    };
+};
 
 function buildPersonalizedAlert() {
     const income = getIncome();
