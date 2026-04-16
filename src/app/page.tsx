@@ -270,7 +270,7 @@ function TrustBar() {
   ];
 
   return (
-    <div className="bg-[#0D0D14] border-b border-white/[0.05]">
+    <div className="bg-[#0D0D14]/55 backdrop-blur-[2px] border-b border-white/[0.05]">
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-center gap-6 md:gap-12 flex-wrap">
           {trustItems.map((item, i) => (
@@ -719,7 +719,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="py-28 px-6 bg-[#08080C] relative overflow-hidden">
+    <section id="how" className="py-28 px-6 bg-[#08080C]/55 relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.02]"
         style={{ backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)", backgroundSize: "40px 40px" }}
       />
@@ -995,7 +995,7 @@ function Stats() {
   ];
 
   return (
-    <section id="stats" className="py-20 px-6 bg-[#08080C] relative overflow-hidden">
+    <section id="stats" className="py-20 px-6 bg-[#08080C]/55 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_70%)] opacity-[0.03]" />
       </div>
@@ -1266,19 +1266,22 @@ function Footer() {
 export default function HomePage() {
   return (
     <>
-      <Navbar />
-      <TrustBar />
-      <main>
-        <Hero />
-        <Features />
-        <HowItWorks />
-        <VetVangShowcase />
-        <Stats />
-        <FAQ />
-        <FinalCTA />
-      </main>
-      <StickyCTABar />
-      <Footer />
+      <div className="landing-aurora" aria-hidden="true" />
+      <div className="relative z-10">
+        <Navbar />
+        <TrustBar />
+        <main>
+          <Hero />
+          <Features />
+          <HowItWorks />
+          <VetVangShowcase />
+          <Stats />
+          <FAQ />
+          <FinalCTA />
+        </main>
+        <StickyCTABar />
+        <Footer />
+      </div>
     </>
   );
 }
