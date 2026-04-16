@@ -393,13 +393,13 @@ function Hero() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="text-5xl md:text-6xl font-black mb-6 leading-[1.18] md:leading-[1.14] tracking-tight"
+              className="text-5xl md:text-6xl font-extrabold mb-6 leading-[1.25] md:leading-[1.2] tracking-tight [text-wrap:balance]"
             >
-              <span className="text-white">Tự do tài chính</span>
-              <br />
-              <span className="text-white/80">bắt đầu từ</span>
-              <br />
-              <GradientText>kiểm soát thật.</GradientText>
+              <span className="inline-block py-[0.03em] text-white">Tự do tài chính</span>
+              <span className="inline-block py-[0.03em] text-white/80">bắt đầu từ</span>
+              <span className="inline-block py-[0.03em] text-[#FFD700]">
+                kiểm soát thật.
+              </span>
             </motion.h1>
 
             {/* Subheadline */}
