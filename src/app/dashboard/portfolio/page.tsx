@@ -246,7 +246,7 @@ export default function PortfolioPage() {
               <strong className="text-white/70">{(capital / 1000000).toFixed(0)} triệu</strong>
               {fgScore <= 30 && " — Nhiệt kế thị trường đang ở vùng Sợ hãi → tăng tỷ trọng tài sản an toàn (tiết kiệm, vàng). Chứng khoán có cơ hội tích lũy nếu VN-Index tiếp tục giảm."}
               {fgScore > 30 && fgScore <= 60 && " — Thị trường trung tính → giữ phân bổ cân bằng theo khẩu vị rủi ro."}
-              {fgScore > 60 && " — Thị trường Tham lam → cẩn thận FOMO. Giảm dần vị thế rủi ro, tăng cash reserve."}
+              {fgScore > 60 && " — Thị trường tham lam → cẩn thận hội chứng sợ bỏ lỡ. Giảm dần vị thế rủi ro, tăng quỹ tiền mặt."}
               {userContext && <><br /><span className="text-[11px] text-white/30">📊 {userContext}</span></>}
             </p>
 
@@ -313,7 +313,7 @@ export default function PortfolioPage() {
       <motion.div variants={fadeIn} className="glass-card p-5 mb-4 border border-[#22C55E]/10">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="w-4 h-4 text-[#22C55E]" />
-          <h3 className="text-sm font-semibold text-white">Backtest — Nếu bạn đầu tư từ 2021</h3>
+          <h3 className="text-sm font-semibold text-white">Kiểm tra ngược — Nếu bạn đầu tư từ 2021</h3>
         </div>
         <p className="text-[11px] text-white/30 mb-3">
           Giả lập nếu bạn đầu tư <strong className="text-white/60">{(capital / 1000000).toFixed(0)} triệu</strong> theo phân bổ <strong className="text-white/60">{riskLabels[riskType]}</strong> từ đầu năm 2021:
@@ -368,9 +368,9 @@ export default function PortfolioPage() {
               <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />
               <Tooltip contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }} formatter={(v: unknown) => `${formatVND(v as number)}`} />
-              <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[0] || "Bull"} />
-              <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.1} strokeWidth={2} name={projectionData?.scenarios?.[1] || "Base"} />
-              <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[2] || "Bear"} />
+              <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[0] || "Lạc quan"} />
+              <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.1} strokeWidth={2} name={projectionData?.scenarios?.[1] || "Cơ sở"} />
+              <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[2] || "Bi quan"} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

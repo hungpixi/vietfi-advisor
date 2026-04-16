@@ -10,6 +10,34 @@ export function SentimentTab({
     assetSentiments: Array<{ asset: string; score: number; trend: "up" | "down" | "neutral"; news: string }>;
 }) {
     const zone = getZone(score);
+    const fallbackAssetSentiments = [
+        {
+            asset: "Chứng khoán",
+            score,
+            trend: score >= 55 ? "up" : score <= 40 ? "down" : "neutral",
+            news: "Dòng tin đang nghiêng về phòng thủ, nhưng vẫn còn cửa hồi nếu thanh khoản và độ rộng cải thiện.",
+        },
+        {
+            asset: "Vàng",
+            score: Math.max(0, Math.min(100, Math.round(100 - score / 2))),
+            trend: score >= 55 ? "up" : "neutral",
+            news: "Vàng giữ vai trò lớp phòng thủ khi khẩu vị rủi ro trên thị trường giảm nhiệt.",
+        },
+        {
+            asset: "Vĩ mô",
+            score: Math.max(0, Math.min(100, Math.round(50 + (score - 50) / 2))),
+            trend: score >= 55 ? "up" : "neutral",
+            news: "Lãi suất, tỷ giá và dòng tiền vẫn là 3 biến số quyết định nhịp thị trường ngắn hạn.",
+        },
+    ];
+
+    const mergedAssetSentiments = [...assetSentiments];
+    for (const fallback of fallbackAssetSentiments) {
+        if (mergedAssetSentiments.length >= 3) break;
+        if (!mergedAssetSentiments.some((item) => item.asset === fallback.asset)) {
+            mergedAssetSentiments.push(fallback);
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -33,7 +61,7 @@ export function SentimentTab({
             </section>
 
             <section className="grid gap-3 md:grid-cols-2">
-                {assetSentiments.map((asset) => (
+                {mergedAssetSentiments.map((asset) => (
                     <div key={asset.asset} className="glass-card p-4">
                         <div className="flex items-center justify-between">
                             <p className="text-sm font-semibold text-white">{asset.asset}</p>

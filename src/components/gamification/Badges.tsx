@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { getGamification } from "@/lib/gamification";
+import { cn } from "@/lib/utils";
 
-/* ─── Badge Definitions ─── */
 export interface Badge {
   id: string;
   name: string;
@@ -16,23 +16,42 @@ export interface Badge {
 }
 
 const TIER_STYLES = {
-  bronze: { border: "border-[#CD7F32]/30", bg: "bg-[#CD7F32]/5", glow: "", text: "text-[#CD7F32]" },
-  silver: { border: "border-[#C0C0C0]/30", bg: "bg-[#C0C0C0]/5", glow: "", text: "text-[#C0C0C0]" },
-  gold: { border: "border-[#E6B84F]/30", bg: "bg-[#E6B84F]/8", glow: "shadow-[0_0_15px_rgba(230,184,79,0.15)]", text: "text-[#E6B84F]" },
-  diamond: { border: "border-[#A855F7]/30", bg: "bg-[#A855F7]/5", glow: "shadow-[0_0_20px_rgba(168,85,247,0.15)]", text: "text-[#A855F7]" },
+  bronze: {
+    border: "border-[#CD7F32]/30",
+    bg: "bg-[#CD7F32]/8",
+    text: "text-[#CD7F32]",
+    ring: "shadow-[0_0_0_1px_rgba(205,127,50,0.25)]",
+  },
+  silver: {
+    border: "border-[#C0C0C0]/30",
+    bg: "bg-[#C0C0C0]/8",
+    text: "text-[#C0C0C0]",
+    ring: "shadow-[0_0_0_1px_rgba(192,192,192,0.25)]",
+  },
+  gold: {
+    border: "border-[#E6B84F]/35",
+    bg: "bg-[#E6B84F]/10",
+    text: "text-[#E6B84F]",
+    ring: "shadow-[0_0_0_1px_rgba(230,184,79,0.3)]",
+  },
+  diamond: {
+    border: "border-[#7DD3FC]/35",
+    bg: "bg-[#7DD3FC]/10",
+    text: "text-[#7DD3FC]",
+    ring: "shadow-[0_0_0_1px_rgba(125,211,252,0.3)]",
+  },
 };
 
 export const BADGES: Badge[] = [
-  { id: "newcomer", name: "Tân Binh", emoji: "🐣", description: "Hoàn thành Quick Setup", tier: "bronze", condition: (s) => s.xp >= 1 },
-  { id: "analyst", name: "Nhà Phân Tích", emoji: "📊", description: "Check thị trường 7 lần", tier: "silver", condition: (s) => s.xp >= 35 },
-  { id: "saver", name: "Tiết Kiệm Master", emoji: "💰", description: "Ghi 10 chi tiêu", tier: "silver", condition: (s) => s.xp >= 100 },
-  { id: "fire", name: "On Fire", emoji: "🔥", description: "Streak 7 ngày liên tiếp", tier: "gold", condition: (s) => s.streak >= 7 },
-  { id: "debt_free", name: "Thoát Nợ", emoji: "💎", description: "Trả hết 1 khoản nợ", tier: "diamond", condition: (s) => s.xp >= 200 },
-  { id: "champion", name: "Đại Gia", emoji: "🏆", description: "Đạt Level 5 (1000 XP)", tier: "diamond", condition: (s) => s.xp >= 1000 },
-  { id: "wise", name: "Thông Thái", emoji: "🧠", description: "Hoàn thành 5 bài học", tier: "gold", condition: (s) => s.xp >= 300 },
+  { id: "newcomer", name: "Tân Binh", emoji: "🐣", description: "Hoàn thành Quick Setup", tier: "bronze", condition: (state) => state.xp >= 1 },
+  { id: "analyst", name: "Nhà Phân Tích", emoji: "📊", description: "Check thị trường 7 lần", tier: "silver", condition: (state) => state.xp >= 35 },
+  { id: "saver", name: "Tiết Kiệm Master", emoji: "💰", description: "Ghi 10 chi tiêu", tier: "silver", condition: (state) => state.xp >= 100 },
+  { id: "fire", name: "On Fire", emoji: "🔥", description: "Streak 7 ngày liên tiếp", tier: "gold", condition: (state) => state.streak >= 7 },
+  { id: "debt_free", name: "Thoát Nợ", emoji: "💎", description: "Trả hết 1 khoản nợ", tier: "diamond", condition: (state) => state.xp >= 200 },
+  { id: "champion", name: "Đại Gia", emoji: "🏆", description: "Đạt Level 5 (1000 XP)", tier: "diamond", condition: (state) => state.xp >= 1000 },
+  { id: "wise", name: "Thông Thái", emoji: "🧠", description: "Hoàn thành 5 bài học", tier: "gold", condition: (state) => state.xp >= 300 },
 ];
 
-/* ─── Badge Grid Component (SSR-safe) ─── */
 export function BadgeGrid() {
   const [mounted, setMounted] = useState(false);
   const [earned, setEarned] = useState<Badge[]>([]);
@@ -40,9 +59,9 @@ export function BadgeGrid() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const gam = getGamification();
-      setEarned(BADGES.filter((b) => b.condition(gam)));
-      setLocked(BADGES.filter((b) => !b.condition(gam)));
+      const gamification = getGamification();
+      setEarned(BADGES.filter((badge) => badge.condition(gamification)));
+      setLocked(BADGES.filter((badge) => !badge.condition(gamification)));
       setMounted(true);
     }, 0);
 
@@ -51,65 +70,112 @@ export function BadgeGrid() {
 
   if (!mounted) return null;
 
+  const completion = BADGES.length > 0 ? (earned.length / BADGES.length) * 100 : 0;
+
   return (
     <div className="space-y-6">
-      {earned.length > 0 && (
-        <div>
-          <p className="text-[18px] font-black font-heading uppercase tracking-[0.3em] text-white/30 mb-6">
-            ĐÃ MỞ KHOÁ ({earned.length}/{BADGES.length})
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#E6B84F]" />
+            <p className="text-[12px] font-black uppercase tracking-[0.18em] text-white/60">Tiến độ thành tựu</p>
+          </div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/55">
+            {earned.length}/{BADGES.length} đã mở khóa
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {earned.map((badge, i) => {
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${completion}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="h-full rounded-full bg-gradient-to-r from-[#E6B84F] via-[#F5D37A] to-[#22C55E]"
+          />
+        </div>
+      </div>
+
+      {earned.length > 0 && (
+        <section>
+          <p className="mb-3 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/45">Đã mở khóa</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {earned.map((badge, index) => {
               const style = TIER_STYLES[badge.tier];
               return (
-                <motion.div key={badge.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                  className={`flex flex-col items-center gap-4 p-8 rounded-[32px] border ${style.border} ${style.bg} ${style.glow} hover:scale-105 transition-transform cursor-default group`}>
-                  <span className="text-5xl group-hover:scale-110 transition-transform duration-500">{badge.emoji}</span>
-                  <span className={`text-[16px] font-black uppercase tracking-widest ${style.text}`}>{badge.name}</span>
-                  <span className="text-[14px] text-white/30 text-center leading-relaxed font-black uppercase opacity-60">{badge.description}</span>
-                </motion.div>
+                <motion.article
+                  key={badge.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={cn(
+                    "group rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5",
+                    style.border,
+                    style.bg,
+                    style.ring
+                  )}
+                >
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <span className="text-3xl transition-transform duration-300 group-hover:scale-110">{badge.emoji}</span>
+                    <span className={cn("rounded-full border px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-[0.14em]", style.border, style.text)}>
+                      {badge.tier}
+                    </span>
+                  </div>
+                  <h4 className="text-[14px] font-black text-white">{badge.name}</h4>
+                  <p className="mt-1 text-[12px] leading-relaxed text-white/60">{badge.description}</p>
+                </motion.article>
               );
             })}
           </div>
-        </div>
+        </section>
       )}
+
       {locked.length > 0 && (
-        <div>
-          <p className="text-[18px] font-black font-heading uppercase tracking-[0.3em] text-white/30 mb-6">CHƯA MỞ KHOÁ</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <section>
+          <p className="mb-3 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/35">Chưa mở khóa</p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {locked.map((badge) => (
-              <div key={badge.id} className="flex flex-col items-center gap-4 p-8 rounded-[32px] border border-white/[0.08] bg-white/[0.02] opacity-30 group grayscale hover:grayscale-0 transition-all duration-500">
-                <div className="relative">
-                  <span className="text-5xl">{badge.emoji}</span>
-                  <Lock className="absolute -bottom-2 -right-2 w-6 h-6 text-white/60 drop-shadow-[0_0_8px_black]" />
+              <article
+                key={badge.id}
+                className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.015] px-3 py-3 text-white/45 transition-colors duration-300 hover:text-white/65"
+              >
+                <div className="relative shrink-0">
+                  <span className="text-2xl grayscale">{badge.emoji}</span>
+                  <Lock className="absolute -bottom-1 -right-1 h-3.5 w-3.5 text-white/55" />
                 </div>
-                <span className="text-[16px] font-black text-white/40 uppercase tracking-widest">{badge.name}</span>
-                <span className="text-[14px] text-white/20 text-center leading-relaxed font-black uppercase">{badge.description}</span>
-              </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-black">{badge.name}</p>
+                  <p className="truncate text-[11px] text-white/35">{badge.description}</p>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
 }
 
-/* ─── Badge Mini Row (SSR-safe) ─── */
 export function BadgeMiniRow() {
   const [earned, setEarned] = useState<Badge[]>([]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const gam = getGamification();
-      setEarned(BADGES.filter((b) => b.condition(gam)).slice(0, 5));
+      const gamification = getGamification();
+      setEarned(BADGES.filter((badge) => badge.condition(gamification)).slice(0, 5));
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, []);
+
   if (earned.length === 0) return null;
+
   return (
     <div className="flex items-center gap-1">
-      {earned.map((b) => (<span key={b.id} className="text-sm" title={b.name}>{b.emoji}</span>))}
-      {earned.length < BADGES.length && (<span className="text-[9px] text-white/15 font-mono ml-0.5">+{BADGES.length - earned.length}</span>)}
+      {earned.map((badge) => (
+        <span key={badge.id} className="text-sm" title={badge.name}>
+          {badge.emoji}
+        </span>
+      ))}
+      {earned.length < BADGES.length && <span className="ml-0.5 font-mono text-[9px] text-white/20">+{BADGES.length - earned.length}</span>}
     </div>
   );
 }

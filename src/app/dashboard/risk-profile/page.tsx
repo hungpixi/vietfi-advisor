@@ -18,7 +18,7 @@ export default function RiskProfilePage() {
 
   const shareResult = async () => {
     if (!result) return;
-    const text = `🦜 VietFi Advisor vừa phân tích tôi là "${result.label}" ${result.emoji}\nScore: ${result.score}/15\n\nBạn thuộc tuýp nhà đầu tư nào? Làm quiz tại:`;
+    const text = `🦜 VietFi Advisor vừa phân tích tôi là "${result.label}" ${result.emoji}\nĐiểm: ${result.score}/15\n\nBạn thuộc tuýp nhà đầu tư nào? Làm quiz tại:`;
     const url = typeof window !== "undefined" ? window.location.origin + "/dashboard/risk-profile" : "";
 
     if (navigator.share) {
@@ -124,7 +124,7 @@ export default function RiskProfilePage() {
                 <span className="text-4xl">{result.emoji}</span>
                 <div>
                   <h2 className="text-xl font-bold text-white">{result.label}</h2>
-                  <p className="text-xs text-white/40">Score: {result.score}/15</p>
+                  <p className="text-xs text-white/40">Điểm: {result.score}/15</p>
                 </div>
               </div>
               <p className="text-[13px] text-white/50 leading-relaxed mb-4">{result.description}</p>

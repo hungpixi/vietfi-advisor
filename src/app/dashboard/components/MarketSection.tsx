@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, ArrowUpRight, Sparkles } from "lucide-react";
@@ -9,22 +9,17 @@ import { getMarketCache, setMarketCache } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 function usePersistentTime() {
-  const [time, setTime] = useState<string>(() =>
-    new Date().toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  );
+  const [time, setTime] = useState<string>("");
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setTime(
-        new Date().toLocaleTimeString("vi-VN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    }, 60_000);
+    const updateTime = () => setTime(
+      new Date().toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
+    updateTime();
+    const id = setInterval(updateTime, 60_000);
 
     return () => clearInterval(id);
   }, []);
@@ -226,6 +221,16 @@ function getIndicatorColor(value: number) {
   return "#F1D17A"; // zone-neutral/yellow
 }
 
+const SENTIMENT_GAUGE_THEME = {
+  arcBase: "#31384B",
+  arcFill: "#F4B437",
+  arcGlow: "rgba(244, 180, 55, 0.55)",
+  needle: "#E5E7EB",
+  needleShadow: "rgba(0, 0, 0, 0.6)",
+  pivotOuter: "#D9C6A4",
+  pivotInner: "#BFA06D",
+};
+
 export function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
   const positive = change >= 0;
   const color = positive ? "#22C55E" : "#EF4444";
@@ -290,12 +295,12 @@ export function FGGauge({
 }) {
   const zone = ZONES.find((item) => score >= item.min && score < item.max) ?? ZONES[2];
   const { quote, action } = VERTEX_QUOTES[getVertexZoneKey(score)];
-  const indicators = useMemo(() => buildIndicatorMetrics(score, snapshot), [score, snapshot]);
+  const indicators = buildIndicatorMetrics(score, snapshot);
 
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden group border border-white/10 p-8 shadow-2xl"
+      className="glass-card relative overflow-hidden group border border-white/10 p-8 shadow-2xl h-full flex flex-col"
     >
       {/* Cyber Decor */}
       <div className="absolute top-0 right-0 w-64 h-64 blur-[100px] pointer-events-none opacity-20" style={{ backgroundColor: zone.color }} />
@@ -303,130 +308,121 @@ export function FGGauge({
       <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-white/20 to-transparent" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-12 relative z-10 border-b border-white/[0.05] pb-6">
-        <div className="flex items-center gap-5">
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-            <TrendingUp className="w-5 h-5 text-white/60" />
-          </div>
-          <div>
-            <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-3">
-              Nhiệt kế thị trường <span className="text-white/20 font-mono text-[14px] tracking-widest">- MARKET PHASES</span>
-            </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] font-mono">Real-time Analysis</span>
-            </div>
-          </div>
-        </div>
-        <Link
-          href="/dashboard/market-overview"
-          className="text-[11px] text-white/30 hover:text-white transition-colors flex items-center gap-2 font-black uppercase tracking-[0.2em] font-mono group/link"
-        >
-          Toàn cảnh <ArrowUpRight className="w-4 h-4 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-        </Link>
+      <div className="mb-6 relative z-10 pb-4">
+        <h3 className="text-[18px] font-black text-white uppercase tracking-widest leading-none">
+          TÂM LÝ THỊ TRƯỜNG
+        </h3>
+        <p className="text-white/40 font-mono text-[12px] tracking-widest uppercase mt-1">
+          NHIỆT KẾ THỊ TRƯỜNG
+        </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12 relative z-10">
-        {/* Left: 180-degree semi-circle gauge */}
-        <div className="relative flex w-full lg:w-72 flex-shrink-0 flex-col items-center justify-center pt-4">
-          <svg viewBox="0 0 160 100" className="w-full overflow-visible">
+      <div className="flex flex-col gap-4 relative z-10 w-full h-full pb-4">
+        {/* Top: market sentiment gauge (styled to match reference) */}
+        <div className="relative flex w-full flex-col items-center justify-center pt-2">
+          <svg viewBox="0 0 180 124" className="w-full max-w-[280px] overflow-visible">
+            {/* Base track */}
             <path
-              d="M 20 60 A 60 60 0 0 1 140 60"
+              d="M 26 94 A 64 64 0 0 1 154 94"
               fill="none"
-              stroke="white"
-              strokeWidth="10"
+              stroke={SENTIMENT_GAUGE_THEME.arcBase}
+              strokeWidth="11"
               strokeLinecap="round"
-              opacity="0.05"
             />
 
-            {ZONES.map((z, i) => {
-              const radius = 60;
-              const angleStart = -180 + (z.min / 100) * 180;
-              const angleEnd = -180 + (z.max / 100) * 180;
-              const startRad = (angleStart * Math.PI) / 180;
-              const endRad = (angleEnd * Math.PI) / 180;
-              const x1 = 80 + radius * Math.cos(startRad);
-              const y1 = 60 + radius * Math.sin(startRad);
-              const x2 = 80 + radius * Math.cos(endRad);
-              const y2 = 60 + radius * Math.sin(endRad);
-              const isActive = score >= z.min && (score < z.max || (z.max > 100 && score <= 100));
+            {/* Filled track */}
+            <path
+              d="M 26 94 A 64 64 0 0 1 154 94"
+              fill="none"
+              stroke={SENTIMENT_GAUGE_THEME.arcFill}
+              strokeWidth="11"
+              strokeLinecap="round"
+              strokeDasharray={(Math.PI * 64).toFixed(5)}
+              strokeDashoffset={(Math.PI * 64 - ((score / 100) * Math.PI * 64)).toFixed(5)}
+              className="transition-all duration-1000 ease-out"
+              style={{ filter: `drop-shadow(0 0 8px ${SENTIMENT_GAUGE_THEME.arcGlow})` }}
+            />
 
-              return (
-                <path
-                  key={i}
-                  d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
-                  fill="none"
-                  stroke={z.color}
-                  strokeWidth={isActive ? 16 : 8}
-                  strokeLinecap="round"
-                  opacity={isActive ? 1 : 0.2}
-                  className="transition-all duration-1000"
-                />
-              );
-            })}
+            {/* Needle */}
+            <g
+              style={{
+                transformOrigin: "90px 94px",
+                transform: `rotate(${(score / 100) * 180 - 90}deg)`,
+                transition: "transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            >
+              <line
+                x1="90"
+                y1="94"
+                x2="90"
+                y2="28"
+                stroke={SENTIMENT_GAUGE_THEME.needle}
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                style={{ filter: `drop-shadow(0 2px 4px ${SENTIMENT_GAUGE_THEME.needleShadow})` }}
+              />
+            </g>
 
-            {(() => {
-              const rotation = (score / 100) * 180 - 180;
-              return (
-                <g style={{ transformOrigin: "80px 60px", transform: `rotate(${rotation}deg)`, transition: "transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
-                  <circle cx="80" cy="60" r="4" fill="white" />
-                  <line x1="80" y1="60" x2="140" y2="60" stroke="white" strokeWidth="2" strokeLinecap="round" strokeDasharray="2,2" />
-                  <path d="M 135 60 L 142 60" stroke="white" strokeWidth="3" strokeLinecap="round" />
-                </g>
-              );
-            })()}
+            {/* Pivot */}
+            <circle cx="90" cy="94" r="7.2" fill={SENTIMENT_GAUGE_THEME.pivotOuter} />
+            <circle cx="90" cy="94" r="3.4" fill={SENTIMENT_GAUGE_THEME.pivotInner} />
           </svg>
 
-          <div className="absolute top-[60%] flex flex-col items-center">
-            <span className="text-[64px] font-black leading-none tracking-tighter text-white">{score}</span>
+          <div className="-mt-2 flex flex-col items-center">
             <span
-              className="mt-2 text-[11px] font-black uppercase tracking-[0.3em] font-mono px-3 py-1 rounded-full bg-white/5 border border-white/10"
-              style={{ color: zone.color }}
+              className="text-[46px] font-black leading-none tracking-tight"
+              style={{
+                color: SENTIMENT_GAUGE_THEME.arcFill,
+                textShadow: "0 0 10px rgba(244,180,55,0.4)",
+              }}
             >
-              {zone.label}
+              {score}
+            </span>
+            <span
+              className="mt-1 text-[17px] font-black uppercase tracking-wide font-mono"
+              style={{ color: "#E2A838" }}
+            >
+              {zone.label.toUpperCase()}
             </span>
           </div>
         </div>
 
-        {/* Right: Metric bars */}
-        <div className="flex-1 space-y-7 py-2">
+        {/* Bottom: Metric bars and Professional Insight Box */}
+        <div className="flex-1 flex flex-col space-y-5 relative z-10 w-full mt-4">
           {indicators.map((indicator, index) => {
             const barColor = getIndicatorColor(indicator.value);
             return (
               <div key={indicator.label} className="group/bar">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[12px] font-black font-mono uppercase tracking-widest text-white/40 group-hover/bar:text-white/60 transition-colors">{indicator.label}</span>
-                  <span className="text-[14px] font-black text-white font-mono">{indicator.value}</span>
+                <div className="mb-1">
+                  <span className="text-[12px] font-bold font-mono uppercase tracking-widest text-white/80">{indicator.label}</span>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${indicator.value}%` }}
-                    transition={{ duration: 1.2, delay: index * 0.1, ease: "circOut" }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
-                  />
+                <div className="flex items-center gap-4">
+                  <div className="h-1.5 w-full bg-[#1F222A] rounded-full overflow-hidden border border-white/[0.02]">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${indicator.value}%` }}
+                      transition={{ duration: 1.2, delay: index * 0.1, ease: "circOut" }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
+                    />
+                  </div>
+                  <span className="text-[14px] font-bold text-white/60 font-mono w-6 text-right shrink-0">{indicator.value}</span>
                 </div>
               </div>
             );
           })}
 
           {/* Professional Insight Box */}
-          <div className="mt-8 relative p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-hidden group/insight">
-            <div className="absolute top-0 right-0 p-3 opacity-20 group-hover/insight:opacity-40 transition-opacity">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="flex gap-4 items-start relative z-10">
-              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mt-1">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
+          <div className="mt-4 relative p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+            <div className="flex gap-3 items-start relative z-10">
+              <div className="flex-shrink-0 mt-0.5 rounded-full w-4 h-4 border border-white/30 flex items-center justify-center font-mono text-[9px] text-white/50">
+                i
               </div>
-              <div className="space-y-2">
-                <p className="text-[15px] font-semibold text-white/90 leading-relaxed italic">&ldquo;{quote}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="h-[1px] w-4 bg-emerald-400/30" />
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400 font-mono">{action}</p>
-                </div>
-              </div>
+              <p className="text-[13px] font-medium text-white/60 leading-relaxed font-sans">
+                <span className="text-white/80 font-semibold mr-1">AI Commentary:</span>
+                {quote} {action}
+              </p>
             </div>
           </div>
         </div>
@@ -437,8 +433,10 @@ export function FGGauge({
 
 export function MarketSection({
   onError,
+  briefElement,
 }: {
   onError?: (e: string) => void;
+  briefElement?: ReactNode;
 }) {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<MarketSnapshot | null>(null);
@@ -551,7 +549,16 @@ export function MarketSection({
         </motion.div>
       )}
 
-      <FGGauge score={fgScore} snapshot={snapshot} />
+      <div className={cn("mt-4", briefElement ? "grid lg:grid-cols-3 gap-4" : "")}>
+        <div className={cn("h-full", briefElement ? "lg:col-span-1" : "")}>
+          <FGGauge score={fgScore} snapshot={snapshot} />
+        </div>
+        {briefElement && (
+          <div className="lg:col-span-2 h-full flex flex-col w-full min-w-0">
+            {briefElement}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

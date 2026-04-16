@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775550494003,
+  "lastScanned": 1776329766274,
   "projectRoot": "D:\\vietfi-advisor",
   "techStack": {
     "languages": [
@@ -24,7 +24,7 @@
     "frameworks": [
       {
         "name": "next",
-        "version": "16.1.7",
+        "version": "16.2.3",
         "category": "fullstack"
       },
       {
@@ -92,18 +92,11 @@
   },
   "customNotes": [],
   "directoryMap": {
-    "android": {
-      "path": "android",
-      "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1775550493966,
-      "keyFiles": []
-    },
     "design-exports": {
       "path": "design-exports",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775550493966,
+      "lastAccessed": 1776329766232,
       "keyFiles": [
         "9nb0s.png",
         "AL84F.png",
@@ -112,46 +105,62 @@
         "K66sZ.png"
       ]
     },
+    "design-system": {
+      "path": "design-system",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1776329766233,
+      "keyFiles": []
+    },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 1,
-      "lastAccessed": 1775550493973,
+      "fileCount": 3,
+      "lastAccessed": 1776329766241,
       "keyFiles": [
+        "deployment-vinahost-node.md",
+        "PLAN-vietfi-audit-upgrade.md",
         "wda2026-report-sections-vietfi.md"
       ]
+    },
+    "fg-index": {
+      "path": "fg-index",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1776329766242,
+      "keyFiles": []
     },
     "public": {
       "path": "public",
       "purpose": "Public files",
-      "fileCount": 9,
-      "lastAccessed": 1775550493974,
+      "fileCount": 8,
+      "lastAccessed": 1776329766243,
       "keyFiles": [
         "file.svg",
         "globe.svg",
         "manifest.json",
         "next.svg",
-        "quotes.json"
+        "sw-register.js"
       ]
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 6,
-      "lastAccessed": 1775550493974,
+      "fileCount": 8,
+      "lastAccessed": 1776329766243,
       "keyFiles": [
         "debug_clone.py",
+        "export_tts_data.ts",
         "generate-tts-bank.ts",
         "generate_audio.py",
-        "list_voices.py",
-        "test_clone.py"
+        "list_voices.py"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 1,
-      "lastAccessed": 1775550493974,
+      "lastAccessed": 1776329766243,
       "keyFiles": [
         "proxy.ts"
       ]
@@ -160,52 +169,30 @@
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 0,
-      "lastAccessed": 1775550493975,
+      "lastAccessed": 1776329766244,
       "keyFiles": []
-    },
-    "ui-prototype": {
-      "path": "ui-prototype",
-      "purpose": null,
-      "fileCount": 5,
-      "lastAccessed": 1775550493975,
-      "keyFiles": [
-        "index.html",
-        "quotes.json",
-        "script.js",
-        "style.css",
-        "vet-demo.html"
-      ]
     },
     "vietfi-appwrite": {
       "path": "vietfi-appwrite",
       "purpose": null,
-      "fileCount": 2,
-      "lastAccessed": 1775550493976,
-      "keyFiles": [
-        "README.md"
-      ]
+      "fileCount": 0,
+      "lastAccessed": 1776329766244,
+      "keyFiles": []
     },
     "voice_ref": {
       "path": "voice_ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775550493976,
+      "lastAccessed": 1776329766244,
       "keyFiles": [
         "zinzin.vi.vtt"
       ]
-    },
-    "android\\app": {
-      "path": "android\\app",
-      "purpose": "Application code",
-      "fileCount": 0,
-      "lastAccessed": 1775550493977,
-      "keyFiles": []
     },
     "docs\\assets": {
       "path": "docs\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1775550493977,
+      "lastAccessed": 1776329766245,
       "keyFiles": [
         "vietfi-onboarding-flow.png",
         "vietfi-system-architecture.png"
@@ -215,7 +202,7 @@
       "path": "public\\assets",
       "purpose": "Static assets",
       "fileCount": 10,
-      "lastAccessed": 1775550493980,
+      "lastAccessed": 1776329766245,
       "keyFiles": [
         "icon-192.png",
         "icon-512.png",
@@ -226,7 +213,7 @@
       "path": "public\\docs",
       "purpose": "Documentation",
       "fileCount": 57,
-      "lastAccessed": 1775550493982,
+      "lastAccessed": 1776329766246,
       "keyFiles": [
         "audit_budget_1773931000033.png",
         "audit_cpi_retry_1773931015040.png",
@@ -237,7 +224,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 4,
-      "lastAccessed": 1775550493982,
+      "lastAccessed": 1776329766247,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -248,14 +235,14 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 0,
-      "lastAccessed": 1775550493983,
+      "lastAccessed": 1776329766247,
       "keyFiles": []
     },
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 17,
-      "lastAccessed": 1775550493984,
+      "lastAccessed": 1776329766247,
       "keyFiles": [
         "expense-parser.ts",
         "gamification.ts",
@@ -266,31 +253,18 @@
       "path": "src\\test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1775550493984,
+      "lastAccessed": 1776329766247,
       "keyFiles": [
         "setup.ts"
       ]
     },
-    "ui-prototype\\assets": {
-      "path": "ui-prototype\\assets",
-      "purpose": "Static assets",
-      "fileCount": 8,
-      "lastAccessed": 1775550493986,
+    "src\\utils": {
+      "path": "src\\utils",
+      "purpose": "Utility functions",
+      "fileCount": 1,
+      "lastAccessed": 1776329766248,
       "keyFiles": [
-        "icon.png",
-        "level-1-con.png",
-        "level-2-teen.png"
-      ]
-    },
-    "vietfi-appwrite\\docs": {
-      "path": "vietfi-appwrite\\docs",
-      "purpose": "Documentation",
-      "fileCount": 3,
-      "lastAccessed": 1775550493987,
-      "keyFiles": [
-        "appwrite-clone-plan.md",
-        "appwrite-schema.md",
-        "design-spec.md"
+        "supabase.ts"
       ]
     }
   },

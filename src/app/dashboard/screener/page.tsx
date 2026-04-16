@@ -51,7 +51,7 @@ const DEFAULT: Filters = {
 /* ─── Filter Presets ─── */
 
 const PRESETS = [
-  { label: "Blue-chip", emoji: "💎", filters: { maxPE: 20, maxPB: 3, minROE: 15, minMarketCap: 5000, minRating: 3, exchange: "HOSE" } },
+  { label: "Cổ phiếu đầu ngành", emoji: "💎", filters: { maxPE: 20, maxPB: 3, minROE: 15, minMarketCap: 5000, minRating: 3, exchange: "HOSE" } },
   { label: "Giá trị", emoji: "🏷️", filters: { maxPE: 10, maxPB: 1.5, minROE: 10, minMarketCap: 200, minRating: 2, exchange: "" } },
   { label: "Tăng trưởng", emoji: "🚀", filters: { maxPE: 25, maxPB: 4, minROE: 20, minMarketCap: 1000, minRating: 3, exchange: "" } },
   { label: "Cổ tức cao", emoji: "💰", filters: { maxPE: 15, maxPB: 2, minROE: 8, minMarketCap: 500, minRating: 2, exchange: "" } },
@@ -250,7 +250,7 @@ export default function ScreenerPage() {
                   <ThSortable label="ROE%" col="roe" onSort={handleSort} icon={<SortIcon col="roe" />} />
                   <ThSortable label="Vốn hóa" col="marketCap" onSort={handleSort} icon={<SortIcon col="marketCap" />} />
                   <ThSortable label="Rating" col="rating" onSort={handleSort} icon={<SortIcon col="rating" />} />
-                  <ThSortable label="Score" col="compositeScore" onSort={handleSort} icon={<SortIcon col="compositeScore" />} />
+                  <ThSortable label="Điểm" col="compositeScore" onSort={handleSort} icon={<SortIcon col="compositeScore" />} />
                 </tr>
               </thead>
               <tbody>
@@ -322,11 +322,11 @@ export default function ScreenerPage() {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">🏆</span>
-              <h3 className="text-sm font-bold text-[#E6B84F]">Top 3 Cổ Phiếu Nổi Bật</h3>
+              <h3 className="text-sm font-bold text-[#E6B84F]">Top 3 cổ phiếu nổi bật</h3>
             </div>
             <div className="space-y-2.5">
               {sorted.slice(0, 3).map((s, i) => {
-                const category = s.pe < 10 ? "Giá trị" : s.roe > 20 ? "Tăng trưởng" : s.marketCap > 5000 ? "Blue-chip" : "Tiềm năng";
+                const category = s.pe < 10 ? "Giá trị" : s.roe > 20 ? "Tăng trưởng" : s.marketCap > 5000 ? "Đầu ngành" : "Tiềm năng";
                 const emoji = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
                 return (
                   <div key={s.ticker} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02]">
@@ -340,7 +340,7 @@ export default function ScreenerPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-white/30 mt-0.5">
-                        PE {s.pe.toFixed(1)} • PB {s.pb.toFixed(1)} • ROE {s.roe.toFixed(1)}% • Score <strong className={scoreColor(s.compositeScore)}>{s.compositeScore}</strong>
+                        PE {s.pe.toFixed(1)} • PB {s.pb.toFixed(1)} • ROE {s.roe.toFixed(1)}% • Điểm <strong className={scoreColor(s.compositeScore)}>{s.compositeScore}</strong>
                       </p>
                     </div>
                   </div>

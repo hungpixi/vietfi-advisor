@@ -212,7 +212,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: text.slice(0, 500) }),
         });
-        if (!res.ok) throw new Error("TTS Failed");
+        if (!res.ok) throw new Error("TTS thất bại");
         const audioBlob = await res.blob();
         audioUrl = URL.createObjectURL(audioBlob);
         isBlob = true;
@@ -244,7 +244,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       setLastSpokenMsgId(greetingId);
       const text = greetingItem?.ttsText || greetingItem?.text || "Chào mày! Ghi chi tiêu đi!";
       setTimeout(() => {
-        speakMessage(greetingId, text).catch(() => console.log("Autoplay blocked by browser"));
+        speakMessage(greetingId, text).catch(() => console.log("Trình duyệt chặn phát tự động"));
       }, 500);
     }
   }, [isOpen, soundMuted, lastSpokenMsgId, greetingId, greetingItem, speakMessage]);
@@ -535,7 +535,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
           {/* XP Bar */}
           <div className="px-4 py-1.5 border-b border-white/[0.04]">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[8px] font-mono text-white/15">XP PROGRESS</span>
+              <span className="text-[8px] font-mono text-white/15">Tiến độ XP</span>
               <span className="text-[8px] font-mono text-[#E6B84F]/40">{xp}/1000</span>
             </div>
             <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">

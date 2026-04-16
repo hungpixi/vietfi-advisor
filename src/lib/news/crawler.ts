@@ -52,6 +52,7 @@ const RSS_FEEDS: Record<string, string> = {
   'Chứng khoán (CafeF)': 'https://cafef.vn/thi-truong-chung-khoan.rss',
   'Tài chính - Ngân hàng (CafeF)': 'https://cafef.vn/tai-chinh-ngan-hang.rss',
   'Kinh tế vĩ mô (CafeF)': 'https://cafef.vn/vi-mo-dau-tu.rss',
+  'Bất động sản (CafeF)': 'https://cafef.vn/bat-dong-san.rss',
 
   // VnEconomy (Chính luận, chuyên sâu)
   'Tài chính - Chứng khoán (VnEconomy)': 'https://vneconomy.vn/chung-khoan.rss',

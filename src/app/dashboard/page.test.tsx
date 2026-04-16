@@ -5,6 +5,11 @@ import DashboardOverview from './page';
 const mockFetchData = vi.fn();
 vi.stubGlobal('fetch', mockFetchData);
 vi.stubGlobal('Notification', { permission: 'default' });
+vi.stubGlobal('IntersectionObserver', class {
+  observe() {}
+  disconnect() {}
+  unobserve() {}
+});
 
 const onboardingData = {
   completed: true,

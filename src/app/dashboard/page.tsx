@@ -6,13 +6,11 @@ import dynamic from "next/dynamic";
 import { isFirstTimeUser } from "@/lib/onboarding-state";
 import { cn } from "@/lib/utils";
 import { getBudgetPots, getExpenses, getIncome, getRiskResult, getMarketCache } from "@/lib/storage";
-import { getGamification, getLevelProgress } from "@/lib/gamification";
 import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
-  Flame,
   Clock,
   Calendar,
   Wallet,
@@ -21,14 +19,9 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowUpRight,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-
-const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
-const PieChart = dynamic(() => import("recharts").then((mod) => mod.PieChart), { ssr: false });
-const Pie = dynamic(() => import("recharts").then((mod) => mod.Pie), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
-const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
 const QuickSetupWizard = dynamic(() => import("@/components/onboarding/QuickSetupWizard"), { ssr: false });
 
@@ -126,85 +119,164 @@ function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1.8 }: {
   );
 }
 
-/* ═══════════════════ INLINE COMPONENTS ═══════════════════ */
+/* INLINE COMPONENTS */
 
 function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
-  const pctFormatter = (value: unknown) => `${value}%`;
-  return (
-    <motion.div variants={fadeIn} className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#00E5FF]/10 hover:border-[#00E5FF]/30 transition-all duration-500">
-      {/* Cyber Decor */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#00E5FF]/5 blur-[60px] pointer-events-none group-hover:bg-[#00E5FF]/10 transition-colors" />
-      <div className="absolute top-0 right-0 w-24 h-[1px] bg-gradient-to-l from-[#00E5FF] to-transparent" />
-      <div className="absolute top-0 right-0 w-[1px] h-24 bg-gradient-to-b from-[#00E5FF] to-transparent" />
+  const radius = 96;
+  const strokeWidth = 38;
+  const normalizedRadius = radius - strokeWidth / 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const chartSegments = useMemo(
+    () =>
+      allocation.reduce<{
+        item: AllocationItem;
+        segmentLength: number;
+        rotation: number;
+        labelX: number;
+        labelY: number;
+      }[]>((segments, item) => {
+        const cumulative = segments.reduce((total, segment) => total + segment.item.percent, 0);
+        const mid = cumulative + item.percent / 2;
+        const angle = (mid / 100) * 360 - 90;
+        const rad = (angle * Math.PI) / 180;
+        const labelDist = radius + 10;
 
-      <div className="flex items-center justify-between mb-8 relative z-10 border-b border-[#00E5FF]/10 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#00E5FF]/10 flex items-center justify-center border border-[#00E5FF]/20">
-            <TrendingUp className="w-4 h-4 text-[#00E5FF]" />
-          </div>
-          <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
-            Gợi ý phân bổ <span className="text-[#00E5FF]/50 font-mono text-[14px] tracking-widest">- PORTFOLIO</span>
+        return [
+          ...segments,
+          {
+            item,
+            segmentLength: (item.percent / 100) * circumference,
+            rotation: (cumulative / 100) * 360,
+            labelX: radius + Math.cos(rad) * labelDist,
+            labelY: radius + Math.sin(rad) * labelDist,
+          },
+        ];
+      }, []),
+    [allocation, circumference]
+  );
+
+  return (
+    <motion.div
+      variants={fadeIn}
+      className="group relative h-full overflow-hidden rounded-lg border border-[#22C55E]/20 bg-[#08110f] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/40 sm:p-6 md:p-8"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.18),transparent_46%),radial-gradient(circle_at_82%_0%,rgba(0,229,255,0.08),transparent_30%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:38px_38px]" />
+
+      <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#22C55E]/35" />
+      <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#22C55E]/20" />
+      <div className="absolute right-3 top-1/2 hidden translate-y-[-50%] flex-col gap-1 opacity-30 sm:flex">
+        <span className="h-0.5 w-0.5 rounded-full bg-white" />
+        <span className="h-0.5 w-0.5 rounded-full bg-white" />
+        <span className="h-0.5 w-0.5 rounded-full bg-white" />
+      </div>
+
+      <div className="relative z-10 mb-8 min-h-20 pr-24">
+        <div>
+          <h3 className="font-heading text-[19px] font-black uppercase leading-[1.18] tracking-[0.22em] text-white/80 drop-shadow-[0_2px_18px_rgba(255,255,255,0.08)] sm:text-[21px]">
+            PHÂN BỔ<br />
+            DANH MỤC
           </h3>
+          <p className="mt-3 max-w-[190px] font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/60">
+            Gợi ý phân bổ tài sản
+          </p>
         </div>
         <Link
           href="/dashboard/portfolio"
-          className="text-[11px] text-[#00E5FF] hover:underline flex items-center gap-1 font-mono uppercase tracking-[0.2em] font-black group/link"
+          className="group/link absolute right-0 top-0 flex min-h-12 items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2.5 font-mono text-[9px] font-black uppercase leading-tight tracking-[0.18em] text-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-[#22C55E]/35 hover:bg-[#22C55E]/10 hover:text-white"
         >
-          Chi tiết <ArrowUpRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+          Chi tiết <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
         </Link>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
-        <div className="w-32 h-32 flex-shrink-0 relative">
-          <div className="absolute inset-0 bg-[#00E5FF]/5 rounded-full blur-xl" />
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={allocation}
-                cx="50%"
-                cy="50%"
-                innerRadius={38}
-                outerRadius={60}
-                paddingAngle={4}
-                dataKey="percent"
-                stroke="none"
-              >
-                {allocation.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "#111318",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 12,
-                  color: "#F5F3EE",
-                  fontSize: 12,
-                  fontWeight: "900",
-                  fontFamily: "monospace"
-                }}
-                formatter={pctFormatter}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="relative flex aspect-square w-full max-w-[260px] items-center justify-center sm:max-w-[280px]">
+          <div className="pointer-events-none absolute inset-[6%] rounded-full bg-[#22C55E]/8 blur-[42px]" />
+          <div className="pointer-events-none absolute inset-[17%] rounded-full border border-white/[0.035]" />
+
+          <svg
+            height="100%"
+            width="100%"
+            viewBox={`0 0 ${radius * 2} ${radius * 2}`}
+            className="rotate-[-90deg] drop-shadow-[0_18px_34px_rgba(0,0,0,0.56)]"
+          >
+            <circle
+              stroke="rgba(255,255,255,0.04)"
+              fill="transparent"
+              strokeWidth={strokeWidth}
+              r={normalizedRadius}
+              cx={radius}
+              cy={radius}
+            />
+            {chartSegments.map(({ item, segmentLength, rotation }) => {
+              return (
+                <circle
+                  key={item.asset}
+                  stroke={item.color}
+                  fill="transparent"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${segmentLength} ${circumference}`}
+                  style={{
+                    transform: `rotate(${rotation}deg)`,
+                    transformOrigin: 'center',
+                    filter: `drop-shadow(0 0 8px ${item.color}33)`
+                  }}
+                  r={normalizedRadius}
+                  cx={radius}
+                  cy={radius}
+                />
+              );
+            })}
+          </svg>
+
+          <div className="absolute inset-[28%] flex flex-col items-center justify-center rounded-full border border-white/[0.06] bg-[#070a14] shadow-[inset_0_0_26px_rgba(0,0,0,0.9),0_0_42px_rgba(34,197,94,0.12)]">
+            <div className="mb-2 h-2 w-2 animate-pulse rounded-full bg-[#22C55E] shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
+            <span className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-white/65">Trạng thái</span>
+            <span className="mt-1.5 font-mono text-[13px] font-black uppercase tracking-[0.14em] text-white/85">Tối ưu</span>
+          </div>
+
+          {chartSegments.map(({ item, labelX, labelY }) => (
+            <span
+              key={`label-${item.asset}`}
+              className="absolute font-mono text-[14px] font-black tracking-tighter text-white/90"
+              style={{
+                left: `${((labelX / (radius * 2)) * 100).toFixed(5)}%`,
+                top: `${((labelY / (radius * 2)) * 100).toFixed(5)}%`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              {item.percent}%
+            </span>
+          ))}
         </div>
-        <div className="flex-1 w-full space-y-3">
+
+        <div className="mt-7 flex w-full flex-col gap-2 sm:mt-8">
           {allocation.map((item) => (
-            <div key={item.asset} className="flex items-center justify-between group/item">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" style={{ color: item.color, backgroundColor: item.color }} />
-                <span className="text-[14px] text-white/50 font-black uppercase tracking-widest group-hover/item:text-white/80 transition-colors">{item.asset}</span>
-              </div>
-              <div className="flex items-center gap-3 flex-1 px-4">
-                <div className="h-[2px] flex-1 bg-white/5 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.percent}%` }}
-                    className="h-full rounded-full"
+            <div
+              key={item.asset}
+              className="group/item flex items-center justify-between gap-4 rounded-md px-2 py-2.5 transition-colors hover:bg-white/[0.035]"
+            >
+              <div className="flex min-w-0 items-center gap-4 flex-1">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 blur-[7px] opacity-55 transition-opacity group-hover/item:opacity-90"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span
+                    className="relative block h-3.5 w-3.5 shrink-0 rounded-[3px] border border-white/20"
                     style={{ backgroundColor: item.color }}
                   />
                 </div>
-                <span className="text-[14px] font-black text-white font-mono min-w-[40px] text-right">{item.percent}%</span>
+                <span className="min-w-0 whitespace-nowrap font-heading text-[12px] font-black uppercase tracking-[0.14em] text-white/70 transition-colors group-hover/item:text-white sm:text-[13px]">
+                  {item.asset}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="h-px w-10 bg-white/10 transition-colors group-hover/item:bg-[#22C55E]/35 sm:w-16" />
+                <span className="min-w-9 text-right font-mono text-[13px] font-black text-white/80 transition-colors group-hover/item:text-[#22C55E]">
+                  {item.percent}%
+                </span>
               </div>
             </div>
           ))}
@@ -212,6 +284,40 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
       </div>
     </motion.div>
   );
+}
+type BriefTakeaway = BriefData["takeaways"][number];
+
+function buildFallbackBriefTakeaways(brief: BriefData): BriefTakeaway[] {
+  const summarySnippet = brief.summary.length > 120 ? `${brief.summary.slice(0, 117)}...` : brief.summary;
+
+  return [
+    {
+      emoji: "📈",
+      asset: "Thanh khoản",
+      text: `Dòng tiền vẫn là chìa khóa. ${summarySnippet}`,
+    },
+    {
+      emoji: "🏦",
+      asset: "Ngân hàng",
+      text: "Nhóm ngân hàng thường dẫn nhịp khi thị trường muốn hồi bền hơn, nên đây là lớp cần theo dõi kỹ nhất.",
+    },
+    {
+      emoji: "🧭",
+      asset: "Định giá",
+      text: "Nếu định giá chưa quá căng và tin tức không xấu thêm, thị trường vẫn còn cửa tích lũy theo lớp.",
+    },
+  ];
+}
+
+function padTakeaways(items: BriefTakeaway[], fallbacks: BriefTakeaway[], limit: number) {
+  const result = [...items];
+  for (const fallback of fallbacks) {
+    if (result.length >= limit) break;
+    if (!result.some((item) => item.asset === fallback.asset)) {
+      result.push(fallback);
+    }
+  }
+  return result.slice(0, limit);
 }
 
 function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boolean }) {
@@ -238,14 +344,15 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
   );
   const rightTakeaways = brief.takeaways.filter((t) => !leftTakeaways.includes(t));
 
+  const fallbackTakeaways = buildFallbackBriefTakeaways(brief);
   const hasLeft = leftTakeaways.length > 0;
-  const finalLeft = hasLeft ? leftTakeaways : brief.takeaways.slice(0, 2);
+  const finalLeft = padTakeaways(hasLeft ? leftTakeaways : brief.takeaways.slice(0, 1), fallbackTakeaways, 3);
   const finalRight = hasLeft ? rightTakeaways : brief.takeaways.slice(2);
 
   return (
     <motion.div
       variants={fadeIn}
-      className="col-span-full space-y-4 relative w-full"
+      className="col-span-full space-y-4 relative w-full h-full flex flex-col"
     >
       {/* Top Executive Summary Box */}
       <div className="glass-card p-8 md:p-10 border-[#E6B84F]/10 relative overflow-hidden group">
@@ -257,7 +364,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
             <div className="flex items-center gap-3">
               <Sparkles className="w-5 h-5 text-[#E6B84F]" />
               <h2 className="text-[20px] font-black text-white font-heading uppercase tracking-widest flex flex-wrap items-center gap-2">
-                Morning Brief AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- EXECUTIVE SUMMARY</span>
+                Bản tin sáng AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- TÓM TẮT ĐIỀU HÀNH</span>
               </h2>
             </div>
             <span className="text-xs text-white/30 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest">
@@ -272,7 +379,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
       </div>
 
       {/* Two Column Detail Area */}
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid lg:grid-cols-2 gap-4 flex-1">
 
         {/* Left Panel - Chứng khoán (Green Focus) */}
         <div className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#22C55E]/10 hover:border-[#22C55E]/30 transition-colors duration-500">
@@ -285,7 +392,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
               <TrendingUp className="w-4 h-4 text-[#22C55E]" />
             </div>
             <h3 className="text-[18px] font-black text-[#22C55E] font-heading uppercase tracking-widest flex items-center gap-2">
-              Chứng Khoán <span className="text-[#22C55E]/50 font-mono text-[14px] tracking-widest">- ANALYSIS</span>
+              Chứng Khoán <span className="text-[#22C55E]/50 font-mono text-[14px] tracking-widest">- PHÂN TÍCH</span>
             </h3>
           </div>
 
@@ -320,7 +427,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
               <BarChart3 className="w-4 h-4 text-[#E6B84F]" />
             </div>
             <h3 className="text-[18px] font-black text-[#E6B84F] font-heading uppercase tracking-widest flex items-center gap-2">
-              Vàng & Vĩ Mô <span className="text-[#E6B84F]/50 font-mono text-[14px] tracking-widest">- INSIGHTS</span>
+              Vàng & Vĩ Mô <span className="text-[#E6B84F]/50 font-mono text-[14px] tracking-widest">- NHẬN ĐỊNH</span>
             </h3>
           </div>
 
@@ -354,166 +461,158 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
 
   const filteredItems = useMemo(() => {
     if (loading || !items.length) return [];
-    if (activeTab === "Tất cả") return items.slice(0, 6);
-    if (activeTab === "Khác") return items.filter(i => !["Trang chủ", "Kinh tế vĩ mô", "Chứng khoán", "Bất động sản"].includes(i.category || "")).slice(0, 6);
-    return items.filter(i => i.category === activeTab).slice(0, 6);
+    if (activeTab === "Tất cả") return items.slice(0, 10);
+
+    const isMatch = (item: NewsItem, tab: string) => {
+      const cat = item.category?.toLowerCase() || "";
+      if (tab === "Chứng khoán") return cat.includes("chứng khoán");
+      if (tab === "Kinh tế vĩ mô") return cat.includes("vĩ mô");
+      if (tab === "Bất động sản") return cat.includes("bat dong san") || cat.includes("bất động sản");
+      if (tab === "Trang chủ") return cat.includes("kinh doanh") || cat.includes("kinh tế") || cat.includes("tài chính");
+      return false;
+    };
+
+    if (activeTab === "Khác") {
+      const mainTabs = ["Trang chủ", "Kinh tế vĩ mô", "Chứng khoán", "Bất động sản"];
+      return items.filter((item) => !mainTabs.some((tab) => isMatch(item, tab))).slice(0, 10);
+    }
+
+    return items.filter((item) => isMatch(item, activeTab)).slice(0, 10);
   }, [items, activeTab, loading]);
 
   return (
-    <motion.div variants={fadeIn} className="glass-card p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-[18px] font-black text-white uppercase font-heading">Tin tức mới nhất</h3>
+    <motion.div
+      variants={fadeIn}
+      className="glass-card group relative h-full overflow-hidden border border-[#22C55E]/20 bg-[#0B0D17]/75 p-5 transition-all duration-500 hover:border-[#22C55E]/45 md:p-6"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),transparent_40%),radial-gradient(circle_at_92%_10%,rgba(0,229,255,0.12),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#22C55E]/80 to-transparent" />
+      <div className="pointer-events-none absolute right-5 top-24 h-24 w-1 rounded-full bg-[#22C55E] shadow-[0_0_18px_rgba(34,197,94,0.8)]" />
+
+      <div className="relative z-10 mb-5 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#22C55E]/25 bg-[#22C55E]/10">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] shadow-[0_0_14px_rgba(34,197,94,0.9)]" />
+            </div>
+            <h3 className="font-heading text-[18px] font-black uppercase tracking-[0.18em] text-white md:text-[20px]">
+              Market News Terminal
+            </h3>
+          </div>
+          <p className="ml-11 mt-1 font-mono text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
+            Tin tức thị trường
+          </p>
+        </div>
         <Link
           href="/dashboard/news"
-          className="text-xs text-[#E6B84F] hover:underline flex items-center gap-1 font-mono uppercase tracking-widest font-black"
+          className="group/link inline-flex w-fit items-center gap-1.5 rounded-lg border border-[#22C55E]/20 bg-[#22C55E]/10 px-3 py-2 font-mono text-[10px] font-black uppercase tracking-[0.18em] text-[#22C55E] transition-colors hover:bg-[#22C55E]/15"
         >
-          Kế tiếp <ArrowUpRight className="w-4 h-4" />
+          Toàn bộ tin <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
         </Link>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide" style={{ WebkitOverflowScrolling: "touch", msOverflowStyle: "-ms-autohiding-scrollbar" }}>
-        {TABS.map(tab => (
+      <div className="relative z-10 mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`whitespace-nowrap px-6 py-3 rounded-full text-[18px] font-black uppercase font-heading ${activeTab === tab
-              ? "bg-[#E6B84F] text-[#111318] shadow-[0_4px_20px_rgba(230,184,79,0.4)]"
-              : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-              }`}
+            className={cn(
+              "whitespace-nowrap rounded-lg border px-4 py-2 font-heading text-[11px] font-black uppercase tracking-[0.14em] transition-all",
+              activeTab === tab
+                ? "border-[#22C55E]/35 bg-[#22C55E]/15 text-[#22C55E] shadow-[0_0_18px_rgba(34,197,94,0.12)]"
+                : "border-white/[0.08] bg-white/[0.03] text-white/45 hover:border-white/[0.16] hover:text-white/75"
+            )}
           >
             {tab}
           </button>
         ))}
       </div>
 
-      <div className="space-y-3">
-        {loading ? (
-          [1, 2, 3].map((i) => (
-            <div key={i} className="p-3 rounded-xl bg-white/[0.02] animate-pulse">
-              <div className="h-4 bg-white/[0.06] rounded w-full mb-2" />
-              <div className="h-3 bg-white/[0.06] rounded w-1/3" />
-            </div>
-          ))
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-10 text-sm text-white/30 italic">Không có tin tức nào trong danh mục này</div>
-        ) : (
-          filteredItems.map((n: NewsItem, i: number) => {
-            const s = sentimentTag[n.sentiment] || sentimentTag.neutral;
-            return (
-              <div
-                key={i}
-                className="p-5 rounded-3xl bg-white/[0.04] border border-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.08] transition-all cursor-pointer group"
-              >
-                <p className="text-[16px] text-white/80 line-clamp-2 md:line-clamp-none mb-3 group-hover:text-white font-black uppercase leading-relaxed">
-                  {n.title}
-                </p>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-white/40 font-black uppercase font-mono">{n.source}</span>
-                  <span className="text-xs text-white/30 flex items-center gap-1.5 font-mono" title={n.time}>
-                    <Clock className="w-3.5 h-3.5" />
-                    {n.time.includes("vừa xong") ? "Mới đây" : n.time}
-                  </span>
-                  <span
-                    className="text-xs font-black px-2.5 py-1 rounded-lg ml-auto whitespace-nowrap uppercase tracking-widest"
-                    style={{ color: s.color, backgroundColor: `${s.color}15` }}
-                  >
-                    {s.label}
-                  </span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-function VetVangFloatWidget() {
-  const [mounted, setMounted] = useState(false);
-  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setGam(getGamification());
-      setMounted(true);
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  const { current, progress } = getLevelProgress(gam.xp);
-
-  return (
-    <motion.div variants={fadeIn} className="glass-card p-6 md:p-8 relative overflow-hidden group border border-[#FF6B35]/10 hover:border-[#FF6B35]/30 transition-all duration-500">
-      {/* Cyber Decor */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/5 blur-[60px] pointer-events-none group-hover:bg-[#FF6B35]/10 transition-colors" />
-      <div className="absolute top-0 right-0 w-24 h-[1px] bg-gradient-to-l from-[#FF6B35] to-transparent" />
-      <div className="absolute top-0 right-0 w-[1px] h-24 bg-gradient-to-b from-[#FF6B35] to-transparent" />
-
-      <div className="flex items-center gap-3 mb-8 relative z-10 border-b border-[#FF6B35]/10 pb-4">
-        <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
-          <Flame className="w-4 h-4 text-[#FF6B35]" />
-        </div>
-        <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
-          Vẹt Vàng <span className="text-[#FF6B35]/50 font-mono text-[14px] tracking-widest">- CONSOLE</span>
-        </h3>
-        <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#FF6B35]/10 text-[#FF6B35] font-black font-mono ml-auto uppercase tracking-widest border border-[#FF6B35]/20">
-          {gam.streak >= 3 ? "STREAK ON 🔥" : "STANDBY 💛"}
-        </span>
+      <div className="relative z-10 mb-1 rounded-lg border border-white/[0.05] bg-white/[0.04] px-4 py-3 font-mono text-[11px] font-black uppercase tracking-[0.12em] text-white/35">
+        Toàn news
       </div>
 
-      <div className="bg-white/[0.02] rounded-2xl p-6 mb-8 border border-white/[0.05] relative group/speech">
-        <div className="absolute top-2 left-2 w-1 h-1 bg-[#FF6B35]/40 rounded-full" />
-        <p className="text-[15px] text-white/80 italic leading-relaxed font-semibold tracking-normal font-mono">
-          <span className="text-[#FF6B35] mr-2 opacity-50">&gt;</span>
-          {gam.streak >= 3
-            ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục xài app đi, tao thề sẽ không mổ cho đến khi mày giàu! 🦜&rdquo;`
-            : `&ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu! Level ${current.name} rồi mà còn lười hả? 🦜&rdquo;`}
-        </p>
-      </div>
-
-      <div className="space-y-4 relative z-10 font-mono text-[12px] font-black uppercase tracking-widest">
-        <div className="flex items-center justify-between text-white/40">
-          <span>Experience Points</span>
-          <span className="text-[#FF6B35]">{mounted ? gam.xp : "--"} / 1000 XP</span>
-        </div>
-        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+      <div className="relative z-10 max-h-[430px] overflow-y-auto pr-2 [scrollbar-color:#22C55E33_transparent] [scrollbar-width:thin]">
+        <AnimatePresence mode="wait">
           <motion.div
-            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#E6B84F] rounded-full shadow-[0_0_10px_rgba(255,107,53,0.3)]"
-            initial={{ width: 0 }}
-            animate={{ width: `${mounted ? progress : 0}%` }}
-            transition={{ duration: 1.5, ease: "circOut" }}
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-white/30">Current Rank:</span>
-          <span className="text-white/60">{mounted ? current.name.toUpperCase() : "🐣 VẸT TEEN"}</span>
-        </div>
+            key={activeTab + (loading ? "-loading" : "-ready")}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="divide-y divide-white/[0.06]"
+          >
+            {loading ? (
+              [1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div key={i} className="animate-pulse py-4">
+                  <div className="mb-2 h-4 w-4/5 rounded bg-white/[0.07]" />
+                  <div className="h-3 w-1/3 rounded bg-white/[0.04]" />
+                </div>
+              ))
+            ) : filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-4 border border-dashed border-white/10 bg-white/[0.01] py-16 text-center font-mono text-[12px] font-black uppercase tracking-widest text-white/30">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/5 bg-white/[0.02]">
+                  <X className="h-5 w-5 opacity-20" />
+                </div>
+                [ NO DATA IN THIS CATEGORY ]
+              </div>
+            ) : (
+              filteredItems.map((n: NewsItem, i: number) => {
+                const s = sentimentTag[n.sentiment] || sentimentTag.neutral;
+
+                return (
+                  <motion.div
+                    key={`${n.title}-${i}`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.22 }}
+                    className="group/news relative grid cursor-pointer grid-cols-[1fr_auto] gap-4 py-4 transition-colors hover:bg-[#22C55E]/[0.03]"
+                  >
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 font-heading text-[14px] font-black leading-relaxed tracking-tight text-white/70 transition-colors group-hover/news:text-white md:text-[15px]">
+                        {n.title}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-white/35">
+                        <span className="text-[#22C55E]/70">{n.source}</span>
+                        <span className="text-white/15">/</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="h-3 w-3 text-white/20" />
+                          {n.time.includes("vừa xong") ? "Mới đây" : n.time}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-start pt-1">
+                      <span
+                        className="rounded border px-2.5 py-1 font-mono text-[10px] font-black uppercase tracking-[0.14em]"
+                        style={{ color: s.color, backgroundColor: `${s.color}10`, borderColor: `${s.color}35` }}
+                      >
+                        {s.label}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </motion.div>
   );
 }
-
-/* ═══════════════════ PAGE ═══════════════════ */
 export default function DashboardOverview() {
   const [showSetup, setShowSetup] = useState(false);
   const [liveArticles, setLiveArticles] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [aiBrief, setAiBrief] = useState<BriefData | null>(null);
   const [aiBriefLoading, setAiBriefLoading] = useState(true);
-  const [aiBriefError, setAiBriefError] = useState<string | null>(null);
   const [netWorth, setNetWorth] = useState<number | null>(null);
   const [monthlyDeltaPct, setMonthlyDeltaPct] = useState<number>(0);
-  const [assetSummary, setAssetSummary] = useState<string>("Chưa có dữ liệu");
   const [mounted, setMounted] = useState(false);
 
   // Morning Brief AI
   useEffect(() => {
     const fetchMorningBrief = async () => {
       setAiBriefLoading(true);
-      setAiBriefError(null);
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
@@ -524,14 +623,14 @@ export default function DashboardOverview() {
         if (!data || !data.summary) throw new Error("Invalid brief payload");
         setAiBrief({
           date: data.date || `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`,
-          title: data.title || "Morning Brief AI",
+          title: data.title || "Bản tin sáng AI",
           summary: data.summary,
           raw: data.raw ?? data.summary,
           takeaways: Array.isArray(data.takeaways) ? data.takeaways : [],
           source: data.source ?? "heuristic",
         });
       } catch {
-        setAiBriefError("Không thể tải Morning Brief");
+        // BriefCard already shows the loading fallback; failed fetches should not block the dashboard.
       } finally {
         setAiBriefLoading(false);
       }
@@ -561,11 +660,6 @@ export default function DashboardOverview() {
 
     setNetWorth(computedNetWorth);
     setMonthlyDeltaPct(income > 0 ? Math.round((net / income) * 100) : 0);
-    setAssetSummary(
-      income > 0
-        ? `Đã lưu thu nhập: ${new Intl.NumberFormat("vi-VN").format(income)} ₫`
-        : "Chưa có thu nhập"
-    );
   }, []);
 
   // News fetch
@@ -637,7 +731,6 @@ export default function DashboardOverview() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const liveBrief = aiBrief;
@@ -719,7 +812,7 @@ export default function DashboardOverview() {
                       monthlyDeltaPct >= 0 ? "bg-[#22C55E]/5 border-[#22C55E]/20 text-[#22C55E]" : "bg-[#EF4444]/5 border-[#EF4444]/20 text-[#EF4444]"
                     )}>
                       {monthlyDeltaPct >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                      {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% <span className="opacity-40 ml-1">THIS MONTH</span>
+                      {monthlyDeltaPct >= 0 ? "+" : ""}{monthlyDeltaPct}% <span className="opacity-40 ml-1">THÁNG NÀY</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-white/30 font-mono text-[11px] font-black uppercase tracking-[0.2em]">
@@ -731,7 +824,7 @@ export default function DashboardOverview() {
 
               {/* Right: Actions */}
               <div className="flex flex-col gap-3 min-w-[220px]">
-                <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] font-mono mb-2 md:text-right">Quick Operations</p>
+                <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] font-mono mb-2 md:text-right">Thao tác nhanh</p>
                 <div className="grid grid-cols-1 gap-3">
                   <Link
                     href="/dashboard/budget"
@@ -766,48 +859,42 @@ export default function DashboardOverview() {
         {/* Notification Permission Banner */}
         <NotificationBanner />
 
-        {/* Market Metrics Grid + F&G Gauge */}
+        {/* Market Metrics Grid + F&G Gauge + Morning Brief */}
         <div className="mb-4">
-          <MarketSection />
+          <MarketSection briefElement={<BriefCard brief={liveBrief} loading={briefLoading} />} />
         </div>
-
-        {/* Morning Brief — Full width */}
-        <motion.div variants={stagger} className="mb-4">
-          <BriefCard brief={liveBrief} loading={briefLoading} />
-        </motion.div>
 
         {/* Daily Quests — Duolingo style */}
         <DailyQuestSection />
 
-        {/* Achievement Badges — Cyber-Editorial style */}
-        <motion.div variants={fadeIn} className="glass-card p-8 md:p-12 mb-6 relative overflow-hidden group border border-white/10 transition-all duration-500 hover:border-[#E6B84F]/20">
-          <div className="absolute top-0 right-0 w-32 h-[1px] bg-gradient-to-l from-[#E6B84F]/30 to-transparent" />
-          <div className="absolute top-0 right-0 w-[1px] h-32 bg-gradient-to-b from-[#E6B84F]/30 to-transparent" />
+        {/* Achievement Badges */}
+        <motion.div
+          variants={fadeIn}
+          className="glass-card relative mb-6 overflow-hidden border border-white/10 p-6 transition-all duration-500 hover:border-[#E6B84F]/25 md:p-8"
+        >
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#E6B84F]/8 to-transparent pointer-events-none" />
+          <div className="absolute -top-24 -left-10 h-56 w-56 rounded-full bg-[#E6B84F]/10 blur-[90px] pointer-events-none" />
 
-          <div className="flex items-center gap-6 mb-12 border-b border-white/[0.05] pb-8 relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20">
-              <span className="text-2xl">🏅</span>
+          <div className="relative z-10 mb-6 flex items-start gap-4 border-b border-white/[0.06] pb-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#E6B84F]/30 bg-[#E6B84F]/12">
+              <span className="text-xl">🏅</span>
             </div>
             <div>
-              <h3 className="text-[18px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-3">
-                Thành tựu đạt được <span className="text-[#E6B84F]/30 font-mono text-[14px] tracking-widest">- BADGES</span>
+              <h3 className="font-heading text-[18px] font-black uppercase tracking-widest text-white">
+                Thành tựu đạt được
               </h3>
-              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] font-mono mt-1">Unlock tiers by engaging with AI Advisor</p>
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-white/45">
+                Mở khóa huy hiệu bằng cách duy trì thói quen tài chính mỗi ngày
+              </p>
             </div>
           </div>
-          <div className="relative z-10 px-2 sm:px-6">
+          <div className="relative z-10">
             <BadgeGrid />
           </div>
         </motion.div>
-
-        {/* 2-Column: Portfolio + Vẹt Vàng */}
-        <motion.div variants={stagger} className="grid lg:grid-cols-2 gap-3 mb-4">
+        {/* Portfolio Allocation + News Terminal */}
+        <motion.div variants={stagger} className="mb-4 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
           <PortfolioMini allocation={currentAllocation} />
-          <VetVangFloatWidget />
-        </motion.div>
-
-        {/* News */}
-        <motion.div variants={stagger}>
           <NewsFeed items={liveNews} loading={newsLoading} />
         </motion.div>
       </motion.div>

@@ -31,13 +31,43 @@ export function buildSentimentSnapshot(
         { label: "Khối ngoại", value: clampMetric(score + vnChange * 8 - fxPressure), tone: score >= 57 ? "greed" : score <= 44 ? "fear" : "neutral" },
     ];
 
+    const baseAssetSentiments = newsPayload.metrics?.assetSentiment ?? [];
+    const fallbackAssetSentiments: AssetMoodCard[] = [
+        {
+            asset: "Chứng khoán",
+            score,
+            trend: score >= 55 ? "up" : score <= 40 ? "down" : "neutral",
+            news: "Dòng tin đang nghiêng theo chiều thận trọng, nhưng vẫn còn cửa hồi nếu thanh khoản cải thiện.",
+        },
+        {
+            asset: "Vàng",
+            score: clampMetric(100 - goldChange * 18),
+            trend: goldChange >= 0 ? "up" : "down",
+            news: "Vàng vẫn là lớp phòng thủ khi tâm lý rủi ro tăng, nhất là lúc USD/VND còn căng.",
+        },
+        {
+            asset: "Vĩ mô",
+            score: clampMetric(50 + vnChange * 8 - fxPressure * 2),
+            trend: vnChange >= 0 ? "up" : "down",
+            news: "Lãi suất, tỷ giá và GDP vẫn là 3 biến số chi phối xác suất nới khẩu vị rủi ro.",
+        },
+    ];
+
+    const assetSentiments = [...baseAssetSentiments];
+    for (const fallback of fallbackAssetSentiments) {
+        if (assetSentiments.length >= 3) break;
+        if (!assetSentiments.some((item) => item.asset === fallback.asset)) {
+            assetSentiments.push(fallback);
+        }
+    }
+
     return {
         score,
         zone: getZone(score),
         history,
         historicalValues: [],
         yearlyExtremes: [],
-        assetSentiments: newsPayload.metrics?.assetSentiment ?? [],
+        assetSentiments,
         drivers,
     };
 }

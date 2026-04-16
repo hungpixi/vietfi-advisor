@@ -150,7 +150,7 @@ const LESSONS: Lesson[] = [
       },
       {
         title: "VietFi F&G Index",
-        content: "VietFi tính F&G Index cho thị trường Việt Nam dựa trên:\n1. VN-Index momentum\n2. Volume giao dịch\n3. Giá vàng SJC\n4. Tỷ giá USD/VND\n5. Sentiment tin tức tài chính VN\n\nCheck mỗi ngày trên dashboard → Không bị FOMO!",
+        content: "VietFi tính chỉ số sợ hãi và tham lam cho thị trường Việt Nam dựa trên:\n1. Động lượng VN-Index\n2. Khối lượng giao dịch\n3. Giá vàng SJC\n4. Tỷ giá USD/VND\n5. Tâm lý tin tức tài chính Việt Nam\n\nXem mỗi ngày trên dashboard → Đỡ bị cuốn theo đám đông!",
       },
     ],
     quiz: {
