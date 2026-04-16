@@ -1153,7 +1153,7 @@ function VetVangShowcase() {
                 </span>
               </div>
               <p className="text-sm text-white/60 italic leading-relaxed mb-4">
-                "{m.quote.replace(/^"|"$/g, "")}"
+                &quot;{m.quote.replace(/^"|"$/g, "")}&quot;
               </p>
               <div className="flex items-start gap-2">
                 <div className="w-1 h-1 rounded-full bg-white/20 mt-2 flex-shrink-0" />
@@ -1205,7 +1205,7 @@ function VetVangShowcase() {
             Lộ trình trưởng thành cùng Vẹt
           </h3>
           <p className="text-sm text-white/35">
-            Ghi chi tiêu mỗi ngày = "cho vẹt ăn" → tích XP → level up
+            Ghi chi tiêu mỗi ngày = &quot;cho vẹt ăn&quot; → tích XP → level up
           </p>
         </motion.div>
 
@@ -1439,7 +1439,7 @@ function FinalCTA() {
             text="Sẵn sàng bị Vẹt Vàng"
             className="text-white block"
           />
-          <GradientText>"mổ" cho giàu?</GradientText>
+          <GradientText>&quot;mổ&quot; cho giàu?</GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">

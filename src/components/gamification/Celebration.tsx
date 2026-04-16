@@ -37,7 +37,7 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
   const particlesRef = useRef<Particle[]>([]);
   const rafRef = useRef<number>(0);
 
-  const animate = useCallback(() => {
+  const animate = useCallback(function animateFrame() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -67,7 +67,7 @@ export function ConfettiCannon({ active, onDone }: { active: boolean; onDone: ()
     }
 
     if (alive > 0) {
-      rafRef.current = requestAnimationFrame(animate);
+      rafRef.current = requestAnimationFrame(animateFrame);
     } else {
       onDone();
     }

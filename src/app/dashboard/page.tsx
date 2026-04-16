@@ -408,8 +408,12 @@ function VetVangFloatWidget() {
   const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
 
   useEffect(() => {
-    setGam(getGamification());
-    setMounted(true);
+    const timer = window.setTimeout(() => {
+      setGam(getGamification());
+      setMounted(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const { current, progress } = getLevelProgress(gam.xp);

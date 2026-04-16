@@ -68,7 +68,7 @@ function buildSimulatedGeminiBrief(marketSnapshot: MarketSnapshot, newsSnapshot:
   const vnChange = marketSnapshot.vnIndex?.changePct || 0;
   const goldPrice = marketSnapshot.goldSjc?.goldVnd?.toLocaleString('vi-VN') || '---';
   
-  let moodPrompt = vnChange >= 0 ? "sắc xanh tích cực" : "áp lực điều chỉnh";
+  const moodPrompt = vnChange >= 0 ? "s?c xanh t?ch c?c" : "?p l?c ?i?u ch?nh";
   let promptText = `[Bản tin Dự phòng] Thị trường hôm nay vận động trong ${moodPrompt}, VN-Index hiện đạt ${vnIndex.toFixed(2)} điểm (${vnChange >= 0 ? '+' : ''}${vnChange}%). `;
   
   if (marketSnapshot.goldSjc) {

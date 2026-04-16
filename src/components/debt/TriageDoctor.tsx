@@ -44,7 +44,8 @@ export function TriageDoctor({ dti, debtCount, phase }: DoctorProps) {
   };
 
   const messages = SPICY_MESSAGES[phase];
-  const message = messages[Math.floor(Math.random() * messages.length)];
+  const messageIndex = Math.abs(Math.floor(dti) + debtCount + phase.length) % messages.length;
+  const message = messages[messageIndex];
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 w-full">

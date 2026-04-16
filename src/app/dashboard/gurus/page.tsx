@@ -36,7 +36,7 @@ export default function GurusPage() {
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-white group-hover:text-indigo-300 transition-colors">{guru.name}</h2>
                   <p className="text-sm font-medium text-emerald-400 mb-2">{guru.title}</p>
-                  <p className="text-xs text-gray-500 line-clamp-2 italic">"{guru.philosophy}"</p>
+                  <p className="text-xs text-gray-500 line-clamp-2 italic">&quot;{guru.philosophy}&quot;</p>
                 </div>
               </div>
 

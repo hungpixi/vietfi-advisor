@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { GURU_PERSONAS, GuruPersona } from "@/lib/guru-personas";
 import { spendXP, getGamification } from "@/lib/gamification";
-import { Lock, Unlock, ArrowLeft, TrendingUp, Target, AlertTriangle, CheckCircle2, Coffee, MessageSquare } from "lucide-react";
+import { Lock, Unlock, ArrowLeft, Target, AlertTriangle, CheckCircle2, Coffee, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from "recharts";
 
 // Mock data until Supabase is ready
 const mockPerformanceData = Array.from({ length: 30 }).map((_, i) => ({
@@ -17,26 +17,27 @@ const mockPerformanceData = Array.from({ length: 30 }).map((_, i) => ({
 
 export default function GuruDetailPage() {
   const { id } = useParams() as { id: string };
-  const router = useRouter();
-  const [guru, setGuru] = useState<GuruPersona | null>(null);
+  const guru: GuruPersona | null = id ? GURU_PERSONAS[id] ?? null : null;
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [userXp, setUserXp] = useState(0);
 
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (id && GURU_PERSONAS[id]) {
-      setGuru(GURU_PERSONAS[id]);
-    }
-    const state = getGamification();
-    setUserXp(state.xp);
-    
-    // In actual app, check if user has already unlocked this guru for today
-    const unlockedList = JSON.parse(localStorage.getItem("vf_unlocked_gurus") || "[]");
-    const today = new Date().toISOString().slice(0, 10);
-    if (unlockedList.includes(`${id}_${today}`)) {
-      setIsUnlocked(true);
-    }
+    const timer = window.setTimeout(() => {
+      const state = getGamification();
+      setUserXp(state.xp);
+      setIsUnlocked(false);
+
+      // In actual app, check if user has already unlocked this guru for today
+      const unlockedList = JSON.parse(localStorage.getItem("vf_unlocked_gurus") || "[]");
+      const today = new Date().toISOString().slice(0, 10);
+      if (unlockedList.includes(`${id}_${today}`)) {
+        setIsUnlocked(true);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [id]);
 
   const handleUnlock = () => {
@@ -70,7 +71,7 @@ export default function GuruDetailPage() {
         <div className="flex-1 text-center md:text-left relative z-10">
           <h1 className="text-3xl font-bold text-white mb-1">{guru.name}</h1>
           <p className="text-emerald-400 font-medium mb-2">{guru.title}</p>
-          <p className="text-sm text-gray-400 italic">"{guru.philosophy}"</p>
+          <p className="text-sm text-gray-400 italic">&quot;{guru.philosophy}&quot;</p>
         </div>
         
         <div className="flex gap-4 relative z-10">
