@@ -225,14 +225,20 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#E6B84F]/30 to-transparent" />
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#E6B84F]/5 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-5 h-5 text-[#E6B84F]" />
-            <h2 className="text-[20px] font-black text-white font-heading uppercase tracking-widest flex items-center gap-2">
-              Morning Brief AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- EXECUTIVE SUMMARY</span>
-            </h2>
+        <div className="relative z-10 flex flex-col">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-[#E6B84F]" />
+              <h2 className="text-[20px] font-black text-white font-heading uppercase tracking-widest flex flex-wrap items-center gap-2">
+                Morning Brief AI <span className="opacity-40 font-mono text-[14px] tracking-widest">- EXECUTIVE SUMMARY</span>
+              </h2>
+            </div>
+            <span className="text-xs text-white/30 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest">
+              <Calendar className="w-3.5 h-3.5" />
+              {brief.date}
+            </span>
           </div>
-          <p className="text-[16px] text-white/80 leading-relaxed font-semibold tracking-normal max-w-4xl mx-auto opacity-90">
+          <p className="text-[16px] text-white/80 leading-relaxed font-semibold tracking-normal w-full opacity-90 text-justify">
             {brief.summary}
           </p>
         </div>
