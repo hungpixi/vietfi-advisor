@@ -206,6 +206,116 @@
       1.5px 1.5px;
     mix-blend-mode: soft-light;
   }
+
+  .dashboard-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        44rem 26rem at 6% -10%,
+        rgba(255, 215, 0, 0.14),
+        transparent 60%
+      ),
+      radial-gradient(
+        36rem 24rem at 94% 6%,
+        rgba(0, 229, 255, 0.1),
+        transparent 62%
+      ),
+      radial-gradient(
+        30rem 20rem at 48% 112%,
+        rgba(58, 91, 255, 0.12),
+        transparent 65%
+      ),
+      linear-gradient(160deg, #07090f 0%, #0a0d16 58%, #06080f 100%);
+  }
+
+  .dashboard-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        22rem 14rem at 18% 22%,
+        rgba(255, 200, 88, 0.08),
+        transparent 70%
+      ),
+      radial-gradient(
+        20rem 14rem at 80% 30%,
+        rgba(0, 229, 255, 0.06),
+        transparent 72%
+      );
+    filter: blur(8px);
+  }
+
+  .dashboard-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.6) 0.35px,
+      transparent 0.35px
+    );
+    background-size: 3px 3px;
+    mix-blend-mode: soft-light;
+  }
+
+  .dashboard-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(
+        36rem 22rem at 8% 12%,
+        rgba(255, 215, 0, 0.12),
+        transparent 65%
+      ),
+      radial-gradient(
+        30rem 20rem at 92% 10%,
+        rgba(0, 229, 255, 0.1),
+        transparent 68%
+      ),
+      radial-gradient(
+        34rem 24rem at 50% 98%,
+        rgba(80, 107, 255, 0.1),
+        transparent 72%
+      );
+  }
+
+  .dashboard-ambient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 22%),
+      radial-gradient(
+        circle at 14% 22%,
+        rgba(255, 215, 0, 0.12) 0,
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at 82% 30%,
+        rgba(0, 229, 255, 0.09) 0,
+        transparent 26%
+      );
+    filter: blur(22px);
+    opacity: 0.75;
+  }
+
+  .dashboard-ambient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 92%);
+  }
 }
 
 @keyframes float {

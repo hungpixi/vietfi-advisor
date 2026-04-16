@@ -32,12 +32,22 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
-import { XPToastContainer, useXPToast } from "@/components/gamification/XPToast";
+import {
+  XPToastContainer,
+  useXPToast,
+} from "@/components/gamification/XPToast";
 import { WeeklyReportModal } from "@/components/gamification/WeeklyReport";
 import { getAuthUserId } from "@/lib/supabase/user-data";
 import { migrateLocalStorageToSupabase } from "@/lib/supabase/migrate-local";
 import { checkMarketAlerts } from "@/lib/market-alert";
-import { getBudgetPots, getDebts, getOnboardingState, getLessonsDone, getStreakFreeze as storageGetStreak, setStreakFreeze } from "@/lib/storage";
+import {
+  getBudgetPots,
+  getDebts,
+  getOnboardingState,
+  getLessonsDone,
+  getStreakFreeze as storageGetStreak,
+  setStreakFreeze,
+} from "@/lib/storage";
 
 /* ─── Navigation Groups ─── */
 const navGroups = [
@@ -53,28 +63,42 @@ const navGroups = [
     items: [
       { href: "/dashboard/cashflow", label: "Dòng tiền", icon: Wallet },
       { href: "/dashboard/debt", label: "Quỹ nợ", icon: CreditCard },
-      { href: "/dashboard/spending-insights", label: "Phân tích chi tiêu", icon: Calculator },
+      {
+        href: "/dashboard/spending-insights",
+        label: "Phân tích chi tiêu",
+        icon: Calculator,
+      },
     ],
   },
   {
     label: "THỊ TRƯỜNG",
     items: [
-      { href: "/dashboard/market-overview", label: "Tổng quan thị trường", icon: Activity },
+      {
+        href: "/dashboard/market-overview",
+        label: "Tổng quan thị trường",
+        icon: Activity,
+      },
       { href: "/dashboard/screener", label: "Lọc cổ phiếu", icon: Search },
       { href: "/dashboard/news", label: "Tin tức AI", icon: Newspaper },
     ],
   },
   {
     label: "KẾ HOẠCH LỚN",
-    items: [
-      { href: "/dashboard/housing", label: "Nhà ở", icon: Home },
-    ],
+    items: [{ href: "/dashboard/housing", label: "Nhà ở", icon: Home }],
   },
   {
     label: "CỐ VẤN AI",
     items: [
-      { href: "/dashboard/risk-profile", label: "Tính cách đầu tư", icon: UserCircle },
-      { href: "/dashboard/portfolio", label: "Cố vấn danh mục", icon: PieChart },
+      {
+        href: "/dashboard/risk-profile",
+        label: "Tính cách đầu tư",
+        icon: UserCircle,
+      },
+      {
+        href: "/dashboard/portfolio",
+        label: "Cố vấn danh mục",
+        icon: PieChart,
+      },
       { href: "/dashboard/gurus", label: "Cố vấn Lão làng", icon: Sparkles },
       { href: "/dashboard/learn", label: "Bài Học Vẹt", icon: BookOpen },
     ],
@@ -83,7 +107,15 @@ const navGroups = [
 /* ═══════════════════ GAMIFICATION BAR ═══════════════════ */
 function GamificationBar() {
   const [mounted, setMounted] = useState(false);
-  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({ xp: 0, level: 0, levelName: "🐣 Vẹt Teen", streak: 0, lastActiveDate: "", actions: [], questCompleted: false });
+  const [gam, setGam] = useState<ReturnType<typeof getGamification>>({
+    xp: 0,
+    level: 0,
+    levelName: "🐣 Vẹt Teen",
+    streak: 0,
+    lastActiveDate: "",
+    actions: [],
+    questCompleted: false,
+  });
   const prevXPRef = useRef(0);
   const [xpFlash, setXpFlash] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -117,23 +149,50 @@ function GamificationBar() {
           "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all",
           gam.streak >= 3
             ? "bg-[#FF6B35]/10 border-[#FF6B35]/20"
-            : "bg-white/[0.03] border-white/[0.06]"
+            : "bg-white/[0.03] border-white/[0.06]",
         )}
-        animate={gam.streak >= 3 ? { boxShadow: ["0 0 0px rgba(255,107,53,0)", "0 0 12px rgba(255,107,53,0.3)", "0 0 0px rgba(255,107,53,0)"] } : {}}
-        transition={{ repeat: Infinity, duration: 2 }}
-      >
-        <Flame className={cn("w-4 h-4", gam.streak >= 3 ? "text-[#FF6B35]" : "text-white/20")} />
-        <span className={cn("text-xs font-black font-mono", gam.streak >= 3 ? "text-[#FF6B35]" : "text-white/30")}>
+        animate={
+          gam.streak >= 3
+            ? {
+                boxShadow: [
+                  "0 0 0px rgba(255,107,53,0)",
+                  "0 0 12px rgba(255,107,53,0.3)",
+                  "0 0 0px rgba(255,107,53,0)",
+                ],
+              }
+            : {}
+        }
+        transition={{ repeat: Infinity, duration: 2 }}>
+        <Flame
+          className={cn(
+            "w-4 h-4",
+            gam.streak >= 3 ? "text-[#FF6B35]" : "text-white/20",
+          )}
+        />
+        <span
+          className={cn(
+            "text-xs font-black font-mono",
+            gam.streak >= 3 ? "text-[#FF6B35]" : "text-white/30",
+          )}>
           {gam.streak || 0}
         </span>
       </motion.div>
 
       {/* Level badge — click to open Weekly Report */}
-      <button onClick={() => setShowReport(true)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.1] hover:border-[#E6B84F]/30 hover:bg-[#E6B84F]/10 transition-all cursor-pointer group">
-        <span className="text-base group-hover:scale-110 transition-transform">{current.emoji}</span>
-        <span className="text-xs text-white/60 font-bold uppercase tracking-widest">{current.name.split(" ").slice(1).join(" ")}</span>
+      <button
+        onClick={() => setShowReport(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.1] hover:border-[#E6B84F]/30 hover:bg-[#E6B84F]/10 transition-all cursor-pointer group">
+        <span className="text-base group-hover:scale-110 transition-transform">
+          {current.emoji}
+        </span>
+        <span className="text-xs text-white/60 font-bold uppercase tracking-widest">
+          {current.name.split(" ").slice(1).join(" ")}
+        </span>
       </button>
-      <WeeklyReportModal isOpen={showReport} onClose={() => setShowReport(false)} />
+      <WeeklyReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+      />
 
       {/* XP counter + progress */}
       <motion.div
@@ -141,16 +200,21 @@ function GamificationBar() {
           "flex items-center gap-3 px-4 py-1.5 rounded-lg border transition-all",
           xpFlash
             ? "bg-[#E6B84F]/10 border-[#E6B84F]/40"
-            : "bg-white/[0.03] border-white/[0.1]"
+            : "bg-white/[0.03] border-white/[0.1]",
         )}
         animate={xpFlash ? { scale: [1, 1.05, 1] } : {}}
-        transition={{ duration: 0.3 }}
-      >
-        <Zap className={cn("w-4 h-4", xpFlash ? "text-[#E6B84F]" : "text-white/30")} />
-        <span className={cn(
-          "text-sm font-black font-mono tabular-nums",
-          xpFlash ? "text-[#E6B84F]" : "text-white/70"
-        )}>
+        transition={{ duration: 0.3 }}>
+        <Zap
+          className={cn(
+            "w-4 h-4",
+            xpFlash ? "text-[#E6B84F]" : "text-white/30",
+          )}
+        />
+        <span
+          className={cn(
+            "text-sm font-black font-mono tabular-nums",
+            xpFlash ? "text-[#E6B84F]" : "text-white/70",
+          )}>
           {gam.xp}
         </span>
         <div className="w-24 h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
@@ -162,7 +226,9 @@ function GamificationBar() {
           />
         </div>
         {next && (
-          <span className="text-[10px] text-white/30 font-black font-mono whitespace-nowrap tracking-tighter">{xpToNext}→{next.emoji}</span>
+          <span className="text-[10px] text-white/30 font-black font-mono whitespace-nowrap tracking-tighter">
+            {xpToNext}→{next.emoji}
+          </span>
         )}
       </motion.div>
     </div>
@@ -181,7 +247,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       const onboarding = getOnboardingState();
       setSetupStatus({
         "/dashboard/cashflow": pots.length > 0,
-        "/dashboard/debt": debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
+        "/dashboard/debt":
+          debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
         "/dashboard/spending-insights": pots.length > 0,
       });
     };
@@ -192,7 +259,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   // ── Market volatility alerts (client-side, no cron needed) ──
   useEffect(() => {
-    checkMarketAlerts().catch(() => { });
+    checkMarketAlerts().catch(() => {});
   }, []);
 
   return (
@@ -208,9 +275,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
       <aside
         className={cn(
           "fixed top-0 left-0 h-full w-[260px] bg-[#0A0B0F]/95 backdrop-blur-xl border-r border-white/[0.06] z-50 transition-transform duration-300 flex flex-col",
-          open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        )}
-      >
+          open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}>
         {/* Logo */}
         <div className="h-[70px] px-6 flex items-center justify-between border-b border-white/[0.1]">
           <Link href="/" className="flex items-center gap-3 group">
@@ -220,11 +286,15 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
             <div className="flex flex-col">
               <span className="font-black text-[18px] leading-tight tracking-tight uppercase">
                 <span className="text-gradient">VietFi</span>
-                <span className="text-white/40 font-bold ml-1 text-xs">Adv</span>
+                <span className="text-white/40 font-bold ml-1 text-xs">
+                  Adv
+                </span>
               </span>
             </div>
           </Link>
-          <button onClick={onClose} className="md:hidden text-white/40 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="md:hidden text-white/40 hover:text-white transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -250,18 +320,28 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
                         "flex items-center gap-3 px-3 py-3 rounded-xl text-[15px] transition-all duration-300 group",
                         active
                           ? "bg-[#E6B84F]/10 text-[#E6B84F] font-bold shadow-[inset_0_0_20px_rgba(230,184,79,0.05)]"
-                          : "text-white/50 hover:text-white hover:bg-white/[0.04]"
-                      )}
-                    >
-                      <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110", active ? "text-[#E6B84F]" : "text-white/30")} />
+                          : "text-white/50 hover:text-white hover:bg-white/[0.04]",
+                      )}>
+                      <item.icon
+                        className={cn(
+                          "w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110",
+                          active ? "text-[#E6B84F]" : "text-white/30",
+                        )}
+                      />
                       <span className="flex-1 font-semibold">{item.label}</span>
                       {setupStatus[item.href] !== undefined && (
-                        <span className={cn(
-                          "w-2 h-2 rounded-full flex-shrink-0",
-                          setupStatus[item.href] ? "bg-[#22C55E]" : "bg-white/10"
-                        )} />
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full flex-shrink-0",
+                            setupStatus[item.href]
+                              ? "bg-[#22C55E]"
+                              : "bg-white/10",
+                          )}
+                        />
                       )}
-                      {active && <ChevronRight className="w-4 h-4 text-[#E6B84F]/50" />}
+                      {active && (
+                        <ChevronRight className="w-4 h-4 text-[#E6B84F]/50" />
+                      )}
                     </Link>
                   );
                 })}
@@ -275,10 +355,13 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           <div className="glass-card p-3 border-[#E6B84F]/10">
             <div className="flex items-center gap-2 mb-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#E6B84F]" />
-              <span className="text-xs font-medium text-white/70">Vẹt Vàng AI</span>
+              <span className="text-xs font-medium text-white/70">
+                Vẹt Vàng AI
+              </span>
             </div>
             <p className="text-[10px] text-white/30 leading-relaxed">
-              🦜 &ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu!&rdquo;
+              🦜 &ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi
+              tiền đi đâu!&rdquo;
             </p>
           </div>
         </div>
@@ -286,8 +369,12 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         {/* Footer */}
         <div className="px-5 py-3 border-t border-white/[0.04]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-white/20 font-mono">VietFi v1.0</span>
-            <span className="text-[10px] text-white/20 font-mono">WDA 2026</span>
+            <span className="text-[10px] text-white/20 font-mono">
+              VietFi v1.0
+            </span>
+            <span className="text-[10px] text-white/20 font-mono">
+              WDA 2026
+            </span>
           </div>
         </div>
       </aside>
@@ -313,38 +400,43 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A0B0F]">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="relative min-h-screen bg-[#07090F]">
+      <div className="dashboard-aurora" aria-hidden="true" />
 
-      {/* Top bar (mobile) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0A0B0F]/90 backdrop-blur-xl border-b border-white/[0.06] z-30 flex items-center px-4 gap-3">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center"
-        >
-          <Menu className="w-4 h-4 text-white/60" />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-primary flex items-center justify-center">
-            <TrendingUp className="w-3.5 h-3.5 text-black" />
+      <div className="relative z-10 min-h-screen">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Top bar (mobile) */}
+        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0A0B0F]/90 backdrop-blur-xl border-b border-white/[0.06] z-30 flex items-center px-4 gap-3">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center">
+            <Menu className="w-4 h-4 text-white/60" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-gradient-primary flex items-center justify-center">
+              <TrendingUp className="w-3.5 h-3.5 text-black" />
+            </div>
+            <span className="font-bold text-sm text-gradient">VietFi</span>
           </div>
-          <span className="font-bold text-sm text-gradient">VietFi</span>
         </div>
+
+        {/* Desktop Top Bar — XP + Streak */}
+        <div className="hidden md:flex fixed top-0 left-[260px] right-0 h-12 bg-[#0A0B0F]/80 backdrop-blur-xl border-b border-white/[0.04] z-30 items-center px-6 justify-end gap-4">
+          <GamificationBar />
+        </div>
+
+        {/* Main content */}
+        <main className="md:ml-[260px] min-h-screen pt-14 md:pt-12 relative overflow-hidden">
+          <div className="dashboard-ambient" aria-hidden="true" />
+          <div className="relative z-10 p-4 md:p-6 lg:p-8 w-full">
+            {children}
+          </div>
+        </main>
+
+        {/* Vẹt Vàng Floating Chatbot */}
+        <VetVangFloat />
       </div>
-
-      {/* Desktop Top Bar — XP + Streak */}
-      <div className="hidden md:flex fixed top-0 left-[260px] right-0 h-12 bg-[#0A0B0F]/80 backdrop-blur-xl border-b border-white/[0.04] z-30 items-center px-6 justify-end gap-4">
-        <GamificationBar />
-      </div>
-
-      {/* Main content */}
-      <main className="md:ml-[260px] min-h-screen pt-14 md:pt-12">
-        <div className="p-4 md:p-6 lg:p-8 w-full">{children}</div>
-      </main>
-
-      {/* Vẹt Vàng Floating Chatbot */}
-      <VetVangFloat />
-
     </div>
   );
 }
