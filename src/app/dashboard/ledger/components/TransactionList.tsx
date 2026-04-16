@@ -51,14 +51,16 @@ export default function TransactionList({
 
   if (!transactions.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <AnimatedParrot size={80} state="idle" />
-        <p className="mt-4 text-gray-400">Chưa có giao dịch nào</p>
+      <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.01]">
+        <div className="opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
+          <AnimatedParrot size={100} state="idle" />
+        </div>
+        <p className="mt-6 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/30">Hệ thống chưa ghi nhận giao dịch</p>
         <button
           onClick={onAddFirst}
-          className="mt-3 bg-gradient-primary text-black font-semibold px-6 py-2 rounded-xl"
+          className="mt-6 bg-[#22C55E] text-black font-heading text-[12px] font-black uppercase tracking-widest px-8 py-3 rounded-xl hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all"
         >
-          + Thêm giao dịch đầu tiên
+          + Khởi tạo giao dịch
         </button>
       </div>
     );
@@ -73,13 +75,14 @@ export default function TransactionList({
   const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8 pb-10">
       {sortedDates.map((date) => (
         <div key={date}>
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2 px-1">
-            {formatDateGroup(date)}
+          <div className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#22C55E]/60 mb-3 px-2 flex items-center gap-3">
+            <span className="shrink-0">{formatDateGroup(date)}</span>
+            <div className="h-[1px] w-full bg-gradient-to-r from-[#22C55E]/20 to-transparent" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {groups[date].map((entry) => (
               <TransactionItem key={entry.id} entry={entry} onDelete={onDelete} />
             ))}

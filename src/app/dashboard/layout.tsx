@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import VetVangFloat from "@/components/vet-vang/VetVangFloat";
+import { CyberBackground } from "@/components/ui/CyberBackground";
 import {
   TrendingUp,
   LayoutDashboard,
@@ -159,12 +160,12 @@ function GamificationBar() {
         animate={
           gam.streak >= 3
             ? {
-                boxShadow: [
-                  "0 0 0px rgba(255,107,53,0)",
-                  "0 0 12px rgba(255,107,53,0.3)",
-                  "0 0 0px rgba(255,107,53,0)",
-                ],
-              }
+              boxShadow: [
+                "0 0 0px rgba(255,107,53,0)",
+                "0 0 12px rgba(255,107,53,0.3)",
+                "0 0 0px rgba(255,107,53,0)",
+              ],
+            }
             : {}
         }
         transition={{ repeat: Infinity, duration: 2 }}>
@@ -264,7 +265,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   // ── Market volatility alerts (client-side, no cron needed) ──
   useEffect(() => {
-    checkMarketAlerts().catch(() => {});
+    checkMarketAlerts().catch(() => { });
   }, []);
 
   return (
@@ -405,8 +406,8 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#07090F]">
-      <div className="dashboard-aurora" aria-hidden="true" />
+    <div className="relative min-h-screen">
+      <CyberBackground />
 
       <div className="relative z-10 min-h-screen">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -433,7 +434,6 @@ export default function DashboardLayout({
 
         {/* Main content */}
         <main className="md:ml-[260px] min-h-screen pt-14 md:pt-12 relative overflow-hidden">
-          <div className="dashboard-ambient" aria-hidden="true" />
           <div className="relative z-10 p-4 md:p-6 lg:p-8 w-full">
             {children}
           </div>

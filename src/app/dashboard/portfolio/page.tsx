@@ -1,14 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, AlertTriangle, Loader2 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, Clock, Shield } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { getRiskResult, getIncome, getBudgetPots, getDebts } from "@/lib/storage";
 import { GoldTracker } from "@/components/portfolio/GoldTracker";
 import { CashflowDNA } from "@/components/portfolio/CashflowDNA";
 import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
+import { CyberCard } from "@/components/ui/CyberCard";
+import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
+import { cn } from "@/lib/utils";
 
 /* ─── Types ─── */
 interface MarketData {
@@ -20,10 +23,18 @@ interface MarketData {
   sentimentScore?: number;
 }
 
-const riskLabels: Record<string, string> = { conservative: "🛡️ Bảo thủ", balanced: "⚖️ Cân bằng", growth: "🚀 Tăng trưởng" };
+const riskLabels: Record<string, string> = {
+  conservative: "🛡️ BẢO THỦ",
+  balanced: "⚖️ CÂN BẰNG",
+  growth: "🚀 TĂNG TRƯỞNG"
+};
 
 function generateProjection(capital: number, riskType: string) {
-  const rates = { conservative: { base: 0.06, pess: 0.03, opt: 0.08 }, balanced: { base: 0.09, pess: 0.04, opt: 0.14 }, growth: { base: 0.13, pess: 0.02, opt: 0.22 } };
+  const rates = {
+    conservative: { base: 0.06, pess: 0.03, opt: 0.08 },
+    balanced: { base: 0.09, pess: 0.04, opt: 0.14 },
+    growth: { base: 0.13, pess: 0.02, opt: 0.22 }
+  };
   const r = rates[riskType as keyof typeof rates] || rates.balanced;
   return Array.from({ length: 11 }, (_, yr) => ({
     year: `Năm ${yr}`,
@@ -37,8 +48,8 @@ const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, tra
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
 function formatVND(n: number) {
-  if (n >= 1000) return `${(n / 1000).toFixed(0)} tỷ`;
-  return `${n} triệu`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)} TỶ`;
+  return `${n} TRIỆU`;
 }
 
 export default function PortfolioPage() {
@@ -50,52 +61,38 @@ export default function PortfolioPage() {
   const [backtestData, setBacktestData] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projectionData, setProjectionData] = useState<any>(null);
-  const [aiInsight, setAiInsight] = useState<string>("");
-  const [aiLoading, setAiLoading] = useState(false);
   const [userContext, setUserContext] = useState<string>("");
 
-  // ── Pull Risk DNA from localStorage on mount ──
   useEffect(() => {
     if (typeof window === "undefined") return;
     const timer = window.setTimeout(() => {
       const riskResult = getRiskResult();
       if (riskResult) {
         setHasRiskDNA(true);
-        // Map Risk DNA score to risk type
         if (riskResult.score <= 6) setRiskType("conservative");
         else if (riskResult.score <= 10) setRiskType("balanced");
         else setRiskType("growth");
       }
-
-      // Pull income for capital suggestion
       const income = getIncome();
-      if (income > 0) {
-        setCapital(income * 6); // Suggest 6 months income as starting capital
-      }
-
-      // Build user context for AI
+      if (income > 0) setCapital(income * 6);
       const parts: string[] = [];
       const pots = getBudgetPots();
       if (pots.length > 0) {
         const totalBudget = pots.reduce((s, p) => s + p.allocated, 0);
-        parts.push(`Ng?n s?ch th?ng: ${totalBudget.toLocaleString("vi-VN")}?`);
+        parts.push(`Budget: ${totalBudget.toLocaleString("vi-VN")}Đ`);
       }
       const debts = getDebts();
       if (debts.length > 0) {
         const totalDebt = debts.reduce((s, d) => s + d.principal, 0);
-        parts.push(`T?ng n?: ${totalDebt.toLocaleString("vi-VN")}?`);
+        parts.push(`Debt: ${totalDebt.toLocaleString("vi-VN")}Đ`);
       }
-      if (income > 0) parts.push(`Thu nh?p: ${income.toLocaleString("vi-VN")}?/th?ng`);
-      if (riskResult) {
-        parts.push(`Risk DNA: ${riskResult.label} (score ${riskResult.score}/15)`);
-      }
-      setUserContext(parts.join(", "));
+      if (income > 0) parts.push(`Income: ${income.toLocaleString("vi-VN")}Đ`);
+      if (riskResult) parts.push(`Risk DNA: ${riskResult.label} (${riskResult.score}/15)`);
+      setUserContext(parts.join(" • "));
     }, 0);
-
     return () => window.clearTimeout(timer);
   }, []);
 
-  // ── Fetch live market data ──
   useEffect(() => {
     fetch("/api/market-data", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
@@ -103,7 +100,6 @@ export default function PortfolioPage() {
       .catch(() => { });
   }, []);
 
-  // ── Fetch dynamic backtest and projection ──
   useEffect(() => {
     fetch(`/api/portfolio/backtest?capital=${capital}&riskType=${riskType}`)
       .then(r => r.json())
@@ -116,7 +112,6 @@ export default function PortfolioPage() {
       .catch(() => { });
   }, [capital, riskType]);
 
-  // ── Dynamic allocation based on market sentiment ──
   const fgScore = marketData?.sentimentScore ?? 50;
   const allocation = useMemo(() => {
     const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
@@ -127,42 +122,47 @@ export default function PortfolioPage() {
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       <motion.div variants={fadeIn} className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
-          Cố vấn <span className="text-gradient">danh mục</span>
-        </h1>
-        <p className="text-[13px] text-white/40">
-          Nhập số vốn + chọn khẩu vị rủi ro → AI gợi ý phân bổ + dự phóng 10 năm
-        </p>
+        <CyberHeader size="display">Cố vấn <span className="text-[#22C55E]">Danh mục</span></CyberHeader>
+        <CyberSubHeader className="mt-1">
+          Hệ thống tối ưu hóa tài sản dựa trên Modern Portfolio Theory &amp; Market Sentiment
+        </CyberSubHeader>
       </motion.div>
 
-      {/* Input */}
-      <motion.div variants={fadeIn} className="glass-card p-5 mb-4">
-        <div className="grid sm:grid-cols-2 gap-4">
+      {/* Input Module */}
+      <CyberCard className="p-6 mb-6" showDecorators={false}>
+        <div className="grid lg:grid-cols-2 gap-6">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1.5">Số vốn ban đầu</label>
-            <div className="relative">
-              <Calculator className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+            <div className="flex items-center gap-2 mb-3">
+              <Calculator className="w-4 h-4 text-[#22C55E]" />
+              <CyberSubHeader>SỐ VỐN ĐẦU TƯ BAN ĐẦU (Đ)</CyberSubHeader>
+            </div>
+            <div className="relative group">
               <input
                 type="number"
                 value={capital}
                 onChange={(e) => setCapital(Number(e.target.value))}
-                className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E6B84F]/30 transition-colors"
-                placeholder="100000000"
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-3 text-lg text-white font-mono font-black outline-none focus:border-[#22C55E]/40 focus:bg-[#22C55E]/[0.02] transition-all"
               />
+              <div className="absolute top-1/2 -right-1 group-focus-within:opacity-100 opacity-0 bg-[#22C55E] w-1 h-8 -translate-y-1/2 rounded-full transition-all" />
             </div>
-            <p className="text-[10px] text-white/20 mt-1">= {(capital / 1000000).toFixed(0)} triệu VND</p>
+            <CyberSubHeader className="mt-2 block">≈ {formatVND(capital / 1000000 * 1000000)} VND</CyberSubHeader>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-wider text-white/25 block mb-1.5">Khẩu vị rủi ro {hasRiskDNA && <span className="text-[#22C55E]">(từ Risk DNA)</span>}</label>
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-[#22C55E]" />
+              <CyberSubHeader>KHẨU VỊ RỦI RO {hasRiskDNA && <span className="text-[#22C55E] tracking-widest">(AUTO-SYNCED)</span>}</CyberSubHeader>
+            </div>
             <div className="flex gap-2">
               {Object.entries(riskLabels).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setRiskType(val)}
-                  className={`flex-1 py-2.5 text-xs font-medium rounded-lg transition-all ${riskType === val
-                    ? "bg-[#E6B84F]/15 text-[#E6B84F] border border-[#E6B84F]/20"
-                    : "bg-white/[0.03] text-white/40 border border-white/[0.06] hover:border-white/10"
-                    }`}
+                  className={cn(
+                    "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border",
+                    riskType === val
+                      ? "bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/40 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+                      : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
+                  )}
                 >
                   {label}
                 </button>
@@ -170,221 +170,218 @@ export default function PortfolioPage() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </CyberCard>
 
-      {/* Tích hợp Component Cashflow DNA & Mục Tiêu Sống */}
+      {/* Cashflow DNA Integration */}
       <CashflowDNA currentCapital={capital} />
 
-      <div className="grid lg:grid-cols-2 gap-4 mb-4">
-        {/* Allocation Pie */}
-        <motion.div variants={fadeIn} className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <PieChartIcon className="w-4 h-4 text-[#E6B84F]" />
-            Gợi ý phân bổ
-          </h3>
-          <div className="flex items-center gap-5">
-            <div className="w-40 h-40 flex-shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={allocation} cx="50%" cy="50%" innerRadius={35} outerRadius={65} paddingAngle={3} dataKey="percent" stroke="none">
-                    {allocation.map((entry: AllocationItem, i: number) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }}
-                    formatter={(value: unknown) => `${value}%`}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+      <div className="grid lg:grid-cols-5 gap-6 mb-6">
+        {/* Allocation Column */}
+        <div className="lg:col-span-2">
+          <CyberCard className="p-6 h-full">
+            <div className="flex items-center gap-2 mb-8">
+              <PieChartIcon className="w-4 h-4 text-[#22C55E]" />
+              <CyberHeader size="xs">Phân bổ chiến lược</CyberHeader>
             </div>
-            <div className="flex-1 space-y-2">
-              {allocation.map((item: AllocationItem) => (
-                <div key={item.asset} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-white/50">{item.asset}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-white/80">{item.percent}%</span>
-                    <span className="text-[10px] text-white/25 ml-1.5">{((capital * item.percent) / 100 / 1000000).toFixed(1)}tr</span>
-                  </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-full aspect-square max-w-[200px] mb-8 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={allocation} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="percent" stroke="none">
+                      {allocation.map((entry: AllocationItem, i: number) => (
+                        <Cell key={i} fill={entry.color} fillOpacity={0.85} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      itemStyle={{ color: 'white', fontSize: '10px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <CyberTypography size="sm" variant="mono" className="text-white font-black">{riskType.toUpperCase()}</CyberTypography>
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Strategy</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* AI Insight — LIVE, kéo market data + user context */}
-        <motion.div variants={fadeIn} className="glass-card p-5 border-[#E6B84F]/10 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-[#E6B84F]" />
-              <h3 className="text-sm font-semibold text-white">AI Insight — Cá nhân hóa</h3>
-            </div>
-
-            {/* Market data pills */}
-            {marketData && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {marketData.vnIndex && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${marketData.vnIndex.changePct >= 0 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'}`}>
-                    VN-Index: {marketData.vnIndex.price} ({marketData.vnIndex.changePct >= 0 ? '+' : ''}{marketData.vnIndex.changePct}%)
-                  </span>
-                )}
-                {marketData.goldSjc && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F]">
-                    Vàng: {(marketData.goldSjc.goldVnd / 1000000).toFixed(1)}tr
-                  </span>
-                )}
-                <span className={`text-[10px] px-2 py-0.5 rounded-full ${fgScore <= 30 ? 'bg-[#EF4444]/10 text-[#EF4444]' : fgScore >= 70 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-white/5 text-white/40'}`}>
-                  F&G: {fgScore} ({fgScore <= 20 ? 'Cực Sợ' : fgScore <= 40 ? 'Sợ hãi' : fgScore <= 60 ? 'Trung tính' : fgScore <= 80 ? 'Tham lam' : 'Cực Tham'})
-                </span>
               </div>
-            )}
 
-            <p className="text-[13px] text-white/50 leading-relaxed mb-3">
-              Với profile <strong className="text-white/70">{riskLabels[riskType]}</strong> và vốn{" "}
-              <strong className="text-white/70">{(capital / 1000000).toFixed(0)} triệu</strong>
-              {fgScore <= 30 && " — Nhiệt kế thị trường đang ở vùng Sợ hãi → tăng tỷ trọng tài sản an toàn (tiết kiệm, vàng). Chứng khoán có cơ hội tích lũy nếu VN-Index tiếp tục giảm."}
-              {fgScore > 30 && fgScore <= 60 && " — Thị trường trung tính → giữ phân bổ cân bằng theo khẩu vị rủi ro."}
-              {fgScore > 60 && " — Thị trường tham lam → cẩn thận hội chứng sợ bỏ lỡ. Giảm dần vị thế rủi ro, tăng quỹ tiền mặt."}
-              {userContext && <><br /><span className="text-[11px] text-white/30">📊 {userContext}</span></>}
-            </p>
+              <div className="w-full space-y-2">
+                {allocation.map((item: AllocationItem) => (
+                  <div key={item.asset} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: item.color }} />
+                      <CyberSubHeader>{item.asset.toUpperCase()}</CyberSubHeader>
+                    </div>
+                    <div className="text-right">
+                      <CyberTypography size="xs" variant="mono" className="text-white font-black">{item.percent}%</CyberTypography>
+                      <p className="text-[9px] text-white/20 font-mono mt-0.5">{((capital * item.percent) / 100 / 1000000).toFixed(1)}M</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CyberCard>
+        </div>
+
+        {/* AI Insight Column */}
+        <div className="lg:col-span-3">
+          <CyberCard className="p-6 h-full" variant="success">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="w-4 h-4 text-[#22C55E]" />
+              <CyberHeader size="xs">Cố vấn AI — Live Insight</CyberHeader>
+            </div>
+
+            {/* Market Context Pills */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {marketData?.vnIndex && (
+                <div className={cn(
+                  "px-3 py-1 rounded-full text-[9px] font-black border",
+                  marketData.vnIndex.changePct >= 0 ? "bg-[#22C55E]/10 border-[#22C55E]/20 text-[#22C55E]" : "bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444]"
+                )}>
+                  VNINDEX: {marketData.vnIndex.price} ({marketData.vnIndex.changePct >= 0 ? "+" : ""}{marketData.vnIndex.changePct}%)
+                </div>
+              )}
+              {marketData?.goldSjc && (
+                <div className="px-3 py-1 rounded-full text-[9px] font-black border bg-[#E6B84F]/10 border-[#E6B84F]/20 text-[#E6B84F]">
+                  GOLD: {(marketData.goldSjc.goldVnd / 1000000).toFixed(1)}M
+                </div>
+              )}
+              <div className="px-3 py-1 rounded-full text-[9px] font-black border bg-white/5 border-white/10 text-white/40">
+                SENTIMENT: {fgScore} ({fgScore <= 40 ? "FEAR" : fgScore >= 60 ? "GREED" : "NEUTRAL"})
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <p className="text-[13px] text-white/60 leading-relaxed font-mono uppercase">
+                Profile <span className="text-white font-black">{riskLabels[riskType]}</span> • Vốn <span className="text-[#22C55E] font-black">{(capital / 1000000).toFixed(0)} TRIỆU</span>
+                {fgScore <= 30 && " — Thị trường đang trong vùng Sợ hãi cực độ. Đây là thời điểm vàng để tăng tỷ trọng tài sản rủi ro (Chứng khoán) và giữ Vàng như lớp phòng thủ cuối cùng."}
+                {fgScore > 30 && fgScore <= 60 && " — Trạng thái cân bằng. Tiếp tục duy trì danh mục tiêu chuẩn, không nên hưng phấn hay hoảng loạn quá mức."}
+                {fgScore > 60 && " — Hưng phấn đang bao trùm. Khâu quản trị rủi ro cần được thắt chặt. Cân nhắc chốt lời một phần tài sản tăng nóng để tối ưu hóa lợi nhuận."}
+              </p>
+
+              {userContext && (
+                <div className="p-3 rounded-lg bg-black/20 border border-dashed border-white/5">
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest block mb-1">DỮ LIỆU CÁ NHÂN HÓA</span>
+                  <p className="text-[10px] text-white/40 font-mono italic">{userContext}</p>
+                </div>
+              )}
+            </div>
 
             {!hasRiskDNA && (
-              <Link href="/dashboard/risk-profile" className="inline-flex items-center gap-1.5 text-[11px] text-[#E6B84F] hover:text-[#FFD700] transition-colors mb-3">
-                <Brain className="w-3.5 h-3.5" />
-                Làm quiz Tính cách Đầu tư để cá nhân hóa tốt hơn →
+              <Link href="/dashboard/risk-profile" className="flex items-center gap-2 text-[10px] font-black uppercase text-[#22C55E] hover:underline mb-8 tracking-widest">
+                <Brain className="w-4 h-4" /> Đồng bộ hóa Risk DNA ngay <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             )}
 
-            <div className="mt-4 mb-4 pt-4 border-t border-[#E6B84F]/10">
-              <h4 className="text-[10px] font-bold text-[#E6B84F] mb-2 uppercase tracking-wider">Hành động cụ thể (Action Cards)</h4>
+            <div className="space-y-3">
+              <CyberSubHeader className="text-[#22C55E] font-black">CHIẾN LƯỢC HÀNH ĐỘNG</CyberSubHeader>
               <div className="space-y-2">
-                {riskType === "conservative" && (
-                  <>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#00E5FF]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#00E5FF]">Hành động 1:</strong> Gửi ngay 50% tiền nhàn rỗi vào sổ tiết kiệm online kỳ hạn linh hoạt.
-                    </div>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#E6B84F]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#E6B84F]">Hành động 2:</strong> Trích 20% mua vàng SJC hoặc nhẫn trơn 9999 làm tài sản trú ẩn dài hạn.
-                    </div>
-                  </>
-                )}
-                {riskType === "balanced" && (
-                  <>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#22C55E]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#22C55E]">Hành động 1:</strong> Mua chứng chỉ quỹ ETF (VN30/VN100) hàng tháng để trung bình giá cổ phiếu.
-                    </div>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#00E5FF]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#00E5FF]">Hành động 2:</strong> Giữ 30% tiền mặt/tiết kiệm như quỹ khẩn cấp để bắt đáy khi thị trường hoảng loạn.
-                    </div>
-                  </>
-                )}
-                {riskType === "growth" && (
-                  <>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#22C55E]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#22C55E]">Hành động 1:</strong> Dồn 40% vào thị trường Cổ phiếu: Tự mua các mã rớt sâu hoặc mua ETF theo định kỳ.
-                    </div>
-                    <div className="bg-white/5 p-2.5 rounded border border-[#AB47BC]/20 text-[11px] text-white/70 leading-relaxed">
-                      <strong className="text-[#AB47BC]">Hành động 2:</strong> Trích 25% mua Crypto (BTC/ETH). Biến động cực mạnh nên dứt khoát Không All-in.
-                    </div>
-                  </>
-                )}
+                {[
+                  { label: "Action 01", text: riskType === "conservative" ? "Gửi 50% vốn vào tiết kiệm online kỳ hạn 12T để khóa lãi suất." : riskType === "balanced" ? "Mua ETF VN30 hàng tháng để tích lũy cổ phiếu đầu ngành." : "Dành 40% vốn săn tìm các cổ phiếu Midcap có cơ bản tốt rớt sâu.", color: "#22C55E" },
+                  { label: "Action 02", text: riskType === "conservative" ? "Trích 20% mua Vàng nhẫn 9999 làm bảo hiểm tài sản." : riskType === "balanced" ? "Giữ 30% quỹ tiền mặt để bắt đáy khi VN-Index điều chỉnh >10%." : "Trích 25% vốn vào BTC/ETH nhưng tuyệt đối không dùng đòn bẩy.", color: "#E6B84F" }
+                ].map((act, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-white/[0.03] border-l-4 border-white/5 hover:border-l-[#22C55E]/60 transition-all flex items-start gap-3">
+                    <span className="text-[9px] font-black text-white/20 mt-1 shrink-0">{act.label}</span>
+                    <p className="text-[11px] text-white/70 leading-relaxed uppercase font-mono">{act.text}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="mt-8 flex items-center justify-around border-t border-white/5 pt-6">
               <div className="text-center">
-                <TrendingUp className="w-5 h-5 text-[#22C55E] mx-auto mb-0.5" />
-                <p className="text-[10px] text-white/25">CAGR dự kiến</p>
-                <p className="text-sm font-bold text-[#22C55E]">{riskType === "conservative" ? "6%" : riskType === "balanced" ? "9%" : "13%"}</p>
+                <TrendingUp className="w-5 h-5 text-[#22C55E] mx-auto mb-2" />
+                <CyberSubHeader>DỰ KIẾN CAGR</CyberSubHeader>
+                <CyberMetric size="xs" color="text-[#22C55E]">{riskType === "conservative" ? "6%" : riskType === "balanced" ? "9%" : "13%"}</CyberMetric>
               </div>
               <div className="text-center">
-                <RefreshCw className="w-5 h-5 text-[#E6B84F] mx-auto mb-0.5" />
-                <p className="text-[10px] text-white/25">Tái cân bằng</p>
-                <p className="text-sm font-bold text-[#E6B84F]">Quý/lần</p>
+                <RefreshCw className="w-5 h-5 text-[#E6B84F] mx-auto mb-2" />
+                <CyberSubHeader>TÁI CÂN BẰNG</CyberSubHeader>
+                <CyberMetric size="xs" color="text-[#E6B84F]">QUÝ / LẦN</CyberMetric>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </CyberCard>
+        </div>
       </div>
 
-      {/* Backtest — "Nếu bạn đầu tư từ 2021..." */}
-      <motion.div variants={fadeIn} className="glass-card p-5 mb-4 border border-[#22C55E]/10">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-4 h-4 text-[#22C55E]" />
-          <h3 className="text-sm font-semibold text-white">Kiểm tra ngược — Nếu bạn đầu tư từ 2021</h3>
-        </div>
-        <p className="text-[11px] text-white/30 mb-3">
-          Giả lập nếu bạn đầu tư <strong className="text-white/60">{(capital / 1000000).toFixed(0)} triệu</strong> theo phân bổ <strong className="text-white/60">{riskLabels[riskType]}</strong> từ đầu năm 2021:
-        </p>
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={backtestData?.history.filter((_: unknown, i: number) => i % 12 === 0).map((d: { year: string, portfolioValue: number }) => ({
-              year: d.year,
-              value: Math.round(d.portfolioValue / 1000000),
-            })) || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />
-              <Tooltip contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }} formatter={(v: unknown) => `${formatVND(v as number)}`} />
-              <Area type="monotone" dataKey="value" stroke="#22C55E" fill="#22C55E" fillOpacity={0.1} strokeWidth={2} name="Giá trị danh mục" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-3 p-3 bg-white/[0.02] rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-white/40">Vốn ban đầu (2021)</span>
-            <span className="text-xs font-medium text-white/60">{(capital / 1000000).toFixed(0)} triệu</span>
+      {/* Analytics Charts */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        {/* Backtest */}
+        <CyberCard className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="w-4 h-4 text-[#22C55E]" />
+            <CyberHeader size="xs">Backtest — Hiệu suất từ 2021</CyberHeader>
           </div>
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[11px] text-white/40">Giá trị hiện tại ({new Date().getFullYear()})</span>
-            <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? Math.round(backtestData.currentValue / 1000000) : '--'} triệu
-            </span>
+          <p className="text-[11px] text-white/40 font-mono uppercase mb-6">
+            Giả lập đầu tư {formatVND(capital / 1000000 * 1000000)} từ đầu năm 2021 đến nay:
+          </p>
+          <div className="h-64 mb-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={backtestData?.history.filter((_: any, i: number) => i % 12 === 0).map((d: any) => ({
+                year: d.year,
+                value: Math.round(d.portfolioValue / 1000000),
+              })) || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <XAxis dataKey="year" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.2)", fontWeight: 900 }} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  formatter={(v: any) => `${formatVND(v)}`}
+                />
+                <Area type="monotone" dataKey="value" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[11px] text-white/40">Lợi nhuận gộp</span>
-            <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? `+${Math.round((backtestData.currentValue / capital - 1) * 100)}%` : '--'}
-            </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+              <CyberSubHeader className="block mb-1">GIÁ TRỊ HIỆN TẠI</CyberSubHeader>
+              <CyberTypography size="sm" variant="mono" className="text-[#22C55E] font-black">
+                {backtestData ? formatVND(Math.round(backtestData.currentValue / 1000000)) : "--"}
+              </CyberTypography>
+            </div>
+            <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+              <CyberSubHeader className="block mb-1">TỔNG LỢI NHUẬN</CyberSubHeader>
+              <CyberTypography size="sm" variant="mono" className="text-[#22C55E] font-black">
+                {backtestData ? `+${Math.round((backtestData.currentValue / capital - 1) * 100)}%` : "--"}
+              </CyberTypography>
+            </div>
           </div>
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[11px] text-white/40">CAGR thực tế</span>
-            <span className="text-xs font-bold text-[#22C55E]">
-              {backtestData ? `${backtestData.cagr}%/năm` : '--'}
-            </span>
-          </div>
-        </div>
-      </motion.div>
+        </CyberCard>
 
-      {/* 10-Year Projection */}
-      <motion.div variants={fadeIn} className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-white mb-3">Dự phóng 10 năm (3 kịch bản)</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={projection}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatVND(v)} />
-              <Tooltip contentStyle={{ background: "#111318", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, color: "#F5F3EE", fontSize: 11 }} formatter={(v: unknown) => `${formatVND(v as number)}`} />
-              <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[0] || "Lạc quan"} />
-              <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.1} strokeWidth={2} name={projectionData?.scenarios?.[1] || "Cơ sở"} />
-              <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.05} strokeWidth={1.5} name={projectionData?.scenarios?.[2] || "Bi quan"} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex justify-center gap-6 mt-2">
-          <span className="flex items-center gap-1 text-[10px] text-[#EF4444]"><div className="w-2 h-2 rounded-full bg-[#EF4444]" />Bi quan</span>
-          <span className="flex items-center gap-1 text-[10px] text-[#E6B84F]"><div className="w-2 h-2 rounded-full bg-[#E6B84F]" />Cơ sở</span>
-          <span className="flex items-center gap-1 text-[10px] text-[#22C55E]"><div className="w-2 h-2 rounded-full bg-[#22C55E]" />Lạc quan</span>
-        </div>
-      </motion.div>
+        {/* Projection */}
+        <CyberCard className="p-6">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-[#22C55E]" />
+              <CyberHeader size="xs">Dự phóng tăng trưởng 10 năm</CyberHeader>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#22C55E]" /><span className="text-[8px] font-black text-white/40 uppercase">Best</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#E6B84F]" /><span className="text-[8px] font-black text-white/40 uppercase">Base</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#EF4444]" /><span className="text-[8px] font-black text-white/40 uppercase">Worst</span></div>
+            </div>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={projection}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <XAxis dataKey="year" tick={{ fontSize: 9, fill: "rgba(255,255,255,0.2)", fontWeight: 900 }} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  formatter={(v: any) => `${formatVND(v)}`}
+                />
+                <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.03} strokeWidth={1.5} />
+                <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.08} strokeWidth={2.5} />
+                <Area type="monotone" dataKey="pessimistic" stroke="#EF4444" fill="#EF4444" fillOpacity={0.03} strokeWidth={1.5} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <CyberSubHeader className="text-center block mt-4 opacity-30 italic">LƯU Ý: ĐÂY LÀ DỰ PHÓNG TOÁN HỌC, KHÔNG PHẢI KHUYẾN NGHỊ ĐẦU TƯ</CyberSubHeader>
+        </CyberCard>
+      </div>
 
-      {/* Sổ Vàng (Physical Gold Tracker) */}
-      <motion.div variants={fadeIn} className="mt-6">
-        <GoldTracker marketData={marketData} />
-      </motion.div>
+      <GoldTracker marketData={marketData} />
     </motion.div>
   );
 }

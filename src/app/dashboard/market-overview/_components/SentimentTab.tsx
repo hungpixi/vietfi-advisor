@@ -1,5 +1,7 @@
 import { getZone } from "@/lib/market-overview/formatters";
 import type { AssetMoodCard, SentimentDriver } from "@/lib/market-overview/types";
+import { CyberCard } from "@/components/ui/CyberCard";
+import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
 
 export function SentimentTab({
     score,
@@ -42,34 +44,34 @@ export function SentimentTab({
 
     return (
         <div className="space-y-6">
-            <section className="glass-card p-5">
-                <p className="text-[11px] uppercase tracking-widest text-white/30">Nhiệt độ thị trường hôm nay</p>
+            <CyberCard className="p-5" variant="success">
+                <CyberSubHeader>Nhiệt độ thị trường hôm nay</CyberSubHeader>
                 <div className="mt-3 flex items-end gap-3">
-                    <span className="text-5xl font-black text-white">{score}</span>
-                    <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ color: zone.color, backgroundColor: `${zone.color}18` }}>
+                    <CyberMetric size="4xl" color="text-white">{score}</CyberMetric>
+                    <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase mb-2 border" style={{ color: zone.color, backgroundColor: `${zone.color}18`, borderColor: `${zone.color}30` }}>
                         {zone.label}
                     </span>
                 </div>
-            </section>
+            </CyberCard>
 
-            <section className="grid gap-3 md:grid-cols-5">
+            <section className="grid gap-3 grid-cols-2 md:grid-cols-5">
                 {drivers.map((driver) => (
-                    <div key={driver.label} className="glass-card p-4">
-                        <p className="text-[11px] text-white/40">{driver.label}</p>
-                        <p className="mt-2 text-xl font-bold text-white">{driver.value}</p>
-                    </div>
+                    <CyberCard key={driver.label} className="p-4" showDecorators={false}>
+                        <CyberSubHeader>{driver.label}</CyberSubHeader>
+                        <CyberMetric size="sm" className="mt-1 block">{driver.value}</CyberMetric>
+                    </CyberCard>
                 ))}
             </section>
 
             <section className="grid gap-3 md:grid-cols-2">
                 {mergedAssetSentiments.map((asset) => (
-                    <div key={asset.asset} className="glass-card p-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-white">{asset.asset}</p>
-                            <span className="text-xs text-white/40">{asset.score}/100</span>
+                    <CyberCard key={asset.asset} className="p-4" variant={asset.score > 50 ? "success" : "danger"}>
+                        <div className="flex items-center justify-between mb-2">
+                            <CyberHeader size="xs">{asset.asset}</CyberHeader>
+                            <CyberMetric size="xs" color="text-white/40">{asset.score}/100</CyberMetric>
                         </div>
-                        <p className="mt-2 text-[12px] text-white/50">{asset.news}</p>
-                    </div>
+                        <p className="text-[12px] text-white/50 font-mono uppercase leading-relaxed">{asset.news}</p>
+                    </CyberCard>
                 ))}
             </section>
         </div>
