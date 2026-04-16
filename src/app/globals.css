@@ -153,9 +153,21 @@
     z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(60rem 38rem at 12% -8%, rgba(255, 215, 0, 0.24), transparent 62%),
-      radial-gradient(48rem 34rem at 88% 8%, rgba(0, 229, 255, 0.18), transparent 62%),
-      radial-gradient(40rem 26rem at 50% 108%, rgba(26, 84, 255, 0.19), transparent 66%),
+      radial-gradient(
+        60rem 38rem at 12% -8%,
+        rgba(255, 215, 0, 0.24),
+        transparent 62%
+      ),
+      radial-gradient(
+        48rem 34rem at 88% 8%,
+        rgba(0, 229, 255, 0.18),
+        transparent 62%
+      ),
+      radial-gradient(
+        40rem 26rem at 50% 108%,
+        rgba(26, 84, 255, 0.19),
+        transparent 66%
+      ),
       linear-gradient(165deg, #07090f 0%, #090b12 52%, #05070d 100%);
   }
 
@@ -164,8 +176,16 @@
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(30rem 20rem at 22% 24%, rgba(255, 198, 74, 0.14), transparent 70%),
-      radial-gradient(26rem 18rem at 78% 34%, rgba(0, 229, 255, 0.1), transparent 72%);
+      radial-gradient(
+        30rem 20rem at 22% 24%,
+        rgba(255, 198, 74, 0.14),
+        transparent 70%
+      ),
+      radial-gradient(
+        26rem 18rem at 78% 34%,
+        rgba(0, 229, 255, 0.1),
+        transparent 72%
+      );
     filter: blur(10px);
     opacity: 0.9;
   }
@@ -178,8 +198,12 @@
     background-image:
       radial-gradient(rgba(255, 255, 255, 0.75) 0.35px, transparent 0.35px),
       radial-gradient(rgba(255, 255, 255, 0.45) 0.35px, transparent 0.35px);
-    background-size: 3px 3px, 4px 4px;
-    background-position: 0 0, 1.5px 1.5px;
+    background-size:
+      3px 3px,
+      4px 4px;
+    background-position:
+      0 0,
+      1.5px 1.5px;
     mix-blend-mode: soft-light;
   }
 }
