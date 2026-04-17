@@ -7,7 +7,7 @@ import {
 } from "./mappers";
 import { getZone, formatMarketTime } from "./formatters";
 
-const marketSnapshot = {
+const marketSnapshot: any = {
     fetchedAt: "2026-04-15T08:30:00.000Z",
     vnIndex: { price: 1245.66, changePct: -1.2 },
     goldSjc: { goldVnd: 121_500_000, changePct: 0.8 },
@@ -21,7 +21,7 @@ const marketSnapshot = {
     aiSummary: "VN-Index yếu nhưng vàng và BTC vẫn giữ nhịp.",
 };
 
-const newsPayload = {
+const newsPayload: any = {
     metrics: {
         overallNewsScore: 29,
         history: [
