@@ -5,6 +5,7 @@ import Image from "next/image";
 
 interface DoctorProps {
   dti: number;
+  debtCount: number;
   phase: "scanning" | "diagnosis" | "surgery" | "success";
 }
 
@@ -35,14 +36,16 @@ const SPICY_MESSAGES = {
   ],
 };
 
-export function TriageDoctor({ dti, phase }: DoctorProps) {
+export function TriageDoctor({ dti, debtCount, phase }: DoctorProps) {
   const getDoctorTitle = () => {
     if (dti > 60) return "BÁC SĨ TRƯỞNG";
     if (dti > 40) return "CHUYÊN GIA PHẪU THUẬT";
     return "BÁC SĨ NỘI TRÚ";
   };
 
-  const message = SPICY_MESSAGES[phase][0];
+  const messages = SPICY_MESSAGES[phase];
+  const messageIndex = Math.abs(Math.floor(dti) + debtCount + phase.length) % messages.length;
+  const message = messages[messageIndex];
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 w-full">

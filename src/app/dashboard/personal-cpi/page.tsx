@@ -2,13 +2,15 @@
 
 import { motion } from "framer-motion";
 import { Calculator, AlertTriangle, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
 import { getBudgetPots, getExpenses } from "@/lib/storage";
 import RequireTier from "@/components/gamification/RequireTier";
 import { UserRole } from "@/lib/rbac";
+import { CyberCard } from "@/components/ui/CyberCard";
+import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
+import { cn } from "@/lib/utils";
 
-/* ─── Budget → CPI mapping ─── */
 const BUDGET_TO_CPI: Record<string, string> = {
   "Ăn uống": "food",
   "Shopping": "other",
@@ -30,13 +32,16 @@ export default function PersonalCPIPage() {
   });
   const [imported, setImported] = useState(false);
 
+  useEffect(() => {
+    // Initial load if needed
+  }, []);
+
   const importFromBudget = () => {
     try {
       const pots = getBudgetPots();
       const expenses = getExpenses();
       if (pots.length === 0) return;
 
-      // Tính tổng chi/allocated cho mỗi pot
       const potSpend: Record<string, number> = {};
       for (const pot of pots) {
         const spent = expenses
@@ -45,7 +50,6 @@ export default function PersonalCPIPage() {
         potSpend[pot.name] = spent || pot.allocated;
       }
 
-      // Map budget → CPI weights
       const newWeights: Record<string, number> = {};
       CPI_CATEGORIES.forEach((c) => { newWeights[c.id] = 0; });
 
@@ -58,7 +62,6 @@ export default function PersonalCPIPage() {
         }
       }
 
-      // Normalize to percentage
       if (total > 0) {
         for (const id of Object.keys(newWeights)) {
           newWeights[id] = Math.round((newWeights[id] / total) * 100);
@@ -79,196 +82,194 @@ export default function PersonalCPIPage() {
   return (
     <RequireTier requiredRole={UserRole.PRO} featureName="Lạm Phát Của Tôi">
       <motion.div initial="hidden" animate="visible" variants={stagger}>
-      <motion.div variants={fadeIn} className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-white mb-0.5">
-          Lạm phát <span className="text-gradient">của tôi</span>
-        </h1>
-        <p className="text-[13px] text-white/40">
-          Điều chỉnh trọng số chi tiêu → tính lạm phát &ldquo;thật sự&rdquo; ảnh hưởng đến bạn
-        </p>
-      </motion.div>
-
-      {/* Big Number */}
-      <motion.div variants={fadeIn} className="grid sm:grid-cols-2 gap-3 mb-6">
-        <div className="glass-card p-5 text-center border-[#E6B84F]/10 relative overflow-hidden">
-          <div className="absolute -top-20 -left-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
-          <div className="relative z-10">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">LẠM PHÁT CỦA BẠN</span>
-            <div className="text-5xl font-black mt-2" style={{ color: result.isHigher ? "#EF4444" : "#22C55E" }}>
-              {result.personalRate}%
-            </div>
-            {result.isHigher && (
-              <p className="text-xs text-[#EF4444] mt-2 flex items-center justify-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                Cao hơn CPI chính thức {(result.personalRate - result.officialRate).toFixed(1)}%
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="glass-card p-5 text-center">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-white/25">CPI CHÍNH THỨC (GSO 2025)</span>
-          <div className="text-5xl font-black text-white/50 mt-2">{result.officialRate}%</div>
-          <p className="text-xs text-white/25 mt-2">Tổng cục Thống kê</p>
-        </div>
-      </motion.div>
-
-      {/* Ratio Bar */}
-      {result.isHigher && (
-        <motion.div variants={fadeIn} className="glass-card p-4 mb-6 border-[#EF4444]/10">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-semibold text-[#EF4444]">Lạm phát ảnh hưởng bạn gấp {result.ratio}x!</h3>
-              <p className="text-xs text-white/40 mt-1">
-                Chi tiêu của bạn tập trung vào các danh mục có CPI cao (nhà ở, ăn uống). 
-                Lãi suất tiết kiệm 5.2%/năm có thể chưa đủ bù lạm phát thực tế.
-              </p>
-            </div>
-          </div>
+        <motion.div variants={fadeIn} className="mb-6">
+          <CyberHeader size="display">Lạm phát <span className="text-[#22C55E]">của tôi</span></CyberHeader>
+          <CyberSubHeader className="mt-1">
+            Điều chỉnh trọng số chi tiêu → tính lạm phát &ldquo;thật sự&rdquo; ảnh hưởng đến bạn
+          </CyberSubHeader>
         </motion.div>
-      )}
 
-      {/* 🦜 ACTION CARD — Phải Làm Gì? */}
-      <motion.div variants={fadeIn} className="glass-card p-5 mb-6 border-[#E6B84F]/10 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E6B84F]/5 rounded-full blur-[80px] pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">🦜</span>
-            <h3 className="text-sm font-bold text-[#E6B84F]">Vẹt Vàng khuyên:</h3>
-          </div>
-          <div className="space-y-2.5">
-            {/* Rule 1: Lãi suất vs lạm phát */}
-            {result.personalRate > 5.2 ? (
-              <div className="flex items-start gap-2">
-                <span className="text-xs bg-[#EF4444]/15 text-[#EF4444] px-1.5 py-0.5 rounded font-bold shrink-0">1</span>
-                <p className="text-[13px] text-white/60">
-                  Lãi suất tiết kiệm <strong className="text-white/80">5.2%/năm</strong> &lt; lạm phát của bạn <strong className="text-[#EF4444]">{result.personalRate}%</strong> → 
-                  Tiền mặt đang <strong className="text-[#EF4444]">MẤT GIÁ</strong> ≈ {((result.personalRate - 5.2) * 1000000 / 100).toLocaleString("vi-VN")}đ/năm cho mỗi 1 triệu gửi tiết kiệm
-                </p>
-              </div>
-            ) : (
-              <div className="flex items-start gap-2">
-                <span className="text-xs bg-[#22C55E]/15 text-[#22C55E] px-1.5 py-0.5 rounded font-bold shrink-0">1</span>
-                <p className="text-[13px] text-white/60">
-                  Lãi suất tiết kiệm <strong className="text-[#22C55E]">5.2%</strong> &gt; lạm phát của bạn <strong className="text-white/80">{result.personalRate}%</strong> → 
-                  Tiền tiết kiệm vẫn <strong className="text-[#22C55E]">tăng giá trị thực</strong> 👍
-                </p>
+        {/* Big Number Cards */}
+        <motion.div variants={fadeIn} className="grid sm:grid-cols-2 gap-3 mb-6">
+          <CyberCard className="p-5 text-center flex flex-col items-center justify-center min-h-[160px]" variant={result.isHigher ? "danger" : "success"}>
+            <CyberSubHeader>LẠM PHÁT CỦA BẠN</CyberSubHeader>
+            <CyberMetric size="3xl" color={result.isHigher ? "text-[#EF4444]" : "text-[#22C55E]"} className="mt-2 drop-shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+              {result.personalRate}%
+            </CyberMetric>
+            {result.isHigher && (
+              <div className="flex items-center gap-1 mt-2 px-2 py-0.5 bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-full">
+                <AlertTriangle className="w-3 h-3 text-[#EF4444]" />
+                <CyberSubHeader color="text-[#EF4444]">+{(result.personalRate - result.officialRate).toFixed(1)}% so với chính thức</CyberSubHeader>
               </div>
             )}
+          </CyberCard>
 
-            {/* Rule 2: Gợi ý hedge */}
-            {result.personalRate > 5.2 && (
-              <div className="flex items-start gap-2">
-                <span className="text-xs bg-[#E6B84F]/15 text-[#E6B84F] px-1.5 py-0.5 rounded font-bold shrink-0">2</span>
-                <p className="text-[13px] text-white/60">
-                  Tăng tỷ trọng tài sản <strong className="text-white/80">hedge lạm phát</strong> (vàng, chứng khoán, BĐS) → 
-                  <a href="/dashboard/portfolio" className="text-[#E6B84F] hover:underline ml-1">Xem Cố vấn Danh mục →</a>
-                </p>
-              </div>
-            )}
+          <CyberCard className="p-5 text-center flex flex-col items-center justify-center min-h-[160px]" showDecorators={false}>
+            <CyberSubHeader>CPI CHÍNH THỨC (GSO 2025)</CyberSubHeader>
+            <CyberMetric size="3xl" color="text-white/40" className="mt-2">
+              {result.officialRate}%
+            </CyberMetric>
+            <CyberSubHeader className="mt-2">TỔNG CỤC THỐNG KÊ</CyberSubHeader>
+          </CyberCard>
+        </motion.div>
 
-            {/* Rule 3: Gợi ý cắt category lớn nhất */}
-            {(() => {
-              const sorted = [...result.categories].sort((a, b) => b.contribution - a.contribution);
-              const top = sorted[0];
-              if (!top || top.contribution < result.personalRate * 0.3) return null;
-              const pct = ((top.contribution / result.personalRate) * 100).toFixed(0);
-              return (
-                <div className="flex items-start gap-2">
-                  <span className="text-xs bg-[#AB47BC]/15 text-[#AB47BC] px-1.5 py-0.5 rounded font-bold shrink-0">{result.personalRate > 5.2 ? "3" : "2"}</span>
-                  <p className="text-[13px] text-white/60">
-                    <strong className="text-white/80">{top.emoji} {top.name}</strong> chiếm <strong className="text-[#AB47BC]">{pct}%</strong> lạm phát cá nhân — 
-                    cân nhắc cắt giảm hoặc tìm nguồn thay thế rẻ hơn
+        {/* Ratio Alert */}
+        {result.isHigher && (
+          <motion.div variants={fadeIn}>
+            <CyberCard className="p-4 mb-6 border-[#EF4444]/20" variant="danger" showDecorators={false}>
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center shrink-0 border border-[#EF4444]/20">
+                  <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
+                </div>
+                <div>
+                  <CyberHeader size="xs" className="text-[#EF4444]">Ảnh hưởng gấp {result.ratio}x!</CyberHeader>
+                  <p className="text-xs text-white/50 mt-1 font-mono uppercase leading-relaxed">
+                    Chi tiêu của bạn tập trung vào danh mục có lạm phát cao (nhà ở, ăn uống). Lãi suất tiết kiệm 5.2% có thể không đủ bù lại mức trượt giá thực tế.
                   </p>
                 </div>
-              );
-            })()}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Sliders */}
-      <motion.div variants={fadeIn} className="glass-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-[#E6B84F]" />
-            Trọng số chi tiêu của bạn
-          </h3>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={importFromBudget}
-              className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded transition-colors ${imported ? "text-[#22C55E] bg-[#22C55E]/10" : "text-[#E6B84F] hover:bg-[#E6B84F]/10"}`}
-            >
-              <Download className="w-3 h-3" />
-              {imported ? "Đã nhập ✓" : "Nhập từ Quỹ Chi tiêu"}
-            </button>
-            <button
-              onClick={() => {
-                const init: Record<string, number> = {};
-                CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
-                setWeights(init);
-                setImported(false);
-              }}
-              className="text-[10px] text-white/30 hover:text-white/50 transition-colors"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {CPI_CATEGORIES.map((cat) => {
-            const w = weights[cat.id] || 0;
-            const catResult = result.categories.find((c) => c.name === cat.name);
-            return (
-              <div key={cat.id}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{cat.emoji}</span>
-                    <span className="text-xs text-white/60">{cat.name}</span>
-                    <span className="text-[9px] text-white/20">(CPI: {cat.officialRate}%)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white/80">{catResult?.userWeight.toFixed(0)}%</span>
-                    <span className="text-[9px] text-white/20">GSO: {cat.officialWeight}%</span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={60}
-                  step={1}
-                  value={w}
-                  onChange={(e) => handleSlider(cat.id, Number(e.target.value))}
-                  className="w-full h-1.5 rounded-full appearance-none bg-white/5 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#E6B84F] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(230,184,79,0.3)]"
-                />
               </div>
-            );
-          })}
-        </div>
+            </CyberCard>
+          </motion.div>
+        )}
 
-        {/* Contribution Breakdown */}
-        <div className="mt-6 pt-4 border-t border-white/[0.04]">
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/20 mb-3">ĐÓNG GÓP VÀO LẠM PHÁT CÁ NHÂN</h4>
-          <div className="space-y-1.5">
-            {result.categories
-              .sort((a, b) => b.contribution - a.contribution)
-              .map((cat) => (
-                <div key={cat.name} className="flex items-center gap-2">
-                  <span className="text-sm w-6">{cat.emoji}</span>
-                  <span className="text-xs text-white/40 w-28 truncate">{cat.name}</span>
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#E6B84F]"
-                      style={{ width: `${(cat.contribution / result.personalRate) * 100}%` }}
+        {/* Vẹt Vàng Insights */}
+        <motion.div variants={fadeIn}>
+          <CyberCard className="p-5 mb-6" variant="success">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">🦜</span>
+              <CyberHeader size="sm" className="text-[#22C55E]">Vẹt Vàng Insight</CyberHeader>
+            </div>
+
+            <div className="space-y-4">
+              {result.personalRate > 5.2 ? (
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded bg-[#EF4444]/20 text-[#EF4444] flex items-center justify-center text-[10px] font-black shrink-0 border border-[#EF4444]/20">01</div>
+                  <p className="text-xs text-white/70 font-mono uppercase leading-relaxed">
+                    Lãi suất <strong className="text-white">5.2%</strong> &lt; lạm phát của bạn <strong className="text-[#EF4444]">{result.personalRate}%</strong>. Tiền mặt đang <strong className="text-[#EF4444]">mất giá thực</strong>.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded bg-[#22C55E]/20 text-[#22C55E] flex items-center justify-center text-[10px] font-black shrink-0 border border-[#22C55E]/20">01</div>
+                  <p className="text-xs text-white/70 font-mono uppercase leading-relaxed">
+                    Lãi suất <strong className="text-[#22C55E]">5.2%</strong> &gt; lạm phát của bạn <strong className="text-white">{result.personalRate}%</strong>. Giá trị tài sản vẫn duy trì tốt.
+                  </p>
+                </div>
+              )}
+
+              {result.personalRate > 5.2 && (
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded bg-[#22C55E]/20 text-[#22C55E] flex items-center justify-center text-[10px] font-black shrink-0 border border-[#22C55E]/20">02</div>
+                  <p className="text-xs text-white/70 font-mono uppercase leading-relaxed">
+                    Cân nhắc chuyển dịch sang tài sản chống lạm phát như <strong className="text-white">Vàng, Chứng khoán</strong> hoặc <strong className="text-white">BĐS</strong>.
+                  </p>
+                </div>
+              )}
+
+              {(() => {
+                const sorted = [...result.categories].sort((a, b) => b.contribution - a.contribution);
+                const top = sorted[0];
+                if (!top || top.contribution < result.personalRate * 0.3) return null;
+                const pct = ((top.contribution / result.personalRate) * 100).toFixed(0);
+                return (
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded bg-[#AB47BC]/20 text-[#AB47BC] flex items-center justify-center text-[10px] font-black shrink-0 border border-[#AB47BC]/20">{result.personalRate > 5.2 ? "03" : "02"}</div>
+                    <p className="text-xs text-white/70 font-mono uppercase leading-relaxed">
+                      <strong className="text-white">{top.emoji} {top.name}</strong> chiếm <strong className="text-[#AB47BC]">{pct}%</strong> lạm phát của bạn. Hãy tìm giải pháp thay thế tiết kiệm hơn.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </CyberCard>
+        </motion.div>
+
+        {/* Sliders Container */}
+        <motion.div variants={fadeIn}>
+          <CyberCard className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-[#22C55E]" />
+                <CyberHeader size="xs">Trọng số chi tiêu</CyberHeader>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={importFromBudget}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border",
+                    imported ? "bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/30" : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10"
+                  )}
+                >
+                  <Download className="w-3 h-3" />
+                  {imported ? "Đã nhập" : "Nhập dữ liệu"}
+                </button>
+                <button
+                  onClick={() => {
+                    const init: Record<string, number> = {};
+                    CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
+                    setWeights(init);
+                    setImported(false);
+                  }}
+                  className="text-[10px] font-black uppercase text-white/20 hover:text-white/40 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-x-12 gap-y-6 mb-8">
+              {CPI_CATEGORIES.map((cat) => {
+                const w = weights[cat.id] || 0;
+                const catResult = result.categories.find((c) => c.name === cat.name);
+                return (
+                  <div key={cat.id} className="group/slider">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg grayscale group-hover/slider:grayscale-0 transition-all">{cat.emoji}</span>
+                        <CyberTypography size="xs" className="text-white/80">{cat.name}</CyberTypography>
+                      </div>
+                      <div className="text-right">
+                        <CyberMetric size="xs" className="block text-white">{catResult?.userWeight.toFixed(0)}%</CyberMetric>
+                        <CyberSubHeader className="block">GSO: {cat.officialWeight}%</CyberSubHeader>
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={60}
+                      step={1}
+                      value={w}
+                      onChange={(e) => handleSlider(cat.id, Number(e.target.value))}
+                      className="w-full h-1.5 rounded-full appearance-none bg-white/5 cursor-pointer accent-[#22C55E] hover:bg-white/10 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#22C55E] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,197,94,0.5)]"
                     />
                   </div>
-                  <span className="text-[10px] font-mono text-white/30 w-12 text-right">{cat.contribution.toFixed(2)}%</span>
-                </div>
-              ))}
-          </div>
-        </div>
-      </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Contribution Progress Bars */}
+            <div className="mt-8 pt-8 border-t border-white/[0.04]">
+              <CyberSubHeader className="mb-4 block">ĐÓNG GÓP VÀO LẠM PHÁT CÁ NHÂN</CyberSubHeader>
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+                {result.categories
+                  .sort((a, b) => b.contribution - a.contribution)
+                  .map((cat) => (
+                    <div key={cat.name} className="flex items-center gap-3">
+                      <span className="text-sm w-6">{cat.emoji}</span>
+                      <CyberTypography size="xs" className="w-24 text-white/40 truncate">{cat.name}</CyberTypography>
+                      <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+                          style={{ width: `${(cat.contribution / result.personalRate) * 100}%` }}
+                        />
+                      </div>
+                      <CyberTypography size="xs" variant="mono" className="text-white/30 w-12 text-right">{cat.contribution.toFixed(2)}%</CyberTypography>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </CyberCard>
+        </motion.div>
       </motion.div>
     </RequireTier>
   );

@@ -3,13 +3,17 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Calculator, ArrowRight, MapPin, Building2, Banknote,
-  Scale, Clock, HelpCircle,
+  MapPin, Building2, Banknote,
+  Clock, HelpCircle,
+  ArrowRight, Scale,
 } from "lucide-react";
 import Link from "next/link";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from "recharts";
+import { CyberCard } from "@/components/ui/CyberCard";
+import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
+import { cn } from "@/lib/utils";
 
 /* ─── Giá BĐS reference per khu vực ─── */
 const AREA_PRICES = [
@@ -93,8 +97,8 @@ export default function HousingIntelPage() {
       totalRentCost: Math.round(totalRentCost),
       breakeven: Math.max(0, Math.min(breakeven, loanYears * 12)),
       chartData: [
-        { name: "Chi phí mua\n(tổng)", value: Math.round(totalBuyCost / 1e9), fill: "#3B82F6" },
-        { name: "Chi phí thuê\n(tổng)", value: Math.round(totalRentCost / 1e9), fill: "#F59E0B" },
+        { name: "MUA", value: Math.round(totalBuyCost / 1e9), fill: "#22C55E" },
+        { name: "THUÊ", value: Math.round(totalRentCost / 1e9), fill: "#E6B84F" },
       ],
     };
   }, [targetPrice, downPayment, rentMonthly, loanRate, loanYears]);
@@ -105,262 +109,224 @@ export default function HousingIntelPage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       {/* Header */}
       <motion.div variants={fadeIn} className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-white mb-1">
-          <span className="text-gradient">Housing Intel</span> — Thông tin nhà ở
-        </h1>
-        <p className="text-[13px] text-white/40 leading-relaxed max-w-3xl">
-          Giá BĐS theo khu vực, tính khả năng mua nhà, so sánh mua vs thuê, và thông tin nhà ở xã hội.
-        </p>
+        <CyberHeader size="display">Housing <span className="text-[#22C55E]">Intel</span></CyberHeader>
+        <CyberSubHeader className="mt-1">
+          Dữ liệu thị trường BĐS &amp; Phân tích tài chính mua nhà cho thế hệ mới
+        </CyberSubHeader>
       </motion.div>
 
       {/* ═══ Giá BĐS per khu vực ═══ */}
-      <motion.div variants={fadeIn} className="glass-card p-5 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <MapPin className="w-4 h-4 text-[#8B5CF6]" />
-          <h2 className="text-sm font-bold text-white">Giá BĐS theo khu vực</h2>
+      <CyberCard className="p-5 mb-6" showDecorators={false}>
+        <div className="flex items-center gap-2 mb-6">
+          <MapPin className="w-4 h-4 text-[#22C55E]" />
+          <CyberHeader size="xs">Giá BĐS theo khu vực</CyberHeader>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px]">
+          <table className="w-full">
             <thead>
-              <tr className="text-white/30 border-b border-white/[0.06]">
-                <th className="text-left py-2 font-medium">Khu vực</th>
-                <th className="text-left py-2 font-medium">Loại</th>
-                <th className="text-right py-2 font-medium">Giá/m²</th>
-                <th className="text-right py-2 font-medium">YoY</th>
+              <tr className="border-b border-white/[0.06] bg-white/[0.01]">
+                <th className="text-left py-4 px-2"><CyberSubHeader>Khu vực</CyberSubHeader></th>
+                <th className="text-left py-4 px-2"><CyberSubHeader>Loại</CyberSubHeader></th>
+                <th className="text-right py-4 px-2"><CyberSubHeader>Giá/m²</CyberSubHeader></th>
+                <th className="text-right py-4 px-2"><CyberSubHeader>YOY</CyberSubHeader></th>
               </tr>
             </thead>
             <tbody>
               {AREA_PRICES.map((a) => (
-                <tr key={a.area} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                  <td className="py-2.5 text-white/80 font-medium">{a.area}</td>
-                  <td className="py-2.5 text-white/40">{a.type}</td>
-                  <td className="py-2.5 text-right text-white font-semibold">{a.price} {a.unit}</td>
-                  <td className="py-2.5 text-right">
-                    <span className={a.trend.startsWith("+") ? "text-[#16c784]" : "text-[#f3d42f]"}>{a.trend}</span>
+                <tr key={a.area} className="border-b border-white/[0.03] hover:bg-[#22C55E]/[0.02] transition-colors group">
+                  <td className="py-4 px-2">
+                    <CyberTypography size="xs" className="text-white font-black">{a.area}</CyberTypography>
+                  </td>
+                  <td className="py-4 px-2"><CyberSubHeader>{a.type.toUpperCase()}</CyberSubHeader></td>
+                  <td className="py-4 px-2 text-right">
+                    <CyberTypography size="xs" variant="mono" className="text-white">{a.price} {a.unit.toUpperCase()}</CyberTypography>
+                  </td>
+                  <td className="py-4 px-2 text-right">
+                    <span className={cn("font-mono text-[11px] font-black", a.trend.startsWith("+") ? "text-[#22C55E]" : "text-[#E6B84F]")}>
+                      {a.trend}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </CyberCard>
 
       {/* ═══ 2-column: Affordability + Mua vs Thuê ═══ */}
       <div className="grid lg:grid-cols-2 gap-4 mb-6">
         {/* ── Affordability Calculator ── */}
-        <motion.div variants={fadeIn} className="glass-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Calculator className="w-4 h-4 text-[#3B82F6]" />
-            <h2 className="text-sm font-bold text-white">Tính khả năng mua nhà</h2>
+        <CyberCard className="p-5 overflow-visible">
+          <div className="flex items-center gap-2 mb-6">
+            <Building2 className="w-4 h-4 text-[#22C55E]" />
+            <CyberHeader size="xs">Khả năng mua nhà</CyberHeader>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Thu nhập/tháng</label>
-              <input
-                type="number"
-                value={income}
-                onChange={(e) => setIncome(Number(e.target.value))}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:border-[#3B82F6]/50 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Tiết kiệm/tháng</label>
-              <input
-                type="number"
-                value={savings}
-                onChange={(e) => setSavings(Number(e.target.value))}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:border-[#3B82F6]/50 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Đã tích lũy</label>
-              <input
-                type="number"
-                value={currentSaved}
-                onChange={(e) => setCurrentSaved(Number(e.target.value))}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:border-[#3B82F6]/50 focus:outline-none transition-colors"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] text-white/40 mb-1 block">Khu vực</label>
-                <select
-                  value={targetArea}
-                  onChange={(e) => setTargetArea(e.target.value)}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
-                >
-                  {AREA_PRICES.map((a) => (
-                    <option key={a.area} value={a.area} className="bg-[#0f0f1a]">{a.area}</option>
-                  ))}
+                <CyberSubHeader className="mb-1.5 block">THU NHẬP/THÁNG</CyberSubHeader>
+                <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#22C55E]/40 transition-all" />
+              </div>
+              <div>
+                <CyberSubHeader className="mb-1.5 block">TIẾT KIÊM/THÁNG</CyberSubHeader>
+                <input type="number" value={savings} onChange={(e) => setSavings(Number(e.target.value))}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#22C55E]/40 transition-all" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <CyberSubHeader className="mb-1.5 block">KHU VỰC</CyberSubHeader>
+                <select value={targetArea} onChange={(e) => setTargetArea(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono uppercase outline-none focus:border-[#22C55E]/40">
+                  {AREA_PRICES.map((a) => <option key={a.area} value={a.area} className="bg-black">{a.area}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-white/40 mb-1 block">Diện tích (m²)</label>
-                <input
-                  type="number"
-                  value={apartmentSize}
-                  onChange={(e) => setApartmentSize(Number(e.target.value))}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
-                />
+                <CyberSubHeader className="mb-1.5 block">DIỆN TÍCH (m²)</CyberSubHeader>
+                <input type="number" value={apartmentSize} onChange={(e) => setApartmentSize(Number(e.target.value))}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
               </div>
             </div>
           </div>
 
-          {/* Result */}
-          <div className="mt-4 bg-gradient-to-br from-[#3B82F6]/10 to-[#8B5CF6]/10 rounded-xl p-4 border border-[#3B82F6]/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-[#3B82F6]" />
-              <span className="text-xs text-[#3B82F6] font-semibold">KẾT QUẢ</span>
-            </div>
-            <div className="space-y-2 text-[12px]">
-              <div className="flex justify-between">
-                <span className="text-white/50">Giá căn hộ {apartmentSize}m²</span>
-                <span className="text-white font-semibold">{fmt(targetPrice)}đ</span>
+          {/* Result Widget */}
+          <div className="mt-8 bg-[#22C55E]/[0.02] border border-[#22C55E]/20 rounded-xl p-5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#22C55E]/5 rounded-full blur-2xl" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-4 h-4 text-[#22C55E]" />
+                <CyberSubHeader color="text-[#22C55E]">LỘ TRÌNH TÍCH LŨY</CyberSubHeader>
               </div>
-              <div className="flex justify-between">
-                <span className="text-white/50">Đặt cọc 30%</span>
-                <span className="text-white font-semibold">{fmt(downPayment)}đ</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/50">Còn thiếu</span>
-                <span className="text-white font-semibold">{fmt(Math.max(0, downPayment - currentSaved))}đ</span>
-              </div>
-              <div className="border-t border-white/[0.08] pt-2 mt-2">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-white/50">Thời gian tích lũy</span>
-                  <span className="text-xl font-black text-[#3B82F6]">
-                    {monthsToSave <= 0 ? "Đủ rồi! 🎉" : `~${yearsToSave} năm`}
-                  </span>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <CyberSubHeader>TỔNG GIÁ TRỊ</CyberSubHeader>
+                  <CyberTypography size="sm" variant="mono" className="text-white font-black">{fmt(targetPrice)}Đ</CyberTypography>
                 </div>
-                {monthsToSave > 0 && (
-                  <p className="text-[11px] text-white/30 mt-1">≈ {monthsToSave} tháng nếu tiết kiệm đều {fmt(savings)}đ/tháng</p>
-                )}
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <CyberSubHeader>ĐẶT CỌC 30%</CyberSubHeader>
+                  <CyberTypography size="sm" variant="mono" className="text-white font-black">{fmt(downPayment)}Đ</CyberTypography>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-end">
+                <CyberSubHeader>THỜI GIAN CHỜ</CyberSubHeader>
+                <div className="text-right">
+                  <CyberMetric size="lg" color="text-[#22C55E] drop-shadow-[0_0_10px_rgba(34,197,94,0.4)]">
+                    {monthsToSave <= 0 ? "SẴN SÀNG" : `${yearsToSave} NĂM`}
+                  </CyberMetric>
+                  {monthsToSave > 0 && <CyberSubHeader className="block mt-1">QUỸ CÒN THIẾU {fmt(Math.max(0, downPayment - currentSaved))}Đ</CyberSubHeader>}
+                </div>
               </div>
             </div>
           </div>
-        </motion.div>
+        </CyberCard>
 
         {/* ── Mua vs Thuê ── */}
-        <motion.div variants={fadeIn} className="glass-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Scale className="w-4 h-4 text-[#F59E0B]" />
-            <h2 className="text-sm font-bold text-white">Mua vs Thuê</h2>
+        <CyberCard className="p-5">
+          <div className="flex items-center gap-2 mb-6">
+            <Scale className="w-4 h-4 text-[#E6B84F]" />
+            <CyberHeader size="xs">So sánh Mua vs Thuê</CyberHeader>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Tiền thuê/tháng</label>
+              <CyberSubHeader className="mb-1.5 block">TIỀN THUÊ/THÁNG</CyberSubHeader>
               <input type="number" value={rentMonthly} onChange={(e) => setRentMonthly(Number(e.target.value))}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none" />
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[11px] text-white/40 mb-1 block">Lãi suất vay (%)</label>
-                <input type="number" step="0.1" value={loanRate} onChange={(e) => setLoanRate(Number(e.target.value))}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-[11px] text-white/40 mb-1 block">Thời hạn vay (năm)</label>
-                <input type="number" value={loanYears} onChange={(e) => setLoanYears(Number(e.target.value))}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none" />
-              </div>
+            <div>
+              <CyberSubHeader className="mb-1.5 block">LÃI SUẤT VAY (%)</CyberSubHeader>
+              <input type="number" step="0.1" value={loanRate} onChange={(e) => setLoanRate(Number(e.target.value))}
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
             </div>
           </div>
 
-          {/* Bar Chart comparison */}
-          <div className="h-[140px] mt-4">
+          {/* Chart */}
+          <div className="h-[140px] mb-6">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={buyVsRent.chartData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.25)" }} axisLine={false} unit=" tỷ" />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.5)" }} axisLine={false} width={90} />
-                <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,25,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]} name="Tỷ VNĐ">
-                  {buyVsRent.chartData.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
+              <BarChart data={buyVsRent.chartData} layout="vertical" margin={{ left: -10, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)", fontWeight: 900, fontFamily: 'var(--font-heading)' }} axisLine={false} width={50} />
+                <Tooltip contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                  {buyVsRent.chartData.map((entry, index) => <Cell key={index} fill={entry.fill} fillOpacity={0.8} stroke={entry.fill} strokeWidth={1} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Summary */}
-          <div className="mt-3 bg-white/[0.03] rounded-lg p-3 border border-white/[0.05]">
-            <div className="space-y-1.5 text-[12px]">
-              <div className="flex justify-between">
-                <span className="text-white/50">Trả góp/tháng</span>
-                <span className="text-white font-semibold">{fmt(buyVsRent.monthlyPayment)}đ</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/50">Tổng chi phí mua ({loanYears} năm)</span>
-                <span className="text-[#3B82F6] font-semibold">{(buyVsRent.totalBuyCost / 1e9).toFixed(1)} tỷ</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/50">Tổng chi phí thuê ({loanYears} năm)</span>
-                <span className="text-[#F59E0B] font-semibold">{(buyVsRent.totalRentCost / 1e9).toFixed(1)} tỷ</span>
-              </div>
-              <div className="border-t border-white/[0.08] pt-1.5 mt-1.5">
-                <p className="text-[11px] text-white/40">
-                  {buyVsRent.totalBuyCost < buyVsRent.totalRentCost
-                    ? `💡 Mua nhà tiết kiệm hơn ${((buyVsRent.totalRentCost - buyVsRent.totalBuyCost) / 1e9).toFixed(1)} tỷ sau ${loanYears} năm`
-                    : `💡 Thuê rẻ hơn ${((buyVsRent.totalBuyCost - buyVsRent.totalRentCost) / 1e9).toFixed(1)} tỷ — nhưng không tích lũy tài sản`}
-                </p>
-              </div>
+          <div className="space-y-3 bg-white/[0.01] border border-white/5 rounded-xl p-4">
+            <div className="flex justify-between">
+              <CyberSubHeader>GỐC + LÃI/THÁNG</CyberSubHeader>
+              <CyberTypography size="xs" variant="mono" className="text-white">{fmt(buyVsRent.monthlyPayment)}Đ</CyberTypography>
+            </div>
+            <div className="flex justify-between border-t border-white/5 pt-2">
+              <CyberSubHeader>TỔNG CHI MUA</CyberSubHeader>
+              <CyberTypography size="xs" variant="mono" className="text-[#22C55E]">{(buyVsRent.totalBuyCost / 1e9).toFixed(1)} TỶ</CyberTypography>
+            </div>
+            <div className="flex justify-between border-t border-white/5 pt-2">
+              <CyberSubHeader>TỔNG CHI THUÊ</CyberSubHeader>
+              <CyberTypography size="xs" variant="mono" className="text-[#E6B84F]">{(buyVsRent.totalRentCost / 1e9).toFixed(1)} TỶ</CyberTypography>
+            </div>
+            <div className="mt-2 pt-3 border-t border-white/10">
+              <p className="text-[10px] text-white/30 font-mono uppercase leading-relaxed">
+                {buyVsRent.totalBuyCost < buyVsRent.totalRentCost
+                  ? `💡 Mua nhà tối ưu hơn ${((buyVsRent.totalRentCost - buyVsRent.totalBuyCost) / 1e9).toFixed(1)} tỷ sau {loanYears} năm.`
+                  : `💡 Thuê rẻ hơn ${((buyVsRent.totalBuyCost - buyVsRent.totalRentCost) / 1e9).toFixed(1)} tỷ nhưng không sở hữu tài sản.`}
+              </p>
             </div>
           </div>
-        </motion.div>
+        </CyberCard>
       </div>
 
       {/* ═══ Nhà ở xã hội ═══ */}
       <motion.div variants={fadeIn} className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Building2 className="w-4 h-4 text-[#16c784]" />
-          <h2 className="text-sm font-bold text-white">Nhà ở xã hội — Vay ưu đãi</h2>
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <Building2 className="w-4 h-4 text-[#22C55E]" />
+          <CyberHeader size="xs">Dòng Nhà ở xã hội (Social Housing)</CyberHeader>
         </div>
         <div className="grid md:grid-cols-3 gap-3">
           {SOCIAL_HOUSING.map((h) => (
-            <motion.div key={h.project} variants={fadeIn} className="glass-card p-4">
-              <h3 className="text-sm font-semibold text-white mb-2">{h.project}</h3>
-              <div className="space-y-1.5 text-[11px]">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3 text-white/30" />
-                  <span className="text-white/50">{h.location}</span>
+            <CyberCard key={h.project} className="p-4" showDecorators={false} variant="success">
+              <CyberTypography size="sm" className="text-white font-black mb-3">{h.project}</CyberTypography>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3 h-3 text-white/20" />
+                  <CyberSubHeader>{h.location.toUpperCase()}</CyberSubHeader>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Banknote className="w-3 h-3 text-white/30" />
-                  <span className="text-white/70 font-medium">{h.price}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <HelpCircle className="w-3 h-3 text-white/30" />
-                  <span className="text-white/50">{h.status}</span>
+                <div className="flex items-center gap-2">
+                  <Banknote className="w-3 h-3 text-[#22C55E]" />
+                  <CyberTypography size="xs" variant="mono" className="text-[#22C55E] font-black">{h.price.toUpperCase()}</CyberTypography>
                 </div>
               </div>
-              <div className="mt-3 bg-[#16c784]/10 rounded-lg px-3 py-2 border border-[#16c784]/20">
-                <span className="text-[10px] text-[#16c784] font-semibold">{h.loan}</span>
+              <div className="bg-[#22C55E]/10 rounded-lg p-2.5 border border-[#22C55E]/20">
+                <span className="text-[9px] font-black text-[#22C55E] uppercase tracking-wider leading-relaxed">{h.loan}</span>
               </div>
-            </motion.div>
+            </CyberCard>
           ))}
         </div>
       </motion.div>
 
-      {/* ═══ Vẹt Vàng ═══ */}
-      <motion.div variants={fadeIn}>
-        <div className="glass-card p-4 border border-[#f3d42f]/10">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">🦜</span>
-            <div className="flex-1">
-              <span className="text-xs text-[#f3d42f] font-semibold">Vẹt Vàng khuyên</span>
-              <p className="text-sm text-white/60 mt-1 leading-relaxed">
-                &quot;Đừng hoang mang nha! Nhà ở xã hội với vay ưu đãi 4.8% là option rất tốt cho người mới ra trường. Quan trọng là tiết kiệm đều đặn — mỗi tháng gom thêm chút, vài năm là đủ cọc! 🦜💪&quot;
-              </p>
-              <Link href="/dashboard/budget" className="group inline-flex items-center gap-1 text-xs text-[#f3d42f] font-medium mt-2 hover:underline">
-                Lên kế hoạch tiết kiệm <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
+      {/* ═══ Vẹt Vàng Insight ═══ */}
+      <CyberCard className="p-5" variant="success">
+        <div className="flex items-start gap-4">
+          <span className="text-3xl">🦜</span>
+          <div className="flex-1">
+            <CyberHeader size="xs" className="text-[#22C55E] mb-1">Vẹt Vàng Phân Tích</CyberHeader>
+            <p className="text-xs text-white/60 leading-relaxed font-mono uppercase mb-4">
+              &quot;Nhà ở xã hội với lãi suất 4.8% là chìa khóa vàng cho an cư. Đừng nhìn vào tổng giá tiền mà hoảng, hãy nhìn vào khả năng tích lũy hàng tháng. Chỉ cần kỷ luật, căn nhà đầu tiên không hề xa vời!&quot;
+            </p>
+            <Link href="/dashboard/budget" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-[#22C55E] hover:underline tracking-widest">
+              Lên kế hoạch tích lũy <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
-      </motion.div>
+      </CyberCard>
     </motion.div>
   );
 }

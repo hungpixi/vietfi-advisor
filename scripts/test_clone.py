@@ -5,9 +5,10 @@ if sys.stdout and hasattr(sys.stdout, 'buffer'):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from vieneu import Vieneu
-
-VOICE_DIR = r"d:\Cá nhân\Vọc vạch\Cuộc thi\vietfi-advisor\voice_ref"
-OUT_DIR   = r"d:\Cá nhân\Vọc vạch\Cuộc thi\vietfi-advisor\voice_ref"
+from pathlib import Path
+ROOT_DIR = Path(__file__).parent.parent
+VOICE_DIR = str(ROOT_DIR / "voice_ref")
+OUT_DIR   = str(ROOT_DIR / "voice_ref")
 
 # Text mẫu của Vẹt Vàng
 TEST_TEXT = "Ơ vượt lọ rồi đúng không? Tao không nói gì đâu, tao chỉ hỏi thôi."

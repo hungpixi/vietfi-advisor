@@ -14,7 +14,7 @@ export function checkLlmRateLimit() {
   if (history.length >= MAX_RPM) {
     const oldest = history[0];
     const waitTime = Math.ceil((oldest + 60000 - now) / 1000);
-    throw new Error(`Rate limit reached (TrollLLM). Please wait ${waitTime}s.`);
+    throw new Error(`Rate limit reached. Please wait ${waitTime}s.`);
   }
   
   history.push(now);

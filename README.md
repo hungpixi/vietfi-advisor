@@ -38,21 +38,21 @@ Vẹt Vàng — mascot xoắc quắt, mổ tiêu xài dở — biến thói quen
 
 ### WDA2026 Alignment
 
-| Problem | Mô tả |
-|---|---|
+| Problem       | Mô tả                                                                             |
+| ------------- | --------------------------------------------------------------------------------- |
 | **Problem 1** | Centralized Debt Hub — trung tâm nợ tập trung với AI Snowball/Avalanche optimizer |
-| **Problem 2** | AI Financial Advisor — Vẹt Vàng với 3-tier AI pipeline |
-| **Problem 3** | Gamification — XP/level system biến quản lý tiền thành thói quen |
-| **Problem 4** | Vietnamese Context — Vàng SJC, VN-Index, USD/VND, lãi suất Sacombank/Eximbank |
+| **Problem 2** | AI Financial Advisor — Vẹt Vàng với 3-tier AI pipeline                            |
+| **Problem 3** | Gamification — XP/level system biến quản lý tiền thành thói quen                  |
+| **Problem 4** | Vietnamese Context — Vàng SJC, VN-Index, USD/VND, lãi suất Sacombank/Eximbank     |
 
 ### Tính Năng Chính
 
-| | | | |
-|---|---|---|---|
-| 🦜 **Vẹt Vàng AI** | Chat streaming với Gemini 2.0, voice input/output tiếng Việt, 4 mood states | | |
-| 🎮 **Gamification** | XP, 5 levels (Vẹt Con → Vẹt Hoàng), streak, 8 badges, confetti, leaderboard | | |
-| 📊 **Thị Trường** | VN-Index, Vàng SJC, USD/VND, Fear & Greed Index — thời gian thực | | |
-| 🏦 **Debt Hub** | DTI gauge, Snowball/Avalanche optimizer, timeline trả nợ | | |
+|                     |                                                                             |     |     |
+| ------------------- | --------------------------------------------------------------------------- | --- | --- |
+| 🦜 **Vẹt Vàng AI**  | Chat streaming với Gemini 2.0, voice input/output tiếng Việt, 4 mood states |     |     |
+| 🎮 **Gamification** | XP, 5 levels (Vẹt Con → Vẹt Hoàng), streak, 8 badges, confetti, leaderboard |     |     |
+| 📊 **Thị Trường**   | VN-Index, Vàng SJC, USD/VND, Fear & Greed Index — thời gian thực            |     |     |
+| 🏦 **Debt Hub**     | DTI gauge, Snowball/Avalanche optimizer, timeline trả nợ                    |     |     |
 
 ### Quick Start
 
@@ -66,7 +66,7 @@ npm run dev                   # http://localhost:3000
 
 ---
 
-*Divider: Part II — Technical Documentation*
+_Divider: Part II — Technical Documentation_
 
 ---
 
@@ -183,48 +183,48 @@ vietfi-advisor/
 ├── docs/                         # Project documentation
 ├── tests/
 │   └── e2e/                      # Playwright E2E (landing, budget, onboarding)
-├── vercel.json                   # Vercel config (cron moved to external scheduler)
+├── vercel.json                   # Cron schedule + rewrites
 ├── vitest.config.ts
 └── playwright.config.ts
 ```
 
 ### API Routes
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `POST` | `/api/chat` | Gemini streaming chat (Vẹt Vàng) | — |
-| `POST` | `/api/tts` | Text-to-Speech (edge-tts-universal) | — |
-| `GET` | `/api/market-data` | Live: VN-Index, Gold SJC, USD/VND | — |
-| `POST` | `/api/cron/market-data` | External cron trigger: market data refresh + persist Supabase cache | `CRON_SECRET` |
-| `GET` | `/api/news` | Tin tức + sentiment (CafeF RSS) | — |
-| `GET` | `/api/morning-brief` | AI Morning Brief (heuristic fallback) | — |
-| `POST` | `/api/cron/morning-brief` | External cron trigger: morning brief generation + persist Supabase cache | `CRON_SECRET` |
-| `POST` | `/api/cron/macro-update` | External cron trigger: monthly macro snapshot stub + persist Supabase cache | `CRON_SECRET` |
-| `GET` | `/api/stock-screener` | VN stock filter (TCBS, VN30 fallback) | — |
-| `GET` | `/auth/confirm` | Email OTP confirmation | — |
-| `POST` | `/auth/signout` | Sign out | Session |
+| Method | Endpoint                  | Mô tả                                 | Auth          |
+| ------ | ------------------------- | ------------------------------------- | ------------- |
+| `POST` | `/api/chat`               | Gemini streaming chat (Vẹt Vàng)      | —             |
+| `POST` | `/api/tts`                | Text-to-Speech (edge-tts-universal)   | —             |
+| `GET`  | `/api/market-data`        | Live: VN-Index, Gold SJC, USD/VND     | —             |
+| `POST` | `/api/cron/market-data`   | Cron: market data refresh             | `CRON_SECRET` |
+| `GET`  | `/api/news`               | Tin tức + sentiment (CafeF RSS)       | —             |
+| `GET`  | `/api/morning-brief`      | AI Morning Brief (heuristic fallback) | —             |
+| `POST` | `/api/cron/morning-brief` | Cron: morning brief prep (11pm)       | `CRON_SECRET` |
+| `POST` | `/api/cron/macro-update`  | Cron: macro data (1st monthly)        | `CRON_SECRET` |
+| `GET`  | `/api/stock-screener`     | VN stock filter (TCBS, VN30 fallback) | —             |
+| `GET`  | `/auth/confirm`           | Email OTP confirmation                | —             |
+| `POST` | `/auth/signout`           | Sign out                              | Session       |
 
-### Cron Schedule (External Scheduler)
+### Cron Schedule (Vercel Hobby)
 
-Vercel cron đã được tắt. Scheduler chạy ở repo GitHub Actions riêng và gọi các endpoint:
+| Cron          | Schedule       | Mô tả                    | Limitation  |
+| ------------- | -------------- | ------------------------ | ----------- |
+| Market Data   | `30 8 * * 1-5` | 8:30am các ngày làm việc | 1/day hobby |
+| Morning Brief | `0 23 * * *`   | 11pm hàng ngày           | 1/day hobby |
+| Macro Update  | `0 0 1 * *`    | Ngày 1 hàng tháng        | 1/day hobby |
 
-- `POST /api/cron/market-data`
-- `POST /api/cron/morning-brief`
-- `POST /api/cron/macro-update`
-
-Contract chi tiết: `docs/operations/external-cron-contract.md`
+> **Bypass:** GitHub Actions `vercel-deploy.yml` dùng Vercel CLI với token để deploy nhiều lần/ngày.
 
 ### Data Crawlers
 
-| Nguồn | Dữ liệu | File |
-|---|---|---|
-| CafeF | VN-Index, giá cổ phiếu | `market-data/crawler.ts` |
-| Yahoo Finance | Vàng USD | `market-data/crawler.ts` |
-| SBV | USD/VND | `market-data/crawler.ts` |
-| CafeF RSS | Tin tức tài chính | `news/crawler.ts` |
-| TCBS | Stock screener | `market-data/stock-screener.ts` |
-| Webgia DOM | SJC gold brand prices | `GoldTracker.tsx` |
-| DOJI XML | Gold DOJI rates | `GoldTracker.tsx` |
+| Nguồn         | Dữ liệu                | File                            |
+| ------------- | ---------------------- | ------------------------------- |
+| CafeF         | VN-Index, giá cổ phiếu | `market-data/crawler.ts`        |
+| Yahoo Finance | Vàng USD               | `market-data/crawler.ts`        |
+| SBV           | USD/VND                | `market-data/crawler.ts`        |
+| CafeF RSS     | Tin tức tài chính      | `news/crawler.ts`               |
+| TCBS          | Stock screener         | `market-data/stock-screener.ts` |
+| Webgia DOM    | SJC gold brand prices  | `GoldTracker.tsx`               |
+| DOJI XML      | Gold DOJI rates        | `GoldTracker.tsx`               |
 
 > ⚠️ **Warning:** CafeF/TCBS DOM selectors are fragile. Check selector strings in crawler files first when crawlers break.
 
@@ -234,12 +234,12 @@ Supabase Auth via `@supabase/ssr` với cookie-based sessions trong Next.js App 
 
 ### Vẹt Vàng Mascot System
 
-| Component | Purpose |
-|---|---|
-| `VetVangChat.tsx` | Full chat interface |
-| `VetVangFloat.tsx` | Floating mascot on dashboard |
-| `VetVangConfig.tsx` | Avatar config + mood states |
-| `AnimatedParrot.tsx` | Lottie animation player |
+| Component            | Purpose                      |
+| -------------------- | ---------------------------- |
+| `VetVangChat.tsx`    | Full chat interface          |
+| `VetVangFloat.tsx`   | Floating mascot on dashboard |
+| `VetVangConfig.tsx`  | Avatar config + mood states  |
+| `AnimatedParrot.tsx` | Lottie animation player      |
 
 **Mood states:** 🔥 Mổ (roast bad spending), 💛 Khen (praise good habits), 🧠 Thâm (insightful), 😴 Chán (bored)
 
@@ -247,14 +247,14 @@ Supabase Auth via `@supabase/ssr` với cookie-based sessions trong Next.js App 
 
 ### Gamification
 
-| Thành phần | Chi tiết |
-|---|---|
-| **5 Levels** | Vẹt Con (0) → Vẹt Teen (500) → Vẹt Phố (1k) → Vẹt Nhà Giàu (2k) → Vẹt Hoàng (5k) |
-| **XP System** | Earn XP from financial actions, gated content |
-| **Promo Code** | `hungpixi` → LEGEND tier bypass |
-| **Streak** | Daily streak tracking |
-| **Leaderboard** | 1 real user + 14 bot AI competitors |
-| **Badges** | 8 achievement badges |
+| Thành phần      | Chi tiết                                                                         |
+| --------------- | -------------------------------------------------------------------------------- |
+| **5 Levels**    | Vẹt Con (0) → Vẹt Teen (500) → Vẹt Phố (1k) → Vẹt Nhà Giàu (2k) → Vẹt Hoàng (5k) |
+| **XP System**   | Earn XP from financial actions, gated content                                    |
+| **Promo Code**  | `hungpixi` → LEGEND tier bypass                                                  |
+| **Streak**      | Daily streak tracking                                                            |
+| **Leaderboard** | 1 real user + 14 bot AI competitors                                              |
+| **Badges**      | 8 achievement badges                                                             |
 
 ### Testing
 
@@ -266,14 +266,14 @@ npm run test:e2e:ui     # Visual UI mode
 npm run test:e2e:headed # Visible browser
 ```
 
-| Layer | Tests | Coverage |
-|---|---|---|
-| Vitest unit/integration | 57 tests across 10 files | 70% line |
-| Playwright E2E | 15 scenarios | Landing, Budget, Onboarding |
+| Layer                   | Tests                    | Coverage                    |
+| ----------------------- | ------------------------ | --------------------------- |
+| Vitest unit/integration | 57 tests across 10 files | 70% line                    |
+| Playwright E2E          | 15 scenarios             | Landing, Budget, Onboarding |
 
 ### Deployment
 
-- **Platform:** Vercel (frontend + API runtime)
+- **Platform:** Vercel (Hobby + Hobby Plus)
 - **CI/CD:** GitHub Actions — push to `master` + manual `workflow_dispatch`
 - **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
@@ -284,10 +284,11 @@ vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
 
 ### Contributing
 
-| Người | Vai trò | Phạm vi |
-|---|---|---|
-| **Hoàng** (Human Dev) | Infra & Quality | Data Crawling, Security, UI refinements |
-| **Hưng** (AI Agent) | Feature Dev | Business Logic, AI Prompts, WDA2026 Rules |
+| Người                 | Vai trò         | Phạm vi                                     |
+| --------------------- | --------------- | ------------------------------------------- |
+| **Hoàng** (Human Dev) | Infra & Quality | Data Crawling, Security, UI refinements     |
+| **Hưng** (AI Agent)   | Feature Dev     | Business Logic, AI Prompts, WDA2026 Rules   |
+| **Bảo**               | QA Operations   | Test Cases, Bug Reports, User Documentation |
 
 **Quy tắc đóng góp:**
 
@@ -301,8 +302,8 @@ vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
 
 <div align="center">
 
-**VietFi Advisor** — *Cố vấn tài chính AI cho người Việt*
+**VietFi Advisor** — _Cố vấn tài chính AI cho người Việt_
 
-🦜💛 *Vẹt Vàng — Thẳng như ruột ngựa, sắc như mỏ chim.*
+🦜💛 _Vẹt Vàng — Thẳng như ruột ngựa, sắc như mỏ chim._
 
 </div>

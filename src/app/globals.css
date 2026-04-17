@@ -1,22 +1,27 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --color-primary: #FFD700;
-    --color-primary-hover: #FFC107;
-    --color-accent: #00E5FF;
-    --color-success: #00E676;
-    --color-danger: #FF5252;
-    --color-warning: #FFAB40;
-    --color-bg: #0A0A0F;
-    --color-bg-card: #12121A;
-    --color-bg-card-hover: #1A1A25;
-    --color-border: #2A2A3A;
-    --color-text: #F0F0F5;
-    --color-text-secondary: #8888AA;
-    --color-gradient-start: #FFD700;
-    --color-gradient-end: #FF6B35;
-  }
+@theme {
+  --color-primary: #ffd700;
+  --color-primary-hover: #ffc107;
+  --color-accent: #00e5ff;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-bg: #0a0a0f;
+  --color-bg-card: #12121a;
+  --color-bg-card-hover: #1a1a25;
+  --color-border: #2a2a3a;
+  --color-text: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-gradient-start: #ffd700;
+  --color-gradient-end: #ff6b35;
+
+  /* Font Tokens */
+  --font-heading: var(--font-noto-sans), sans-serif;
+  --font-body: var(--font-noto-sans), sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 @layer base {
@@ -34,9 +39,16 @@
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+    font-family:
+      var(--font-body),
+      system-ui,
+      -apple-system,
+      sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
@@ -47,14 +59,22 @@
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+    background: linear-gradient(
+      135deg,
+      var(--color-gradient-start),
+      var(--color-gradient-end)
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-primary {
-    background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+    background: linear-gradient(
+      135deg,
+      var(--color-gradient-start),
+      var(--color-gradient-end)
+    );
   }
 
   .glass-card {
@@ -92,11 +112,15 @@
   }
 
   .glow-primary {
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 215, 0, 0.05);
+    box-shadow:
+      0 0 30px rgba(255, 215, 0, 0.15),
+      0 0 60px rgba(255, 215, 0, 0.05);
   }
 
   .glow-accent {
-    box-shadow: 0 0 30px rgba(0, 229, 255, 0.15), 0 0 60px rgba(0, 229, 255, 0.05);
+    box-shadow:
+      0 0 30px rgba(0, 229, 255, 0.15),
+      0 0 60px rgba(0, 229, 255, 0.05);
   }
 
   .animate-float {
@@ -110,6 +134,7 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -117,14 +142,191 @@
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .landing-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60rem 38rem at 12% -8%,
+        rgba(255, 215, 0, 0.24),
+        transparent 62%
+      ),
+      radial-gradient(
+        48rem 34rem at 88% 8%,
+        rgba(0, 229, 255, 0.18),
+        transparent 62%
+      ),
+      radial-gradient(
+        40rem 26rem at 50% 108%,
+        rgba(26, 84, 255, 0.19),
+        transparent 66%
+      ),
+      linear-gradient(165deg, #07090f 0%, #090b12 52%, #05070d 100%);
+  }
+
+  .landing-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        30rem 20rem at 22% 24%,
+        rgba(255, 198, 74, 0.14),
+        transparent 70%
+      ),
+      radial-gradient(
+        26rem 18rem at 78% 34%,
+        rgba(0, 229, 255, 0.1),
+        transparent 72%
+      );
+    filter: blur(10px);
+    opacity: 0.9;
+  }
+
+  .landing-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image:
+      radial-gradient(rgba(255, 255, 255, 0.75) 0.35px, transparent 0.35px),
+      radial-gradient(rgba(255, 255, 255, 0.45) 0.35px, transparent 0.35px);
+    background-size:
+      3px 3px,
+      4px 4px;
+    background-position:
+      0 0,
+      1.5px 1.5px;
+    mix-blend-mode: soft-light;
+  }
+
+  .dashboard-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        44rem 26rem at 6% -10%,
+        rgba(255, 215, 0, 0.14),
+        transparent 60%
+      ),
+      radial-gradient(
+        36rem 24rem at 94% 6%,
+        rgba(0, 229, 255, 0.1),
+        transparent 62%
+      ),
+      radial-gradient(
+        30rem 20rem at 48% 112%,
+        rgba(58, 91, 255, 0.12),
+        transparent 65%
+      ),
+      linear-gradient(160deg, #07090f 0%, #0a0d16 58%, #06080f 100%);
+  }
+
+  .dashboard-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        22rem 14rem at 18% 22%,
+        rgba(255, 200, 88, 0.08),
+        transparent 70%
+      ),
+      radial-gradient(
+        20rem 14rem at 80% 30%,
+        rgba(0, 229, 255, 0.06),
+        transparent 72%
+      );
+    filter: blur(8px);
+  }
+
+  .dashboard-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.6) 0.35px,
+      transparent 0.35px
+    );
+    background-size: 3px 3px;
+    mix-blend-mode: soft-light;
+  }
+
+  .dashboard-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(
+        36rem 22rem at 8% 12%,
+        rgba(255, 215, 0, 0.12),
+        transparent 65%
+      ),
+      radial-gradient(
+        30rem 20rem at 92% 10%,
+        rgba(0, 229, 255, 0.1),
+        transparent 68%
+      ),
+      radial-gradient(
+        34rem 24rem at 50% 98%,
+        rgba(80, 107, 255, 0.1),
+        transparent 72%
+      );
+  }
+
+  .dashboard-ambient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 22%),
+      radial-gradient(
+        circle at 14% 22%,
+        rgba(255, 215, 0, 0.12) 0,
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at 82% 30%,
+        rgba(0, 229, 255, 0.09) 0,
+        transparent 26%
+      );
+    filter: blur(22px);
+    opacity: 0.75;
+  }
+
+  .dashboard-ambient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 92%);
   }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Custom scrollbar */

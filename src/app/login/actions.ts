@@ -2,21 +2,43 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getServerAuthCallbackUrl } from "@/lib/security/origin";
+
+const AUTH_ERROR = "Email hoac mat khau khong hop le.";
+const SIGNUP_ERROR = "Dang ky that bai. Vui long kiem tra email va mat khau.";
+
+function parseAuthCredentials(formData: FormData) {
+  const emailRaw = formData.get("email");
+  const passwordRaw = formData.get("password");
+
+  if (typeof emailRaw !== "string" || typeof passwordRaw !== "string") {
+    return null;
+  }
+
+  const email = emailRaw.trim().toLowerCase();
+  const password = passwordRaw;
+  const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  if (!emailLooksValid || email.length > 254 || password.length < 6 || password.length > 128) {
+    return null;
+  }
+
+  return { email, password };
+}
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
+  const data = parseAuthCredentials(formData);
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  if (!data) {
+    redirect("/login?error=" + encodeURIComponent(AUTH_ERROR));
+  }
 
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    redirect("/login?error=" + encodeURIComponent(error.message));
+    redirect("/login?error=" + encodeURIComponent(AUTH_ERROR));
   }
 
   revalidatePath("/", "layout");
@@ -25,16 +47,21 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+  const data = parseAuthCredentials(formData);
 
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  if (!data) {
+    redirect("/login?error=" + encodeURIComponent(SIGNUP_ERROR));
+  }
 
-  const { error } = await supabase.auth.signUp(data);
+  const { error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      emailRedirectTo: getServerAuthCallbackUrl("/dashboard"),
+    },
+  });
 
   if (error) {
-    redirect("/login?error=" + encodeURIComponent(error.message));
+    redirect("/login?error=" + encodeURIComponent(SIGNUP_ERROR));
   }
 
   revalidatePath("/", "layout");
@@ -43,21 +70,21 @@ export async function signup(formData: FormData) {
 
 export async function loginWithGoogle() {
   const supabase = await createClient();
-  const headerList = await headers();
-  const origin = headerList.get("origin") || "http://localhost:3000";
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/confirm`,
+      redirectTo: getServerAuthCallbackUrl("/dashboard"),
     },
   });
 
   if (error) {
-    redirect("/login?error=" + encodeURIComponent(error.message));
+    redirect("/login?error=" + encodeURIComponent("Dang nhap Google that bai."));
   }
 
   if (data.url) {
     redirect(data.url);
   }
+
+  redirect("/login?error=" + encodeURIComponent("Dang nhap Google that bai."));
 }

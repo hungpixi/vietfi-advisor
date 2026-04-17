@@ -228,7 +228,7 @@ export function FinancialTriageModal({ onClose, debts, dtiRatio }: TriageProps) 
           >
             {/* Left Panel: Vitals & Dr. Vẹt */}
             <div className="md:w-1/3 bg-[#0a0a0a] p-8 border-b md:border-b-0 md:border-r border-white/5 flex flex-col">
-              <TriageDoctor dti={dtiRatio} phase={phase} />
+              <TriageDoctor dti={dtiRatio} debtCount={debts.length} phase={phase} />
               
               <div className="space-y-4 mt-8">
                 <div className="bg-white/[0.02] rounded-2xl p-4 border border-white/[0.05]">
@@ -418,7 +418,7 @@ export function FinancialTriageModal({ onClose, debts, dtiRatio }: TriageProps) 
               </div>
             </div>
 
-            <TriageDoctor dti={dtiRatio} phase="success" />
+            <TriageDoctor dti={dtiRatio} debtCount={debts.length} phase="success" />
 
             <button 
               onClick={onClose}

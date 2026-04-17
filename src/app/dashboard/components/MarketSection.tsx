@@ -1,12 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, ArrowUpRight } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, Sparkles } from "lucide-react";
 import type { MarketSnapshot } from "@/lib/market-data/crawler";
 import { getMarketCache, setMarketCache } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+
+function usePersistentTime() {
+  const [time, setTime] = useState<string>("");
+
+  useEffect(() => {
+    const updateTime = () => setTime(
+      new Date().toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
+    updateTime();
+    const id = setInterval(updateTime, 60_000);
+
+    return () => clearInterval(id);
+  }, []);
+
+  return time;
+}
 
 interface MarketCardData {
   label: string;
@@ -202,30 +221,61 @@ function getIndicatorColor(value: number) {
   return "#F1D17A"; // zone-neutral/yellow
 }
 
+const SENTIMENT_GAUGE_THEME = {
+  arcBase: "#31384B",
+  arcFill: "#F4B437",
+  arcGlow: "rgba(244, 180, 55, 0.55)",
+  needle: "#E5E7EB",
+  needleShadow: "rgba(0, 0, 0, 0.6)",
+  pivotOuter: "#D9C6A4",
+  pivotInner: "#BFA06D",
+};
+
 export function MarketCard({ label, value, change, icon: Icon }: MarketCardData) {
   const positive = change >= 0;
+  const color = positive ? "#22C55E" : "#EF4444";
 
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card glass-card-hover cursor-default p-4 transition-all"
+      className={cn(
+        "group relative overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 cursor-default",
+        positive ? "hover:border-[#22C55E]/40" : "hover:border-[#EF4444]/40"
+      )}
       data-testid="market-card"
     >
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-mono uppercase tracking-wider text-white/30">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className={cn("pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-700 group-hover:opacity-100", positive ? "bg-[radial-gradient(circle_at_50%_35%,rgba(34,197,94,0.12),transparent_46%)]" : "bg-[radial-gradient(circle_at_50%_35%,rgba(239,68,68,0.12),transparent_46%)]")} />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
+      {/* Decors */}
+      <div className="absolute top-0 left-0 w-24 h-24 blur-[40px] pointer-events-none opacity-0 group-hover:opacity-10 transition-opacity duration-500" style={{ backgroundColor: color }} />
+      <div className="pointer-events-none absolute right-3 top-3 h-3 w-3 border-r border-t border-white/20" />
+      <div className="pointer-events-none absolute bottom-3 left-3 h-3 w-3 border-b border-l border-white/10" />
+
+      <div className="mb-1.5 flex items-center justify-between relative z-10 border-b border-white/[0.06] pb-1.5">
+        <span className="font-heading text-[12px] font-black uppercase tracking-wide text-white/90 transition-colors">
           {label}
         </span>
-        <Icon
-          className={cn("h-3.5 w-3.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
-        />
+        <div className={cn("p-1.5 rounded-lg border", positive ? "bg-[#22C55E]/10 border-[#22C55E]/20" : "bg-[#EF4444]/10 border-[#EF4444]/20")}>
+          <Icon
+            className={cn("h-3.5 w-3.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
+          />
+        </div>
       </div>
-      <div className="text-xl font-bold tracking-tight text-white">{value}</div>
-      <span
-        className={cn("text-xs font-medium", positive ? "text-[#22C55E]" : "text-[#EF4444]")}
-      >
-        {positive ? "+" : ""}
-        {change}%
-      </span>
+
+      <div className="relative z-10 pt-0.5">
+        <div className="font-heading text-[20px] tracking-wider font-black text-white mb-2 group-hover:translate-x-1 transition-transform duration-300 drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)]">{value}</div>
+        <div className="flex items-center gap-2">
+          <span
+            className={cn("font-mono text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded border", positive ? "bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/30" : "bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/30")}
+          >
+            {positive ? "+" : ""}
+            {change.toFixed(2)}%
+          </span>
+          <div className="h-[1px] flex-1 bg-white/5" />
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -249,154 +299,143 @@ export function FGGauge({
 }) {
   const zone = ZONES.find((item) => score >= item.min && score < item.max) ?? ZONES[2];
   const { quote, action } = VERTEX_QUOTES[getVertexZoneKey(score)];
-  const indicators = useMemo(() => buildIndicatorMetrics(score, snapshot), [score, snapshot]);
+  const indicators = buildIndicatorMetrics(score, snapshot);
 
   return (
     <motion.div
       variants={fadeIn}
-      className="glass-card relative overflow-hidden border border-white/10 bg-[linear-gradient(180deg,rgba(24,28,39,0.96),rgba(12,15,23,0.96))] p-5 shadow-xl"
+      className="group relative h-full overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-white/20 md:p-8 flex flex-col"
     >
+      {/* Cyber-Technical Background Elements */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.03),transparent_46%)] opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:40px_40px]" />
+
+      {/* Cyber Decor */}
+      <div className="absolute top-0 right-0 w-64 h-64 blur-[100px] pointer-events-none opacity-20" style={{ backgroundColor: zone.color }} />
+      <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-white/30" />
+      <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-white/20" />
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <h3 className="text-base font-bold tracking-tight text-white">
-            Nhiệt kế thị trường
-          </h3>
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]" />
-            LIVE
-          </span>
-          <span className="rounded-full border border-[#f0cf7a]/20 bg-[#f0cf7a]/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f6dda0]">
-            VN
-          </span>
+      <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
+        <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+          <div className="w-full text-left">
+            <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
+              TÂM LÝ THỊ TRƯỜNG
+            </h3>
+            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              NHIỆT KẾ THỊ TRƯỜNG
+            </p>
+          </div>
         </div>
-        <Link
-          href="/dashboard/sentiment"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-[#f6dda0]"
-        >
-          Chi tiết <ArrowUpRight className="h-3 w-3" />
-        </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left: 180-degree semi-circle gauge */}
-        <div className="relative flex w-full md:w-64 flex-shrink-0 flex-col items-center justify-center p-2">
-          {/* Main Semi-circle Gauge */}
-          <svg viewBox="0 0 160 100" className="w-full overflow-visible">
-            {/* Background Arc - Track */}
+      <div className="flex flex-col gap-4 relative z-10 w-full h-full pb-4">
+        {/* Top: market sentiment gauge (styled to match reference) */}
+        <div className="relative flex w-full flex-col items-center justify-center pt-2">
+          <svg viewBox="0 0 180 124" className="w-full max-w-[280px] overflow-visible">
+            {/* Base track */}
             <path
-              d="M 20 60 A 60 60 0 0 1 140 60"
+              d="M 26 94 A 64 64 0 0 1 154 94"
               fill="none"
-              stroke="white"
-              strokeWidth="14"
+              stroke={SENTIMENT_GAUGE_THEME.arcBase}
+              strokeWidth="11"
               strokeLinecap="round"
-              opacity="0.05"
             />
 
-            {/* Color Segments */}
-            {ZONES.map((z, i) => {
-              const radius = 60;
-              const angleStart = -180 + (z.min / 100) * 180;
-              const angleEnd = -180 + (z.max / 100) * 180;
+            {/* Filled track */}
+            <path
+              d="M 26 94 A 64 64 0 0 1 154 94"
+              fill="none"
+              stroke={SENTIMENT_GAUGE_THEME.arcFill}
+              strokeWidth="11"
+              strokeLinecap="round"
+              strokeDasharray={(Math.PI * 64).toFixed(5)}
+              strokeDashoffset={(Math.PI * 64 - ((score / 100) * Math.PI * 64)).toFixed(5)}
+              className="transition-all duration-1000 ease-out"
+              style={{ filter: `drop-shadow(0 0 8px ${SENTIMENT_GAUGE_THEME.arcGlow})` }}
+            />
 
-              const startRad = (angleStart * Math.PI) / 180;
-              const endRad = (angleEnd * Math.PI) / 180;
-              const x1 = 80 + radius * Math.cos(startRad);
-              const y1 = 60 + radius * Math.sin(startRad);
-              const x2 = 80 + radius * Math.cos(endRad);
-              const y2 = 60 + radius * Math.sin(endRad);
+            {/* Needle */}
+            <g
+              style={{
+                transformOrigin: "90px 94px",
+                transform: `rotate(${(score / 100) * 180 - 90}deg)`,
+                transition: "transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            >
+              <line
+                x1="90"
+                y1="94"
+                x2="90"
+                y2="28"
+                stroke={SENTIMENT_GAUGE_THEME.needle}
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                style={{ filter: `drop-shadow(0 2px 4px ${SENTIMENT_GAUGE_THEME.needleShadow})` }}
+              />
+            </g>
 
-              const isActive = score >= z.min && (score < z.max || (z.max > 100 && score <= 100));
-
-              return (
-                <path
-                  key={i}
-                  d={`M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`}
-                  fill="none"
-                  stroke={z.color}
-                  strokeWidth={isActive ? 18 : 12}
-                  strokeLinecap="round"
-                  opacity={isActive ? 1 : 0.25}
-                  style={{
-                    transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-                    filter: isActive ? `drop-shadow(0 0 12px ${z.color}40)` : "none"
-                  }}
-                />
-              );
-            })}
-
-            {/* Needle indicator */}
-            {(() => {
-              const rotation = (score / 100) * 180 - 180;
-              return (
-                <g
-                  style={{
-                    transformOrigin: "80px 60px",
-                    transform: `rotate(${rotation}deg)`,
-                    transition: "transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                  }}
-                >
-                  <polygon
-                    points="80,58 80,62 142,60"
-                    fill="white"
-                    stroke="#1E293B"
-                    strokeWidth="0.5"
-                    className="shadow-xl"
-                  />
-                  <circle cx="80" cy="60" r="5" fill="#1E293B" stroke="white" strokeWidth="2" />
-                </g>
-              );
-            })()}
+            {/* Pivot */}
+            <circle cx="90" cy="94" r="7.2" fill={SENTIMENT_GAUGE_THEME.pivotOuter} />
+            <circle cx="90" cy="94" r="3.4" fill={SENTIMENT_GAUGE_THEME.pivotInner} />
           </svg>
 
-          {/* Integrated Score & Label - Positioned below pivot to avoid overlap */}
-          <div className="absolute top-[68%] flex flex-col items-center">
-            <span className="text-[52px] font-black leading-none tracking-tighter text-white drop-shadow-2xl">{score}</span>
+          <div className="-mt-2 flex flex-col items-center">
             <span
-              className="mt-1 text-[11px] font-black uppercase tracking-[0.25em]"
-              style={{ color: zone.color }}
+              className="text-[46px] font-black leading-none tracking-tight"
+              style={{
+                color: SENTIMENT_GAUGE_THEME.arcFill,
+                textShadow: "0 0 10px rgba(244,180,55,0.4)",
+              }}
             >
-              {zone.label}
+              {score}
+            </span>
+            <span
+              className="mt-1 text-[17px] font-black uppercase tracking-wide font-mono"
+              style={{ color: "#E2A838" }}
+            >
+              {zone.label.toUpperCase()}
             </span>
           </div>
         </div>
 
-        {/* Right: 5 metric bars */}
-        <div className="flex flex-1 flex-col justify-center gap-4">
+        {/* Bottom: Metric bars and Professional Insight Box */}
+        <div className="flex-1 flex flex-col space-y-5 relative z-10 w-full mt-4">
           {indicators.map((indicator, index) => {
             const barColor = getIndicatorColor(indicator.value);
             return (
-              <div key={indicator.label} className="flex items-center gap-4">
-                <span className="w-28 flex-shrink-0 text-[12px] text-white/80 font-semibold tracking-tight">{indicator.label}</span>
-                <div className="flex flex-1 items-center gap-4">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.05] shadow-inner">
+              <div key={indicator.label} className="group/bar">
+                <div className="mb-1">
+                  <span className="font-heading text-[15px] font-black tracking-wide text-white/90">{indicator.label}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-1.5 w-full bg-[#1F222A] rounded-full overflow-hidden border border-white/[0.02]">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${indicator.value}%` }}
-                      transition={{ duration: 1, delay: index * 0.08, ease: "circOut" }}
-                      className="h-full rounded-full shadow-[0_0_8px_rgba(255,255,255,0.1)]"
-                      style={{ background: barColor }}
+                      transition={{ duration: 1.2, delay: index * 0.1, ease: "circOut" }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
                     />
                   </div>
-                  <span className="w-6 flex-shrink-0 text-right text-[12px] font-bold text-white font-mono">
-                    {indicator.value}
-                  </span>
+                  <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/60 w-8 text-right shrink-0">{indicator.value}</span>
                 </div>
               </div>
             );
           })}
 
           {/* Professional Insight Box */}
-          <div className="mt-2 flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 shadow-inner">
-            <div className="flex items-start gap-2.5">
-              <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
+          <div className="mt-4 relative p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+            <div className="flex gap-3 items-start relative z-10">
+              <div className="flex-shrink-0 mt-0.5 rounded-full w-4 h-4 border border-white/30 flex items-center justify-center font-mono text-[9px] text-white/50">
+                i
               </div>
-              <p className="text-[13px] font-medium leading-relaxed text-white/90">{quote}</p>
-            </div>
-            <div className="flex items-center gap-2 pl-7">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400">{action}</p>
+              <p className="text-[13px] font-medium text-white/60 leading-relaxed font-sans">
+                <span className="text-white/80 font-semibold mr-1">AI Commentary:</span>
+                {quote} {action}
+              </p>
             </div>
           </div>
         </div>
@@ -407,8 +446,12 @@ export function FGGauge({
 
 export function MarketSection({
   onError,
+  briefElement,
+  pinnedElement,
 }: {
   onError?: (e: string) => void;
+  briefElement?: ReactNode;
+  pinnedElement?: ReactNode;
 }) {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<MarketSnapshot | null>(null);
@@ -508,20 +551,46 @@ export function MarketSection({
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <MarketSkeletonCard key={idx} />
-          ))}
+        <div className="grid lg:grid-cols-12 gap-4">
+          {pinnedElement && (
+            <div className="lg:col-span-8 h-full">
+              {pinnedElement}
+            </div>
+          )}
+          <div className={cn("grid grid-cols-2 gap-3", pinnedElement ? "lg:col-span-4" : "lg:grid-cols-4 lg:col-span-12")}>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <MarketSkeletonCard key={idx} />
+            ))}
+          </div>
         </div>
       ) : (
-        <motion.div variants={stagger} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {cards.map((card) => (
-            <MarketCard key={card.label} {...card} />
-          ))}
-        </motion.div>
+        <div className="grid lg:grid-cols-12 gap-4">
+          {pinnedElement && (
+            <div className="lg:col-span-8 h-full">
+              {pinnedElement}
+            </div>
+          )}
+          <motion.div
+            variants={stagger}
+            className={cn("grid grid-cols-2 gap-3", pinnedElement ? "lg:col-span-4" : "lg:grid-cols-4 lg:col-span-12")}
+          >
+            {cards.map((card) => (
+              <MarketCard key={card.label} {...card} />
+            ))}
+          </motion.div>
+        </div>
       )}
 
-      <FGGauge score={fgScore} snapshot={snapshot} />
+      <div className={cn("mt-4", briefElement ? "grid lg:grid-cols-3 gap-4" : "")}>
+        <div className={cn("h-full", briefElement ? "lg:col-span-1" : "")}>
+          <FGGauge score={fgScore} snapshot={snapshot} />
+        </div>
+        {briefElement && (
+          <div className="lg:col-span-2 h-full flex flex-col w-full min-w-0">
+            {briefElement}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

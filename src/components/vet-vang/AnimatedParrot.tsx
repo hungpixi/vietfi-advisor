@@ -1,5 +1,7 @@
 "use client";
-import { motion, type TargetAndTransition } from "framer-motion";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { motion } from "framer-motion";
+import Image from "next/image";
 
 type AnimState = "idle" | "celebrate" | "sleepy" | "angry" | "thinking" | "peek" | "welcome" | "scared" | "bounce" | "fly-across";
 
@@ -18,8 +20,7 @@ const PARTS = {
 };
 
 /* ─── Animation variants per state ─── */
-type PartAnimationMap = Record<string, TargetAndTransition>;
-const VARIANTS: Record<AnimState, PartAnimationMap> = {
+const VARIANTS: Record<AnimState, Record<string, any>> = {
   idle: {
     body: { y: [0, -4, 0], transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } },
     head: { y: [0, -6, 0], rotate: [0, 1.5, 0, -1.5, 0], transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } },
@@ -98,7 +99,7 @@ export default function AnimatedParrot({ state = "idle", size = 200 }: AnimatedP
       {/* Render order: body first (back), then wings, then head (front) */}
       {(["body", "wing_l", "wing_r", "head"] as const).map((key) => {
         const part = PARTS[key];
-        const variant = variants[key];
+        const variant = variants[key] || {};
         return (
           <motion.div
             key={`${key}-${state}`}

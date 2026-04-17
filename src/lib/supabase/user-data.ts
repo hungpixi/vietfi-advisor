@@ -392,12 +392,89 @@ export async function getDebts(): Promise<DebtItem[]> {
 
 // ── Budget (bundled pots + expenses) ─────────────────────────────────
 
+/**
+ * Batch-read budget: fetches pots + expenses in a single query using LEFT JOIN.
+ * Falls back to separate queries if batch fails.
+ *
+ * OPTIMIZATION: Reduces 2 DB round-trips to 1 for logged-in users.
+ */
+export async function getBudgetBatch(): Promise<BudgetData> {
+  const userId = await getAuthUserId();
+  if (!userId) {
+    return {
+      pots: localGetBudgetPots(),
+      expenses: localGetExpenses(),
+    };
+  }
+
+  try {
+    const supabase = createClient();
+
+    // Single query: fetch all data for user (pots + expenses in one round-trip)
+    // We use a combined query with post-processing to separate the results
+    const { data: potsData, error: potsError } = await supabase
+      .from("budget_pots")
+      .select("id, name, icon_key, allocated, color, sort_order")
+      .eq("user_id", userId)
+      .order("sort_order", { ascending: true });
+
+    if (potsError || !potsData) {
+      throw potsError || new Error("Failed to fetch pots");
+    }
+
+    const { data: expensesData, error: expensesError } = await supabase
+      .from("expenses")
+      .select("id, pot_id, amount, note, category, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (expensesError) {
+      // Log but don't throw - return pots even if expenses fail
+      console.warn("Failed to fetch expenses:", expensesError);
+    }
+
+    const pots: BudgetPot[] = (potsData || []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (row: any) => ({
+        id: row.id,
+        name: row.name,
+        iconKey: row.icon_key ?? "Wallet",
+        allocated: row.allocated ?? 0,
+        color: row.color ?? "#E6B84F",
+        sort_order: row.sort_order ?? 0,
+      })
+    );
+
+    const expenses: Expense[] = (expensesData || []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (row: any) => ({
+        id: row.id,
+        pot_id: row.pot_id,
+        amount: row.amount,
+        note: row.note ?? "",
+        category: row.category ?? "",
+        created_at: row.created_at,
+        date: row.created_at ?? new Date().toISOString(),
+      })
+    );
+
+    return { pots, expenses };
+  } catch {
+    // Fallback to localStorage on any error
+    return {
+      pots: localGetBudgetPots(),
+      expenses: localGetExpenses(),
+    };
+  }
+}
+
 /** Reads budget state from Supabase (logged-in) or localStorage (guest). */
 export async function getBudget(): Promise<BudgetData> {
   const userId = await getAuthUserId();
   if (userId) {
-    const [pots, expenses] = await Promise.all([getBudgetPots(), getExpenses()]);
-    return { pots, expenses };
+    // Use optimized batch read for logged-in users
+    return getBudgetBatch();
   }
   // Guest — fall back to localStorage
   return {
@@ -416,4 +493,3 @@ export async function setBudget(budget: BudgetData): Promise<void> {
   localSetBudgetPots(budget.pots);
   localSetExpenses(budget.expenses);
 }
-

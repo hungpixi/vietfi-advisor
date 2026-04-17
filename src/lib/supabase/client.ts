@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { getBrowserAuthCallbackUrl } from "@/lib/security/origin";
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,4 +13,42 @@ export function createClient() {
   }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
+}
+
+// OAuth sign in with Google
+export async function signInWithGoogle() {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: getBrowserAuthCallbackUrl("/dashboard"),
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.url) {
+    window.location.assign(data.url);
+  }
+}
+
+// OAuth sign in with GitHub
+export async function signInWithGithub() {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      redirectTo: getBrowserAuthCallbackUrl("/dashboard"),
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (data.url) {
+    window.location.assign(data.url);
+  }
 }

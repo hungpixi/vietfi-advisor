@@ -209,7 +209,7 @@ export function getDailyQuests(): DailyQuest[] {
     },
     {
       id: "check_market",
-      title: "Check thị trường",
+      title: "Xem thị trường",
       description: "Xem Nhiệt kế thị trường hôm nay",
       xp: 5,
       actionKey: "check_market",

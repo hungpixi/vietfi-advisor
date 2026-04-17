@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({

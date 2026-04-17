@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { UserRole, hasRole, ROLE_THRESHOLDS, ROLE_DESCRIPTIONS } from "@/lib/rbac";
 import { getGamification } from "@/lib/gamification";
-import { Lock, Zap, ShieldAlert, Key } from "lucide-react";
+import { Lock, Zap, ArrowRight, ShieldAlert, Key } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
@@ -22,10 +22,13 @@ export default function RequireTier({ requiredRole, featureName, children }: Req
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsClient(true);
-    const gam = getGamification();
-    setXp(gam.xp);
+    const timer = window.setTimeout(() => {
+      setIsClient(true);
+      const gam = getGamification();
+      setXp(gam.xp);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleActivateCode = () => {

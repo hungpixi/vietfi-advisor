@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, TrendingUp, Flame, Zap, Target, Shield } from "lucide-react";
 import { getGamification, getLevelProgress } from "@/lib/gamification";
@@ -88,25 +87,23 @@ export function WeeklyReportModal({ isOpen, onClose }: { isOpen: boolean; onClos
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [freezeState, setFreezeState] = useState<StreakFreezeState | null>(null);
 
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setStats(getWeeklyStats());
-      setFreezeState(getStreakFreezeState());
+      const timer = window.setTimeout(() => {
+        setStats(getWeeklyStats());
+        setFreezeState(getStreakFreezeState());
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen]);
-  if (!isMounted || !stats || !freezeState) return null;
+
+  if (!stats || !freezeState) return null;
 
   const gam = getGamification();
   const { current, next, progress } = getLevelProgress(gam.xp);
 
-  const modalContent = (
+  return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -207,8 +204,6 @@ export function WeeklyReportModal({ isOpen, onClose }: { isOpen: boolean; onClos
       )}
     </AnimatePresence>
   );
-
-  return createPortal(modalContent, document.body);
 }
 
 /* ─── Stat Card ─── */

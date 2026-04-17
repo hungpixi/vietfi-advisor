@@ -76,7 +76,7 @@ export function DTIDominoGauge({ dtiRatio, monthlyIncome, totalMonthlyMin, toxic
              <span className="text-xs font-black text-[#EF4444] uppercase tracking-wider">Hội chẩn y khoa: Xuất huyết cấp tính</span>
           </div>
           <p className="text-[13px] text-white/80 leading-relaxed mb-4">
-            Bạn đang <strong>&ldquo;lấy mỡ nó rán nó&rdquo;</strong>. Vòng lặp lấy nợ mới đắp nợ cũ đang giết chết bạn từ bên trong và sẽ bóp nát dòng tiền trong vòng 3-6 tháng tới nếu bạn không hành động NGAY BÂY GIỜ!
+            Bạn đang <strong>&quot;lấy mỡ nó rán nó&quot;</strong>. Vòng lặp lấy nợ mới đắp nợ cũ đang giết chết bạn từ bên trong và sẽ bóp nát dòng tiền trong vòng 3-6 tháng tới nếu bạn không hành động NGAY BÂY GIỜ!
           </p>
           <div className="space-y-3">
             <div className="flex items-start gap-3 text-xs bg-[#EF4444]/15 p-4 rounded-xl border border-[#EF4444]/30 hover:bg-[#EF4444]/20 transition-colors">
@@ -111,8 +111,8 @@ export function DTIDominoGauge({ dtiRatio, monthlyIncome, totalMonthlyMin, toxic
                <p className="text-xs text-white/70 mb-4 leading-relaxed">
                  Phát hiện khoản <strong>{toxicDebt.name}</strong> độc hại ở mức lãi <strong className="text-[#EF4444]">{toxicDebt.rate}%/năm</strong>. 
                  Tuyệt vời là tín dụng DTI của bạn ({dtiRatio.toFixed(1)}%) <strong className="text-[#22C55E]">vẫn gánh được nợ ngân hàng</strong>. 
-                  Hãy &ldquo;lấy bạc lẻ đập lô lớn&rdquo;: vay tín chấp 1 cục (lãi ~12-18%) đập tắt ngay khoản nợ cắt cổ kia!
-                </p>
+                 Hãy &quot;lấy bạc lẻ đập lô lớn&quot;: vay tín chấp 1 cục (lãi ~12-18%) đập tắt ngay khoản nợ cắt cổ kia!
+               </p>
                <div className="flex flex-col sm:flex-row gap-3">
                  <button className="px-5 py-2.5 bg-gradient-to-r from-[#00E5FF]/20 to-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/40 rounded-xl text-xs font-bold hover:bg-[#00E5FF]/30 transition-all flex items-center justify-center gap-2">
                     <Banknote className="w-4 h-4" /> Tham khảo Vay Tín Chấp Bank

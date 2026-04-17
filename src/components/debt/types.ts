@@ -1,4 +1,5 @@
-import { CreditCard, Smartphone, UserX, Home, ShieldAlert, Banknote, type LucideIcon } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CreditCard, Smartphone, UserX, Home, ShieldAlert, Banknote } from "lucide-react";
 import { Debt } from "@/lib/calculations/debt-optimizer";
 
 export interface UIDebt extends Debt {
@@ -6,7 +7,7 @@ export interface UIDebt extends Debt {
   color: string;
 }
 
-export const ICON_MAP: Record<string, LucideIcon> = {
+export const ICON_MAP: Record<string, any> = {
   credit_card: CreditCard,
   bnpl: Smartphone,
   personal: UserX,

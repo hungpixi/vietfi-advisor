@@ -41,8 +41,8 @@ from pathlib import Path
 # ── Paths ──────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).parent
 ROOT_DIR   = SCRIPT_DIR.parent
-QUOTES_FILE = ROOT_DIR / "ui-prototype" / "quotes.json"
-OUTPUT_DIR  = ROOT_DIR / "ui-prototype" / "assets" / "audio"
+QUOTES_FILE = ROOT_DIR / "scripts" / "static_responses.json"
+OUTPUT_DIR  = ROOT_DIR / "public" / "audio" / "tts"
 
 # ── CLI Args ────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="VietFi TTS Pre-render")
@@ -67,35 +67,35 @@ NOISE_FILTERS = {
 }
 
 def apply_voice_fx(src: Path, pitch_semitones: int, noise_level: str) -> bool:
-    """Pitch shift + add noise to WAV file in-place. Returns True if OK."""
+    """Pitch shift + add noise to audio and export to MP3. Returns True if OK."""
     rate_mult = 2 ** (pitch_semitones / 12)
     tempo_inv = 1 / rate_mult
     noise_filter = NOISE_FILTERS.get(noise_level.upper(), NOISE_FILTERS["A"])
-    tmp = src.with_suffix(".tmp.wav")
+    out_mp3 = src.with_suffix(".mp3")
     filter_chain = f"asetrate=22050*{rate_mult:.4f},aresample=22050,atempo={tempo_inv:.4f},{noise_filter}"
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(src), "-af", filter_chain, "-ar", "22050", str(tmp)],
+        ["ffmpeg", "-y", "-i", str(src), "-af", filter_chain, "-ar", "22050", "-b:a", "64k", str(out_mp3)],
         capture_output=True
     )
-    if result.returncode == 0 and tmp.exists():
-        tmp.replace(src)  # overwrite original với file đã xử lý
+    if result.returncode == 0 and out_mp3.exists():
+        src.unlink(missing_ok=True)  # overwrite original với file đã xử lý
         return True
-    tmp.unlink(missing_ok=True)
+    src.unlink(missing_ok=True)
     return False
 
 # ── Load quotes ─────────────────────────────────────────────────────────────
 with open(QUOTES_FILE, encoding="utf-8") as f:
-    quotes = json.load(f)
+    responses = json.load(f)
 
-total = sum(len(v) for v in quotes.values())
-print(f"📋 Loaded {len(quotes)} categories, {total} quotes from {QUOTES_FILE.name}")
+print(f"📋 Loaded {len(responses)} responses from {QUOTES_FILE.name}")
 
 if args.dry_run:
-    for key, items in quotes.items():
-        for i, text in enumerate(items):
-            out = OUTPUT_DIR / f"{key}-{i}.wav"
-            status = "✅ EXISTS" if out.exists() else "⬜ MISSING"
-            print(f"  {status}  {key}-{i}.wav — {text[:60]}...")
+    for item in responses:
+        id = item["id"]
+        text = item["ttsText"]
+        out = OUTPUT_DIR / f"{id}.mp3"
+        status = "✅ EXISTS" if out.exists() else "⬜ MISSING"
+        print(f"  {status}  {id}.mp3 — {text[:60]}...")
     print("\nDry run done. No files generated.")
     exit(0)
 
@@ -135,30 +135,30 @@ skipped   = 0
 errors    = 0
 start     = time.time()
 
-for key, items in quotes.items():
-    print(f"📁 Generating: {key} ({len(items)} quotes)")
-    for i, text in enumerate(items):
-        out = OUTPUT_DIR / f"{key}-{i}.wav"
-        
-        # Skip nếu đã có và không force
-        if out.exists() and not args.force:
-            print(f"   ⏭ Skip (cached): {out.name}")
-            skipped += 1
-            continue
-        
-        try:
-            print(f"   🎤 [{i+1}/{len(items)}] {text[:55]}...")
-            audio = tts.infer(text=text, **voice_kwargs)
-            tts.save(audio, str(out))
-            # Pitch shift + noise in-place
-            ok = apply_voice_fx(out, args.pitch, args.noise)
-            status = f"+{args.pitch}st noise-{args.noise}" if ok else "(fx failed)"
-            print(f"   ✅ {out.name} [{status}]")
-            generated += 1
-        except Exception as e:
-            print(f"   ❌ Error on {key}-{i}: {e}")
-            errors += 1
-    print()
+for i, item in enumerate(responses):
+    id = item["id"]
+    text = item["ttsText"]
+    out_wav = OUTPUT_DIR / f"{id}.wav"
+    out_mp3 = OUTPUT_DIR / f"{id}.mp3"
+
+    # Skip nếu đã có mp3 và không force
+    if out_mp3.exists() and not args.force:
+        print(f"   ⏭ Skip (cached): {out_mp3.name}")
+        skipped += 1
+        continue
+
+    try:
+        print(f"   🎤 [{i+1}/{len(responses)}] {id}: {text[:55]}...")
+        audio = tts.infer(text=text, **voice_kwargs)
+        tts.save(audio, str(out_wav))
+        # Pitch shift + noise in-place
+        ok = apply_voice_fx(out_wav, args.pitch, args.noise)
+        status = f"+{args.pitch}st noise-{args.noise}" if ok else "(fx failed)"
+        print(f"   ✅ {out_mp3.name} [{status}]")
+        generated += 1
+    except Exception as e:
+        print(f"   ❌ Error on {id}: {e}")
+        errors += 1
 
 elapsed = time.time() - start
 print(f"{'='*50}")

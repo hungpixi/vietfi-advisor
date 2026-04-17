@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     }
 
     // ── Fetch and Normalize price history ──
-    let rawBars = await fetchPriceHistory(ticker, fromDate, toDate);
+    const rawBars = await fetchPriceHistory(ticker, fromDate, toDate);
 
     // Validate and Normalize (Deduplicate & Sort & Fill Empty Volume)
     const uniqueBarsMap = new Map<string, OHLCVBar>();

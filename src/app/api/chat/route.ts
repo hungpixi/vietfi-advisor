@@ -1,24 +1,31 @@
-import { google } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
-import { streamText } from 'ai';
-import { checkLlmRateLimit } from '@/lib/llm-limiter';
-import { parseExpenseWithContext, type ParsedExpense } from '@/lib/expense-parser';
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { streamText } from "ai";
 import {
-  detectIntent, getScriptedResponse, getExpenseRoast,
-  getComparison, needsAI
-} from '@/lib/scripted-responses';
+  checkFixedWindowRateLimit,
+  getClientIdentifier,
+  jsonError,
+  rateLimitResponse,
+  readJsonWithLimit,
+} from "@/lib/api-security";
+import { checkLlmRateLimit } from "@/lib/llm-limiter";
+import { parseExpenseWithContext, type ParsedExpense } from "@/lib/expense-parser";
+import {
+  detectIntent,
+  getScriptedResponse,
+  getExpenseRoast,
+  getComparison,
+  needsAI,
+} from "@/lib/scripted-responses";
 
-// Edge Runtime — vượt giới hạn 10s Serverless
-export const runtime = 'edge';
+export const runtime = "edge";
 
-// ── Types ─────────────────────────────────────────────────────────
 interface AIMessagePart {
-  type: "text";
-  text: string;
+  type?: string;
+  text?: string;
 }
 
 interface AIMessage {
-  role: "user" | "assistant" | "model" | "system";
+  role?: string;
   content?: string;
   parts?: AIMessagePart[];
 }
@@ -27,38 +34,13 @@ interface RequestBody {
   messages: AIMessage[];
 }
 
-// ── Rate limiting: in-memory token bucket (per-IP) ────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 20;    // max requests per window
-const WINDOW_MS  = 60_000; // 60-second window
-
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (entry && now < entry.resetAt) {
-    if (entry.count >= RATE_LIMIT) {
-      return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
-    }
-    entry.count++;
-  } else {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-  }
-
-  return { allowed: true };
-}
-
-// Periodic cleanup to prevent unbounded Map growth
-let lastCleanup = Date.now();
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-function evictStaleRateLimitEntries() {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
-  lastCleanup = now;
-  for (const [ip, entry] of rateLimitMap.entries()) {
-    if (now >= entry.resetAt) rateLimitMap.delete(ip);
-  }
-}
+const RATE_LIMIT = 20;
+const WINDOW_MS = 60_000;
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 4_000;
+const MAX_TOTAL_CHARS = 16_000;
 
 const SYSTEM_PROMPT = `
 Bạn là linh vật (mascot) AI tư vấn tài chính của ứng dụng VietFi Advisor, tên là "Vẹt Vàng 🦜".
@@ -66,154 +48,141 @@ Sứ mệnh của bạn là giúp người dùng Việt Nam thoát khỏi nợ n
 
 Quy tắc cốt lõi:
 1. Đọc kỹ khối [HƯỚNG DẪN TÍNH CÁCH CỦA VẸT VÀNG MÀ BẠN PHẢI NHẬP VAI] ở đầu tin nhắn của người dùng để biết bạn đang ở CHẾ ĐỘ NÀO (Mỏ Hỗn, Chữa Lành, hay Chuyên Gia). Từ vựng, xưng hô và thái độ phải TUYỆT ĐỐI TUÂN THỦ chế độ đó.
-1.1. Với mặc định trình diễn và bối cảnh chuyên nghiệp, ưu tiên xưng hô lịch sự "tôi/bạn"; tránh dùng "mày/tao" trừ khi người dùng chủ động chọn Mỏ Hỗn.
 2. Đọc kỹ khối [DỮ LIỆU TÀI CHÍNH CỦA USER] (DTI, Cashflow 50-30-20, Thu nhập, Nợ) để đưa ra lời khuyên cá nhân hóa. Nếu DTI > 60%, hãy coi đây là tình trạng khẩn cấp.
 3. Đọc khối [DỮ LIỆU THỊ TRƯỜNG REALTIME] (nếu có) để trả lời các câu hỏi phân bổ vốn, so sánh kênh đầu tư (tiết kiệm ngân hàng vs vàng SJC/PNJ vs chứng khoán).
 4. Câu trả lời CỰC KỲ SÚC TÍCH, CÓ SỨC NẶNG (dưới 100 chữ), đi thẳng vào vấn đề bằng con số.
 5. Không bao giờ tự xưng là "Trợ lý ảo AI", bạn là Vẹt Vàng.
 `;
 
+function extractMessageText(message: AIMessage): string {
+  if (typeof message.content === "string") {
+    return message.content;
+  }
+
+  if (Array.isArray(message.parts)) {
+    return message.parts
+      .filter((part) => !part.type || part.type === "text")
+      .map((part) => (typeof part.text === "string" ? part.text : ""))
+      .join("\n");
+  }
+
+  return "";
+}
+
+function sanitizeMessages(
+  messages: AIMessage[],
+): { ok: true; messages: { role: "user" | "assistant"; content: string }[]; userText: string } | { ok: false; response: Response } {
+  const sanitized: { role: "user" | "assistant"; content: string }[] = [];
+  let totalChars = 0;
+
+  for (const message of messages.slice(-MAX_MESSAGES)) {
+    if (!message || typeof message !== "object") continue;
+    if (!["user", "assistant", "model"].includes(String(message.role))) continue;
+
+    const text = extractMessageText(message).trim();
+    if (!text) continue;
+
+    if (text.length > MAX_MESSAGE_CHARS) {
+      return { ok: false, response: jsonError("Message too long", 413) };
+    }
+
+    totalChars += text.length;
+    if (totalChars > MAX_TOTAL_CHARS) {
+      return { ok: false, response: jsonError("Chat context too large", 413) };
+    }
+
+    sanitized.push({
+      role: message.role === "assistant" || message.role === "model" ? "assistant" : "user",
+      content: text,
+    });
+  }
+
+  const lastUserMsg = [...sanitized].reverse().find((message) => message.role === "user");
+  if (!lastUserMsg) {
+    return { ok: false, response: jsonError("No valid messages", 400) };
+  }
+
+  return { ok: true, messages: sanitized, userText: lastUserMsg.content };
+}
+
 export async function POST(req: Request) {
   try {
-    // ── Rate limiting ────────────────────────────────────────────
-    evictStaleRateLimitEntries();
-    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-                  || req.headers.get("cf-connecting-ip")?.trim()
-                  || "unknown";
-    const rl = checkRateLimit(clientIP);
+    const rl = checkFixedWindowRateLimit(
+      rateLimitMap,
+      getClientIdentifier(req),
+      RATE_LIMIT,
+      WINDOW_MS,
+    );
     if (!rl.allowed) {
-      return new Response(
-        JSON.stringify({ error: "Too many requests. Vui lòng chờ vài giây rồi thử lại." }),
-        { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(rl.retryAfter ?? 60) } }
-      );
+      return rateLimitResponse(rl.retryAfter, "Too many requests. Vui lòng chờ vài giây rồi thử lại.");
     }
 
-    // ── Parse & validate request body ───────────────────────────
-    let raw: unknown;
-    try {
-      raw = await req.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
+    const parsed = await readJsonWithLimit(req, MAX_BODY_BYTES);
+    if (!parsed.ok) return parsed.response;
+
+    if (!parsed.value || typeof parsed.value !== "object" || !Array.isArray((parsed.value as RequestBody).messages)) {
+      return jsonError("Invalid request format", 400);
     }
 
-    if (!raw || typeof raw !== "object" || !Array.isArray((raw as RequestBody).messages)) {
-      return new Response(JSON.stringify({ error: "Invalid request format" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
+    const sanitized = sanitizeMessages((parsed.value as RequestBody).messages);
+    if (!sanitized.ok) return sanitized.response;
 
-    const messages: AIMessage[] = (raw as RequestBody).messages;
-
-    // ── Security: Sanitize messages array ────────────────────────
-    // CRITICAL: block role:"system" injection — attacker could override SYSTEM_PROMPT
-    const MAX_MESSAGES = 20;
-    const sanitized = messages.slice(-MAX_MESSAGES).map((m): { role: "user" | "assistant"; content: string } | null => {
-      if (!m || typeof m !== "object") return null;
-      const role: unknown = m.role;
-      if (!["user", "assistant", "model"].includes(role as string)) return null;
-
-      // Extract text from OpenAI format (content string) or Vercel AI SDK format (parts[])
-      let text: string = "";
-      if (typeof m.content === "string") {
-        text = m.content;
-      } else if (Array.isArray(m.parts) && m.parts[0] && typeof m.parts[0] === "object") {
-        text = String((m.parts[0] as AIMessagePart).text ?? "");
-      }
-      if (!text) return null;
-
-      return {
-        role: role === "model" ? "assistant" : "user",
-        content: text,
-      };
-    }).filter((m): m is NonNullable<typeof m> => m !== null);
-
-    if (sanitized.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid messages" }), {
-        status: 400, headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    const lastUserMsg = [...sanitized].reverse().find((m) => m.role === "user");
-    const userText = lastUserMsg?.content || "";
-
-    // ── STEP 1: Try expense parsing (0 API calls) ───────────────
-    const expense = parseExpenseWithContext(userText);
+    const expense = parseExpenseWithContext(sanitized.userText);
     if (expense && expense.confidence >= 0.5) {
-      const response = buildExpenseResponse(expense);
-      return createTextResponse(response);
+      return createTextResponse(buildExpenseResponse(expense));
     }
 
-    // ── STEP 2: Try scripted response (0 API calls) ─────────────
-    const intent = detectIntent(userText);
-    if (intent !== "unknown" && !needsAI(intent, userText)) {
+    const intent = detectIntent(sanitized.userText);
+    if (intent !== "unknown" && !needsAI(intent, sanitized.userText)) {
       const response = getScriptedResponse(intent);
-      if (response) {
-        return createTextResponse(response.text);
-      }
+      if (response) return createTextResponse(response.text);
     }
 
-    // ── STEP 3: Fallback to AI Provider (Google or TrollLLM) ──
-    const AI_PROVIDER = process.env.AI_PROVIDER || "trollllm";
-    const apiKey = AI_PROVIDER === "trollllm" 
-      ? (process.env.TROLL_LLM_API_KEY || process.env.GEMINI_API_KEY)
-      : process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: `${AI_PROVIDER === "trollllm" ? "TROLL_LLM_API_KEY" : "GEMINI_API_KEY"} is not configured.` }), {
-        status: 500, headers: { "Content-Type": "application/json" }
-      });
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL;
+    if (!GEMINI_API_KEY) {
+      return jsonError("AI service is not configured.", 500);
     }
 
-    // RPM check logic (currently shared, though Gemini has its own limits)
     try {
       checkLlmRateLimit();
-    } catch (e) {
-      return new Response(JSON.stringify({ error: (e as Error).message }), {
-        status: 429, headers: { "Content-Type": "application/json" }
-      });
+    } catch (error) {
+      return rateLimitResponse(60, (error as Error).message);
     }
 
-    let model;
-    if (AI_PROVIDER === "trollllm") {
-      const troll = createOpenAI({
-        apiKey,
-        baseURL: "https://chat.trollllm.xyz/v1",
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      model = troll("gemini-3-flash");
-    } else {
-      model = google("gemini-1.5-flash");
-    }
-
-    const result = streamText({
-      model,
-      system: SYSTEM_PROMPT,
-      messages: sanitized,
+    const google = createGoogleGenerativeAI({
+      apiKey: GEMINI_API_KEY,
+      ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {}),
     });
 
-    // Vercel AI SDK v6 returns StreamTextResult with .toDataStreamResponse() / .toTextStreamResponse()
-    const streamResult = result as { toDataStreamResponse?: () => Response; toTextStreamResponse?: () => Response };
-    return streamResult.toDataStreamResponse
+    const result = streamText({
+      model: google("gemini-1.5-flash"),
+      system: SYSTEM_PROMPT,
+      messages: sanitized.messages,
+    });
+
+    const streamResult = result as {
+      toDataStreamResponse?: () => Response;
+      toTextStreamResponse?: () => Response;
+    };
+    const response = streamResult.toDataStreamResponse
       ? streamResult.toDataStreamResponse()
       : streamResult.toTextStreamResponse?.() ?? new Response("Streaming error", { status: 500 });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   } catch (error) {
     console.error("Chat API Error:", error);
 
     const fallback = getScriptedResponse("greeting");
     return new Response(
       JSON.stringify({
-        error: fallback?.text || "Vẹt Vàng đang bận xử lý dữ liệu, vui lòng thử lại sau. 🦜"
+        error: fallback?.text || "Vẹt Vàng đang bận đi mổ thóc, vui lòng thử lại sau. 🦜",
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
     );
   }
 }
 
-// ── Helper: Build expense response ────────────────────────────────
 function buildExpenseResponse(expense: ParsedExpense): string {
   const amt = expense.amount.toLocaleString("vi-VN");
   const roast = getExpenseRoast(expense.category, expense.amount);
@@ -233,7 +202,7 @@ function buildExpenseResponse(expense: ParsedExpense): string {
       amount: `${amt}đ`,
       item: expense.item,
     });
-    return tmpl?.text || `${amt}đ — tiết kiệm ghê! ${roast} 🦜`;
+    return tmpl?.text || `${amt}đ - tiết kiệm ghê! ${roast} 🦜`;
   }
 
   const tmpl = getScriptedResponse("expense_logged", {
@@ -245,33 +214,27 @@ function buildExpenseResponse(expense: ParsedExpense): string {
     total: "...",
     remaining: "...",
   });
-  return tmpl?.text || `✅ Ghi ${amt}đ — ${expense.item} (${expense.category}). ${roast} 🦜`;
+  return tmpl?.text || `Ghi ${amt}đ - ${expense.item} (${expense.category}). ${roast} 🦜`;
 }
 
-// ── Helper: Non-streaming text response ───────────────────────────
-// Must match Vercel AI SDK Data Stream Protocol for useChat() hook
 function createTextResponse(text: string): Response {
   const encoder = new TextEncoder();
-
-  // Properly escape for JSON string inside data stream
   const escaped = JSON.stringify(text);
 
   const stream = new ReadableStream({
     start(controller) {
-      // Text part: 0:<json-string>\n
       controller.enqueue(encoder.encode(`0:${escaped}\n`));
-      // Finish step: e:{...}\n
       controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
-      // Finish message: d:{...}\n
       controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
       controller.close();
-    }
+    },
   });
 
   return new Response(stream, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "X-Vercel-AI-Data-Stream": "v1",
+      "Cache-Control": "no-store",
     },
   });
 }

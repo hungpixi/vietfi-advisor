@@ -3,7 +3,7 @@ import sys, io, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from pathlib import Path
-ROOT = Path(r"d:\Cá nhân\Vọc vạch\Cuộc thi\vietfi-advisor")
+ROOT = Path(__file__).parent.parent
 VOCAL  = ROOT / "voice_ref" / "zinzin_vocal.wav"
 OUT    = ROOT / "voice_ref" / "zinzin_vocal_cloned_v2.wav"
 
