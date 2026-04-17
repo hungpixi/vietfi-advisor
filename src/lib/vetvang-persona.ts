@@ -33,9 +33,12 @@ export const PERSONAS: Record<PersonaMode, { id: PersonaMode; name: string; emoj
 };
 
 export function getVetvangPersona(): PersonaMode {
-  if (typeof window === "undefined") return "mo_hon";
+  if (typeof window === "undefined") return "chuyen_gia";
   const saved = localStorage.getItem("vetvang_persona");
-  return (saved && PERSONAS[saved as PersonaMode]) ? (saved as PersonaMode) : "mo_hon";
+  if (!saved || !PERSONAS[saved as PersonaMode]) return "chuyen_gia";
+  // Default demo mode should remain polite even if an old browser session saved "Mỏ Hỗn".
+  if (saved === "mo_hon") return "chuyen_gia";
+  return saved as PersonaMode;
 }
 
 export function setVetvangPersona(mode: PersonaMode) {

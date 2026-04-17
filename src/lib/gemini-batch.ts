@@ -78,7 +78,7 @@ export async function batchProcess(
           text: match ? match[1].trim() : text, // Fallback: trả full text nếu không parse được
         });
       }
-    } catch (apiError) {
+    } catch {
       // Nếu batch call fail, fallback từng cái
       for (const req of batch) {
         try {

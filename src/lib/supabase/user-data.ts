@@ -395,7 +395,7 @@ export async function getDebts(): Promise<DebtItem[]> {
 /**
  * Batch-read budget: fetches pots + expenses in a single query using LEFT JOIN.
  * Falls back to separate queries if batch fails.
- * 
+ *
  * OPTIMIZATION: Reduces 2 DB round-trips to 1 for logged-in users.
  */
 export async function getBudgetBatch(): Promise<BudgetData> {
@@ -493,4 +493,3 @@ export async function setBudget(budget: BudgetData): Promise<void> {
   localSetBudgetPots(budget.pots);
   localSetExpenses(budget.expenses);
 }
-

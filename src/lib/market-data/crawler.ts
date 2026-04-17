@@ -9,7 +9,6 @@
  * All fetchers are independent — one failure does NOT block the others.
  * Data is returned even if partial.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as cheerio from 'cheerio'
 import { callGemini } from '@/lib/gemini'
@@ -135,16 +134,12 @@ async function fetchWithCache(url: string, options: RequestInit = {}, timeoutMs 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const start = Date.now();
-    const resp = await fetch(url, { ...options, signal: controller.signal, next: { revalidate: 300, ...((options as any).next || {}) } } as RequestInit)
-    return resp;
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
-      console.warn(`[crawler] Timeout (${timeoutMs}ms) khi gọi: ${url}`);
-    } else {
-      console.warn(`[crawler] Lỗi fetch gọi ${url}:`, err.message || err);
-    }
-    throw err; // Vẫn throw để các hàm fetchSjc, fetchSilver... tự xử lý bằng catch riêng của tụi nó
+    const requestWithNext = options as RequestInit & { next?: { revalidate?: number } }
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      next: { revalidate: 300, ...(requestWithNext.next ?? {}) },
+    } as RequestInit)
   } finally {
     clearTimeout(timer)
   }
@@ -218,143 +213,6 @@ export async function fetchBtc(): Promise<CryptoData | null> {
 
 const GIAVANG_ALL_URL = 'https://giavang.com.vn/wp-json/giavang/v1/all'
 
-function normalizeGoldSeries(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim()
-
-    // Try parse as plain JS float first (handles 183116666.6667, 1.23e8, etc.)
-    const rawNumber = Number(trimmed.replace(/[\s]/g, ''))
-    if (!Number.isNaN(rawNumber) && Number.isFinite(rawNumber)) return rawNumber
-
-    // Vietnamese format: 18.815.882,09 -> 18815882.09
-    const vnNormalized = trimmed.replace(/\./g, '').replace(',', '.')
-    const vnNumber = Number(vnNormalized)
-    if (!Number.isNaN(vnNumber) && Number.isFinite(vnNumber)) return vnNumber
-
-    // Fallback: remove thousands separators and parse
-    const fallback = trimmed.replace(/[\s]/g, '').replace(/,/g, '')
-    const fallbackNumber = Number(fallback)
-    if (!Number.isNaN(fallbackNumber) && Number.isFinite(fallbackNumber)) return fallbackNumber
-  }
-
-  return null
-}
-
-function parseGiavangGoldPrice(body: unknown): { goldVnd: number; changePct: number } | null {
-  if (!body) return null
-
-  interface Point {
-    value: number
-    timestamp?: number
-  }
-
-  const extractPoints = (arr: unknown[]): Point[] => {
-    const points: Point[] = []
-
-    for (const item of arr) {
-      if (typeof item === 'number') {
-        points.push({ value: item })
-        continue
-      }
-
-      if (Array.isArray(item) && item.length >= 2) {
-        const value = normalizeGoldSeries(item[1])
-        if (value !== null) {
-          const ts = item[0] ? new Date(String(item[0])).getTime() : undefined
-          points.push({ value, timestamp: Number.isNaN(ts) ? undefined : ts })
-        }
-        continue
-      }
-
-      if (item && typeof item === 'object') {
-        const o = item as Record<string, unknown>
-        const value = normalizeGoldSeries(o.close ?? o.sell_price ?? o.price ?? o.value ?? o.y ?? o.c)
-
-        if (value !== null) {
-          let ts: number | undefined
-          if (o.time && typeof o.time === 'string') {
-            const maybe = new Date(o.time).getTime()
-            ts = Number.isNaN(maybe) ? undefined : maybe
-          }
-          points.push({ value, timestamp: ts })
-        }
-        continue
-      }
-    }
-
-    return points
-  }
-
-  const chooseLatest = (points: Point[]): Point | null => {
-    if (points.length === 0) return null
-
-    const withTs = points.filter((p) => p.timestamp !== undefined)
-    if (withTs.length > 0) {
-      return withTs.reduce((best, p) => (p.timestamp! > best.timestamp! ? p : best))
-    }
-
-    return points[points.length - 1]
-  }
-
-  let points: Point[] = []
-
-  if (Array.isArray(body)) {
-    points = extractPoints(body)
-  } else if (body && typeof body === 'object') {
-    const obj = body as Record<string, unknown>
-
-    if (Array.isArray(obj.data)) points = extractPoints(obj.data)
-    else if (Array.isArray(obj.series)) {
-      const firstSeries = obj.series[0] as Record<string, unknown> | undefined
-      if (firstSeries) {
-        if (Array.isArray(firstSeries.data)) points = extractPoints(firstSeries.data)
-        else if (Array.isArray(firstSeries.values)) points = extractPoints(firstSeries.values)
-      }
-    } else if (obj.chart && typeof obj.chart === 'object') {
-      const chart = obj.chart as Record<string, unknown>
-      if (Array.isArray(chart.series)) {
-        const firstSeries = chart.series[0] as Record<string, unknown> | undefined
-        if (firstSeries) {
-          if (Array.isArray(firstSeries.data)) points = extractPoints(firstSeries.data)
-          else if (Array.isArray(firstSeries.values)) points = extractPoints(firstSeries.values)
-        }
-      }
-    }
-
-    if (points.length === 0 && Array.isArray(obj.categories) && Array.isArray(obj.data)) {
-      points = extractPoints(obj.data)
-    }
-  }
-
-  const latestPoint = chooseLatest(points)
-  if (!latestPoint) return null
-
-  const latest = latestPoint.value
-  if (!latest || latest < 1e6 || latest > 2e8) return null
-
-  let previousPoint: Point | null = null
-  if (points.length > 1) {
-    const sorted = [...points].sort((a, b) => {
-      const aTs = a.timestamp ?? 0
-      const bTs = b.timestamp ?? 0
-      return aTs - bTs
-    })
-    for (let i = sorted.length - 1; i >= 0; i--) {
-      if (sorted[i] !== latestPoint) {
-        previousPoint = sorted[i]
-        break
-      }
-    }
-  }
-
-  const previous = previousPoint ? previousPoint.value : null
-  const changePct = previous && previous > 0 ? Math.round(((latest - previous) / previous) * 10000) / 100 : 0
-
-  return { goldVnd: Math.round(latest), changePct }
-}
-
 export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null> {
   const tryGiaVang = async () => {
     try {
@@ -373,7 +231,7 @@ export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null>
       const goldUsd = Math.round((goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
       const world = body?.world as Record<string, unknown> | undefined
       const worldPct = typeof world?.change_pct === 'number' ? Number(world.change_pct) : null
-      return { goldUsd, goldVnd, changePct: worldPct !== null ? worldPct : 0, source: 'giaVang /wp-json/giavang/v1/all' }
+      return { goldUsd, goldVnd, changePct: worldPct !== null ? worldPct : 0, source: 'giaVang' }
     } catch { return null }
   }
 
@@ -402,14 +260,14 @@ export async function fetchSilver(usdVndRate: number): Promise<SilverData | null
   try {
     const resp = await fetchWithCache(YAHOO_SILVER_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-    }, 4000)
+    })
 
     if (!resp.ok) return null
 
     const json = await resp.json() as Record<string, unknown>
     const chart = json.chart as Record<string, unknown> | undefined
     const result = Array.isArray(chart?.result) ? (chart.result[0] as Record<string, unknown>) : undefined
-
+    
     if (!result || !result.meta) return null
     const meta = result.meta as Record<string, unknown>
 
@@ -450,7 +308,7 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
       },
-    }, 3000)
+    })
     if (resp.ok) {
       const html = await resp.text()
       const parsed = parseSbvExchangeRate(html)
@@ -479,43 +337,36 @@ export async function fetchExchangeRate(): Promise<ExchangeRateData | null> {
 
 // ── News RSS ──────────────────────────────────────────────────────────────────
 
-const NEWS_SOURCES = [
-  'https://vnexpress.net/rss/kinh-doanh.rss',
-  'https://cafef.vn/thi-truong-chung-khoan.rss'
-]
+const VNEXPRESS_RSS_URL = 'https://vnexpress.net/rss/kinh-doanh.rss'
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  const allItems: NewsItem[] = []
+  try {
+    const resp = await fetchWithCache(VNEXPRESS_RSS_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    })
 
-  await Promise.allSettled(NEWS_SOURCES.map(async (url) => {
-    try {
-      const resp = await fetchWithCache(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-      })
+    if (!resp.ok) return []
+    const xml = await resp.text()
 
-      if (!resp.ok) return
-      const xml = await resp.text()
+    const $ = cheerio.load(xml, { xmlMode: true })
+    const items: NewsItem[] = []
 
-      const $ = cheerio.load(xml, { xmlMode: true })
+    $('item').slice(0, 5).each((_, el) => {
+      const titleRaw = $(el).find('title').text() || ''
+      const title = titleRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+      const linkRaw = $(el).find('link').text() || ''
+      const link = linkRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
+      const pubDate = $(el).find('pubDate').text() || ''
 
-      $('item').slice(0, 10).each((_, el) => {
-        const titleRaw = $(el).find('title').text() || ''
-        const title = titleRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
-        const linkRaw = $(el).find('link').text() || ''
-        const link = linkRaw.replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()
-        const pubDate = $(el).find('pubDate').text() || ''
+      if (title && link) {
+        items.push({ title, link, pubDate })
+      }
+    })
 
-        if (title && link) {
-          allItems.push({ title, link, pubDate })
-        }
-      })
-    } catch {
-      // ignore
-    }
-  }))
-
-  // Sort by date (desc) if possible, or just return first 20
-  return allItems.slice(0, 20)
+    return items
+  } catch {
+    return []
+  }
 }
 
 // ── Multi-Brand Gold Crawler ──────────────────────────────────────────────────
@@ -529,16 +380,16 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       next: { revalidate: 600 }
     }).then(r => r.text())
-
+    
     let dojiSjcBuy = 0, dojiSjcSell = 0
     let dojiRingBuy = 0, dojiRingSell = 0
-
+    
     const matches = [...dojiXml.matchAll(/<Row Name="(.*?)" .*?Buy="(.*?)" Sell="(.*?)"/g)]
     for (const m of matches) {
       const name = m[1]
       const buy = parseFloat(m[2].replace(/,/g, '')) * 1000000
       const sell = parseFloat(m[3].replace(/,/g, '')) * 1000000
-
+      
       if (name.includes('SJC') && dojiSjcBuy === 0 && buy > 10000000) {
         dojiSjcBuy = buy; dojiSjcSell = sell
       }
@@ -548,7 +399,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
     }
     if (dojiSjcBuy > 0) brands['DOJI_SJC'] = { buy: dojiSjcBuy, sell: dojiSjcSell }
     if (dojiRingBuy > 0) brands['DOJI_NHAN'] = { buy: dojiRingBuy, sell: dojiRingSell }
-  } catch { }
+  } catch {}
 
   // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
   const fetchWebgia = async (brandCode: string, urlId: string) => {
@@ -557,27 +408,27 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
         headers: { 'User-Agent': 'Mozilla/5.0' },
         next: { revalidate: 600 }
       }).then(r => r.text())
-
+      
       const $ = cheerio.load(html)
       let ringBuy = 0, ringSell = 0
       let sjcBuy = 0, sjcSell = 0
-
+      
       $('table tbody tr').each((_, el) => {
         const name = $(el).find('td').first().text().trim().toLowerCase()
         const buyStr = $(el).find('td').eq(1).text().replace(/\D/g, '')
         const sellStr = $(el).find('td').eq(2).text().replace(/\D/g, '')
         if (!buyStr) return
-
+        
         let buy = parseInt(buyStr, 10)
         let sell = parseInt(sellStr, 10)
-
+        
         // Cố gắng chuẩn hóa về giá 1 lượng (~80,000,000)
         // Nếu giá trị < 10,000,000 -> khả năng là giá 1 chỉ -> nhân 10
         if (buy > 100000 && buy < 10000000) buy *= 10
         if (sell > 100000 && sell < 10000000) sell *= 10
-
+        
         if (buy < 10000000 || buy > 150000000) return // Bỏ qua nếu giá vô lý
-
+        
         if ((name.includes('nhẫn') || name.includes('vàng rồng') || name.includes('trơn') || name.includes('9999')) && ringBuy === 0) {
           ringBuy = buy; ringSell = sell
         }
@@ -585,10 +436,10 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
           sjcBuy = buy; sjcSell = sell
         }
       })
-
+      
       if (sjcBuy > 0) brands[`${brandCode}_SJC`] = { buy: sjcBuy, sell: sjcSell }
       if (ringBuy > 0) brands[`${brandCode}_NHAN`] = { buy: ringBuy, sell: ringSell }
-    } catch { }
+    } catch {}
   }
 
   await Promise.allSettled([
@@ -650,25 +501,19 @@ async function generateAiSummary(snapshot: MarketSnapshot): Promise<string | nul
 export async function crawlMarketData(): Promise<MarketSnapshot> {
   const fetchedAt = new Date().toISOString()
 
-  // Fetch all data in parallel — exchange rate is now parallel too
-  const [vnIndex, goldSjcData, btc, silver, news, goldBrands, usdVnd] = await Promise.all([
+  // Fetch exchange rate first — needed for gold VND conversion
+  const usdVnd = await fetchExchangeRate()
+  const usdVndRate = usdVnd?.rate ?? 25085
+
+  // Fetch all data in parallel
+  const [vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
     fetchVnIndex(),
-    // We pass a default rate or null and handle conversion later or inside
-    fetchGoldSjc(25450),
+    fetchGoldSjc(usdVndRate),
     fetchBtc(),
-    fetchSilver(25450),
+    fetchSilver(usdVndRate),
     fetchNews(),
-    fetchMultiBrandGold(),
-    fetchExchangeRate()
+    fetchMultiBrandGold()
   ])
-
-  const usdVndRate = usdVnd?.rate ?? 25450
-
-  // Optional: refine gold prices if we got a real exchange rate
-  const goldSjc = goldSjcData ? {
-    ...goldSjcData,
-    goldUsd: Math.round((goldSjcData.goldVnd / usdVndRate / (37.5 / 31.1035)) * 100) / 100
-  } : null
 
   const snapshot: MarketSnapshot = {
     fetchedAt,

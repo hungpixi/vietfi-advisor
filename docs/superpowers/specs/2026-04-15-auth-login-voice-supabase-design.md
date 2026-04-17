@@ -14,7 +14,7 @@
 
 ### Components
 - `src/app/(auth)/login/page.tsx` - Login page
-- `src/app/(auth)/register/page.tsx` - Register page  
+- `src/app/(auth)/register/page.tsx` - Register page
 - `src/app/(auth)/layout.tsx` - Auth layout wrapper
 - `src/components/auth/LoginForm.tsx` - Login form component
 - `src/components/auth/RegisterForm.tsx` - Register form component

@@ -59,7 +59,7 @@ test.describe("Onboarding Wizard", () => {
     await expect(page.getByText("Thị trường giảm 20%")).toBeVisible({ timeout: 5_000 });
   });
 
-  test("should dismiss wizard via Escape key", async ({ page }) => {
+  test("should dismiss wizard via Escape key", async () => {
     // Skip: the onboarding wizard is rendered inline on the dashboard (not as a
     // fixed overlay), and does not implement Escape key dismissal.
     test.skip(true, "Wizard is inline on dashboard; Escape key does not dismiss it");

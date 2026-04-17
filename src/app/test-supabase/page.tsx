@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/utils/supabase'
 
 export default function TestSupabasePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,6 +8,12 @@ export default function TestSupabasePage() {
 
     useEffect(() => {
         async function getTodos() {
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+                setTodos([{ id: 'missing-env', name: 'Missing Supabase public env vars' }])
+                return
+            }
+
+            const { supabase } = await import('@/utils/supabase')
             const { data: todos, error } = await supabase.from('todos').select()
 
             if (error) {

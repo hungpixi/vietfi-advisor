@@ -322,7 +322,7 @@ export default function LearnPage() {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <CyberCard className="p-8" variant={answered ? (selected === activeLesson.quiz.correct ? "success" : "danger") : "default"}>
+              <CyberCard className="p-8" variant={answered ? (selected === activeLesson.quiz.correct ? "success" : "danger") : "neutral"}>
                 <div className="flex items-center gap-2 mb-6">
                   <div className="px-3 py-1 bg-[#22C55E]/10 border border-[#22C55E]/20 rounded text-[9px] font-black text-[#22C55E] uppercase tracking-widest">PHÂN TÍCH QUAN ĐIỂM</div>
                 </div>

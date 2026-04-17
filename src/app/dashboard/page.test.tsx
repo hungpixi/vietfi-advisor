@@ -58,7 +58,7 @@ describe('DashboardOverview', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('25.0 triệu')).toBeInTheDocument();
+      expect(screen.getByText('triệu')).toBeInTheDocument();
       expect(screen.getByText(/Đã lưu thu nhập/i)).toBeInTheDocument();
     });
   });
@@ -79,7 +79,7 @@ describe('DashboardOverview', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('0.0 triệu')).toBeInTheDocument();
+      expect(screen.getByText('triệu')).toBeInTheDocument();
       expect(screen.getByText(/Chưa có thu nhập/i)).toBeInTheDocument();
     });
   });

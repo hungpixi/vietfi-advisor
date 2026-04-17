@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Minus, Filter, ExternalLink, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { getNewsBookmarks, setNewsBookmarks } from "@/lib/storage";
 import { CyberCard } from "@/components/ui/CyberCard";
@@ -131,7 +131,7 @@ export default function NewsPage() {
     () => {
       if (filter === "Tất cả") return items;
       if (filter === "📌 Đã lưu") return items.filter(n => bookmarks.has(n.id));
-      return items.filter((n) => n.asset === f.replace("📌 ", ""));
+      return items.filter((n) => n.asset === filter.replace("📌 ", ""));
     },
     [filter, items, bookmarks],
   );
@@ -194,7 +194,7 @@ export default function NewsPage() {
             <motion.div key={news.id} variants={fadeIn}>
               <CyberCard
                 className="group"
-                variant={news.sentiment === "bullish" ? "success" : news.sentiment === "bearish" ? "danger" : "default"}
+                variant={news.sentiment === "bullish" ? "success" : news.sentiment === "bearish" ? "danger" : "neutral"}
               >
                 <div
                   className="p-5 flex items-start gap-4 cursor-pointer"

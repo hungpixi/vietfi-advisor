@@ -8,6 +8,13 @@ interface CyberTypographyProps extends React.HTMLAttributes<HTMLElement> {
     size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "display";
 }
 
+type CyberTypographySize = NonNullable<CyberTypographyProps["size"]>;
+
+interface CyberShortcutProps extends Omit<CyberTypographyProps, "as" | "variant"> {
+    color?: string;
+    size?: CyberTypographySize;
+}
+
 export function CyberTypography({
     as: Component = "span",
     variant = "heading",
@@ -41,19 +48,19 @@ export function CyberTypography({
 }
 
 // Shortcut components for common specific styles from the spec
-export const CyberHeader = ({ children, className, size = "display", ...props }: any) => (
+export const CyberHeader = ({ children, className, size = "display", ...props }: CyberShortcutProps) => (
     <CyberTypography as="h2" size={size} className={cn("text-white", className)} {...props}>
         {children}
     </CyberTypography>
 );
 
-export const CyberMetric = ({ children, className, size = "2xl", color = "text-white", ...props }: any) => (
+export const CyberMetric = ({ children, className, size = "2xl", color = "text-white", ...props }: CyberShortcutProps) => (
     <CyberTypography size={size} className={cn(color, className)} {...props}>
         {children}
     </CyberTypography>
 );
 
-export const CyberSubHeader = ({ children, className, size = "xs", color = "text-white/40", ...props }: any) => (
+export const CyberSubHeader = ({ children, className, size = "xs", color = "text-white/40", ...props }: CyberShortcutProps) => (
     <CyberTypography variant="mono" size={size} className={cn(color, className)} {...props}>
         {children}
     </CyberTypography>

@@ -34,7 +34,13 @@ vi.mock('@/lib/news/crawler', () => ({
 }))
 
 vi.mock('@/lib/gemini-batch', () => ({
-  generateMorningBrief: vi.fn(async () => 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.'),
+  generateMorningBrief: vi.fn(async () => ({
+    summary: 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.',
+    takeaways: [
+      { emoji: '🟢', asset: 'Chứng khoán', text: 'VN-Index dưới 1000' },
+      { emoji: '🟡', asset: 'Vàng', text: 'Giá vàng đi ngang' },
+    ],
+  })),
 }))
 
 import { buildMorningBrief, getMorningBriefCached, refreshMorningBriefCache, resetMorningBriefCache } from './morning-brief'

@@ -1,12 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getMarketDataResponse, resetMarketDataCache } from './route'
 import type { MarketSnapshot } from '@/lib/market-data/crawler'
+import * as cronCache from '@/lib/cron-cache'
+
+vi.mock('@/lib/cron-cache', () => ({
+  readCronCache: vi.fn(),
+  writeCronCache: vi.fn(),
+}))
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('getMarketDataResponse', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.spyOn(cronCache, 'readCronCache').mockResolvedValue(null)
+    vi.spyOn(cronCache, 'writeCronCache').mockResolvedValue(true)
     resetMarketDataCache() // clear in-memory cache between tests
   })
 
@@ -132,5 +140,35 @@ describe('getMarketDataResponse', () => {
     expect(response.status).toBe(200)
     expect(body.vnIndex).toBeNull()
     expect(body.goldSjc.goldVnd).toBe(75000000)
+  })
+
+  it('returns persisted snapshot when supabase cache is fresh', async () => {
+    const persistedSnapshot: MarketSnapshot = {
+      fetchedAt: '2026-03-21T08:30:00.000Z',
+      vnIndex: { price: 1111, change: 1, changePct: 0.1, volume: '0', source: 'persisted' },
+      goldSjc: { goldUsd: 3000, goldVnd: 70000000, changePct: 0.5, source: 'persisted' },
+      usdVnd: { rate: 25000, source: 'persisted' },
+      macro: {
+        gdpYoY: [{ period: '2025', value: 8.02 }],
+        cpiYoY: [{ period: '2025', value: 3.31 }],
+        deposit12m: { min: 5.2, max: 7.2, source: 'CafeF' },
+      },
+      btc: null,
+      aiSummary: null,
+      silver: null,
+      news: [],
+    }
+
+    vi.spyOn(cronCache, 'readCronCache').mockResolvedValue({
+      payload: persistedSnapshot,
+      fetchedAt: Date.now(),
+    })
+
+    const response = await getMarketDataResponse(() => Promise.reject(new Error('should not crawl')))
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.stale).toBe(false)
+    expect(body.vnIndex.price).toBe(1111)
   })
 })

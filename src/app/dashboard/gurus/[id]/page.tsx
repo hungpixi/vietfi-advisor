@@ -73,7 +73,7 @@ export default function GuruDetailPage() {
           <p className="text-emerald-400 font-medium mb-2">{guru.title}</p>
           <p className="text-sm text-gray-400 italic">&quot;{guru.philosophy}&quot;</p>
         </div>
-        
+
         <div className="flex gap-4 relative z-10">
           <div className="text-center">
             <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Win Rate</div>
@@ -96,7 +96,7 @@ export default function GuruDetailPage() {
             className="bg-[#111] border border-[#333] rounded-2xl p-8 text-center relative overflow-hidden"
           >
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-            
+
             <Lock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-3">Watchlist Đang Khóa</h2>
             <p className="text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed">
@@ -114,7 +114,7 @@ export default function GuruDetailPage() {
                 </span>
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
               </button>
-              
+
               <div className="text-sm text-gray-500 flex items-center gap-1.5">
                 <Coffee size={14} className="text-[#E6B84F]" />
                 Bạn đang có: <span className="font-bold text-white">{Math.floor(userXp / 100)} Cà phê ({(userXp)} XP)</span>
@@ -152,7 +152,7 @@ export default function GuruDetailPage() {
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#111', borderColor: '#333' }}
                       itemStyle={{ color: '#10b981' }}
                     />

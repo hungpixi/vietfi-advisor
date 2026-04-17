@@ -140,13 +140,13 @@ for i, item in enumerate(responses):
     text = item["ttsText"]
     out_wav = OUTPUT_DIR / f"{id}.wav"
     out_mp3 = OUTPUT_DIR / f"{id}.mp3"
-    
+
     # Skip nếu đã có mp3 và không force
     if out_mp3.exists() and not args.force:
         print(f"   ⏭ Skip (cached): {out_mp3.name}")
         skipped += 1
         continue
-    
+
     try:
         print(f"   🎤 [{i+1}/{len(responses)}] {id}: {text[:55]}...")
         audio = tts.infer(text=text, **voice_kwargs)

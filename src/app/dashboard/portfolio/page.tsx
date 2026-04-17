@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, Clock, Shield } from "lucide-react";
+import { PieChart as PieChartIcon, Sparkles, TrendingUp, Calculator, RefreshCw, Brain, Clock, Shield, ArrowRight } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
@@ -21,6 +21,27 @@ interface MarketData {
   usdVnd?: { rate: number };
   macro?: { cpiYoY?: { value: number }[]; deposit12m?: { min: number; max: number } };
   sentimentScore?: number;
+}
+
+interface BacktestHistoryPoint {
+  year: string;
+  portfolioValue: number;
+}
+
+interface BacktestData {
+  history: BacktestHistoryPoint[];
+  currentValue: number;
+}
+
+interface ProjectionPoint {
+  year: string;
+  pessimistic: number;
+  base: number;
+  optimistic: number;
+}
+
+interface ProjectionData {
+  data?: ProjectionPoint[];
 }
 
 const riskLabels: Record<string, string> = {
@@ -57,10 +78,8 @@ export default function PortfolioPage() {
   const [riskType, setRiskType] = useState("balanced");
   const [hasRiskDNA, setHasRiskDNA] = useState(false);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [backtestData, setBacktestData] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [projectionData, setProjectionData] = useState<any>(null);
+  const [backtestData, setBacktestData] = useState<BacktestData | null>(null);
+  const [projectionData, setProjectionData] = useState<ProjectionData | null>(null);
   const [userContext, setUserContext] = useState<string>("");
 
   useEffect(() => {
@@ -317,7 +336,7 @@ export default function PortfolioPage() {
           </p>
           <div className="h-64 mb-6">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={backtestData?.history.filter((_: any, i: number) => i % 12 === 0).map((d: any) => ({
+              <AreaChart data={backtestData?.history.filter((_, i) => i % 12 === 0).map((d) => ({
                 year: d.year,
                 value: Math.round(d.portfolioValue / 1000000),
               })) || []}>
@@ -326,7 +345,7 @@ export default function PortfolioPage() {
                 <YAxis hide />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  formatter={(v: any) => `${formatVND(v)}`}
+                  formatter={(v) => `${formatVND(Number(v))}`}
                 />
                 <Area type="monotone" dataKey="value" stroke="#22C55E" fill="#22C55E" fillOpacity={0.05} strokeWidth={3} />
               </AreaChart>
@@ -369,7 +388,7 @@ export default function PortfolioPage() {
                 <YAxis hide />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#08110f', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  formatter={(v: any) => `${formatVND(v)}`}
+                  formatter={(v) => `${formatVND(Number(v))}`}
                 />
                 <Area type="monotone" dataKey="optimistic" stroke="#22C55E" fill="#22C55E" fillOpacity={0.03} strokeWidth={1.5} />
                 <Area type="monotone" dataKey="base" stroke="#E6B84F" fill="#E6B84F" fillOpacity={0.08} strokeWidth={2.5} />

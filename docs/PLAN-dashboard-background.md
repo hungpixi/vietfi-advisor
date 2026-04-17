@@ -12,7 +12,7 @@ Mục tiêu: Thay thế background hiện tại của Dashboard sang phong cách
 
 ### [Component] CyberBackground
 - [x] **Base Layer**: Màu `#050A09` (Deep Slate/Black) với hiệu ứng Vignette ở các góc.
-- [x] **Data Layer**: 
+- [x] **Data Layer**:
     - Các đường kẻ cực mảnh (0.5px) màu Emerald mờ.
     - Một lớp "Digital Mist" hoặc "Data Flow" chuyển động chậm (Slow-motion SVG stream).
 - [x] **Overlay**: Phủ một lớp hạt (noise/grain) cực nhẹ để tăng cảm giác vật liệu kỹ thuật.

@@ -27,6 +27,7 @@ export const XP_TABLE: Record<string, number> = {
   read_knowledge: 5,
   customize_cpi: 15,
   complete_onboarding: 50,
+  run_backtest: 30,       // Backtest Pro: thưởng XP mỗi lần chạy
 };
 
 /* ─── Levels ─── */

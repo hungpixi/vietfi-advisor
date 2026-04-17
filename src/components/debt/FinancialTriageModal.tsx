@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  AlertTriangle, 
   ShieldAlert, 
   X, 
   Activity, 

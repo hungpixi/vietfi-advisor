@@ -3,19 +3,21 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 
+const DATA_STREAMS = Array.from({ length: 8 }).map((_, i) => ({
+    id: i,
+    x: (i * 13 + 7) % 100,
+    y: (i * 23 + 11) % 100,
+    width: 0.5 + (i % 3) * 0.35,
+    length: 12 + (i % 5) * 7,
+    duration: 16 + (i % 6) * 4,
+    delay: (i % 5) * 1.7,
+    opacity: 0.03 + (i % 4) * 0.012,
+}));
+
 export const CyberBackground = () => {
     // Generate random data streams for the SVG layer
     const streams = useMemo(() => {
-        return Array.from({ length: 8 }).map((_, i) => ({
-            id: i,
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            width: 0.5 + Math.random() * 1,
-            length: 10 + Math.random() * 40,
-            duration: 15 + Math.random() * 25,
-            delay: Math.random() * 10,
-            opacity: 0.03 + Math.random() * 0.05,
-        }));
+        return DATA_STREAMS;
     }, []);
 
     return (

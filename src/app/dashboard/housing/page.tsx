@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   MapPin, Building2, Banknote,
   Clock, HelpCircle,
-  ArrowRight,
+  ArrowRight, Scale,
 } from "lucide-react";
 import Link from "next/link";
 import {

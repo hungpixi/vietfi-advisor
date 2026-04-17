@@ -5,7 +5,7 @@ import { ArrowRight, ArrowLeft, Check, Wallet, CreditCard, Brain, X, Sparkles } 
 import { useState, useEffect } from "react";
 import { completeOnboarding, generateBudgetPots } from "@/lib/onboarding-state";
 import { getCachedUserId, saveBudgetPots, saveIncome } from "@/lib/supabase/user-data";
-import { setBudgetPots, setExpenses, setIncome, setDebts } from "@/lib/storage";
+import { setBudgetPots, setExpenses, setIncome as setIncomeStorage, setDebts } from "@/lib/storage";
 
 interface QuickSetupProps {
   onComplete: () => void;
@@ -218,7 +218,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     // Use user-adjusted pots if available, otherwise fallback
     const finalPots = pots.length && allocationValid ? pots : generateBudgetPots(finalIncome);
     setBudgetPots(finalPots);
-    setIncome(finalIncome);
+    setIncomeStorage(finalIncome);
     setExpenses([]);
 
     // Clear demo debts if no debt

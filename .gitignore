@@ -1,9 +1,6 @@
 # Git worktrees
 /.worktrees/
 
-# Submodules
-vietfi-appwrite/
-
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -42,7 +39,7 @@ yarn-error.log*
 .env.development
 .env.test
 .env.production
-.env.example
+!.env.example
 
 # vercel
 .vercel
@@ -80,4 +77,8 @@ context.md
 context.md
 .vercel
 .env*.local
+
+# Market data cache (sync bởi scripts/sync_market_data.py)
+# Chạy: python scripts/sync_market_data.py để tạo lại
+/public/data/ohlcv/
 .osgrep

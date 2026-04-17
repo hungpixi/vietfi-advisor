@@ -15,7 +15,7 @@ jobs:
         run: |
           curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/morning-brief \
           -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-          
+
       - name: Trigger Market Data
         if: github.event.schedule == '30 8 * * 1-5'
         run: |

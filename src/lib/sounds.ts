@@ -7,7 +7,7 @@
  * Usage: import { playPop, playDing, playCoin } from "@/lib/sounds";
  */
 
-import { getSoundMuted as storageIsMuted, setSoundMuted } from "@/lib/storage";
+import { getSoundMuted as storageIsMuted } from "@/lib/storage";
 
 let audioCtx: AudioContext | null = null;
 
