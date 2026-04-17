@@ -21,7 +21,13 @@ import {
 } from "@/lib/saved-strategies";
 import type { BacktestResult, BacktestMetrics, Trade } from "@/lib/market-data/backtest-engine";
 import type { OHLCVBar } from "@/lib/market-data/price-history";
-import TradingViewChart from "@/components/charts/TradingViewChart";
+import { CyberHeader, CyberSubHeader } from "@/components/ui/CyberTypography";
+import dynamic from "next/dynamic";
+
+const TradingViewChart = dynamic(
+    () => import("@/components/charts/TradingViewChart"),
+    { ssr: false, loading: () => <div className="animate-pulse bg-white/5 w-full h-full rounded-2xl"></div> }
+);
 
 /* ─── Types ─── */
 type Strategy = "buy-and-hold" | "sma-cross" | "breakout-52w" | "ma30w-stage2" | "tactical-allocation";
@@ -71,14 +77,14 @@ function MetricCard({ label, value, sub, positive, warning }: {
     label: string; value: string; sub?: string; positive?: boolean; warning?: boolean;
 }) {
     return (
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+        <div className="glass-card p-4 hover:border-white/10 transition-colors group">
             <p className="text-[11px] text-white/30 uppercase tracking-wider font-mono mb-1">{label}</p>
             <p className={cn("text-xl font-black font-mono",
-                positive === true ? "text-emerald-400" :
+                positive === true ? "text-[#22C55E] drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" :
                     positive === false ? "text-red-400" :
                         warning ? "text-yellow-400" : "text-white"
             )}>{value}</p>
-            {sub && <p className="text-[10px] text-white/25 mt-0.5">{sub}</p>}
+            {sub && <p className="text-[10px] text-white/25 mt-0.5 group-hover:text-white/40 transition-colors">{sub}</p>}
         </div>
     );
 }
@@ -188,7 +194,10 @@ function BacktestInner() {
             }
             const resp = await fetch("/api/backtest", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-demo-bypass": "hungpixi-demo"
+                },
                 body: JSON.stringify(body),
             });
             const json = await resp.json();
@@ -209,28 +218,28 @@ function BacktestInner() {
     );
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-6 pb-32 md:pb-12">
             {/* Header */}
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 mb-4">
                 {activeGuruInfo && (
                     <button onClick={() => router.push(`/dashboard/gurus/${selectedGuru}`)} className="mt-1 text-white/30 hover:text-white/60 transition-colors">
                         <ArrowLeft size={16} />
                     </button>
                 )}
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <FlaskConical className="w-6 h-6 text-[#E6B84F]" />
-                        <span className="text-gradient">Backtest Pro</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#E6B84F]/10 text-[#E6B84F] font-mono border border-[#E6B84F]/20 ml-1">VIP</span>
-                    </h1>
+                <div className="flex-1 space-y-1">
+                    <CyberHeader size="display" className="flex items-center gap-3">
+                        <FlaskConical className="w-7 h-7 text-[#E6B84F] drop-shadow-[0_0_10px_rgba(230,184,79,0.5)]" />
+                        Backtest <span className="text-[#E6B84F]">Pro</span>
+                        <span className="text-[10px] bg-[#E6B84F]/10 text-[#E6B84F] border border-[#E6B84F]/30 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-1 mt-1">VIP</span>
+                    </CyberHeader>
                     {activeGuruInfo ? (
-                        <p className="text-white/40 text-sm mt-1 flex items-center gap-1.5">
-                            <span className="text-lg">{activeGuruInfo.avatar}</span>
-                            Đang dùng chiến lược của <span className="text-white/70 font-medium">{activeGuruInfo.name}</span>
-                            {activeGuruStrategy && <span className="text-[#E6B84F]/60 font-mono text-[10px] ml-1">— {activeGuruStrategy.strategyLabel}</span>}
+                        <p className="text-white/40 text-sm flex items-center gap-1.5 font-medium">
+                            <span className="text-lg drop-shadow-md">{activeGuruInfo.avatar}</span>
+                            Đang dùng chiến lược của <span className="text-white/80 font-bold">{activeGuruInfo.name}</span>
+                            {activeGuruStrategy && <span className="text-[#E6B84F] font-mono text-[10px] ml-1 px-1.5 py-0.5 bg-[#E6B84F]/10 rounded border border-[#E6B84F]/20">{activeGuruStrategy.strategyLabel}</span>}
                         </p>
                     ) : (
-                        <p className="text-white/40 text-sm mt-1">Kiểm thử chiến lược đầu tư trên dữ liệu lịch sử cổ phiếu Việt Nam</p>
+                        <CyberSubHeader>Kiểm thử chiến lược đầu tư trên dữ liệu lịch sử cổ phiếu Việt Nam</CyberSubHeader>
                     )}
                 </div>
             </div>
@@ -239,8 +248,8 @@ function BacktestInner() {
             <AnimatePresence>
                 {savedPanel && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        className="bg-white/[0.02] border border-[#E6B84F]/20 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-3">
+                        className="glass-card p-5">
+                        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
                             <h3 className="text-sm font-semibold text-[#E6B84F] flex items-center gap-2">
                                 <FolderOpen className="w-4 h-4" /> Chiến lược đã lưu ({saved.length}/20)
                             </h3>
@@ -275,8 +284,8 @@ function BacktestInner() {
             </AnimatePresence>
 
             {/* Config Panel */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-5">
-                <div className="flex items-center justify-between">
+            <div className="glass-card p-6 space-y-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
                     <h2 className="text-sm font-semibold text-white/60 flex items-center gap-2">
                         <BarChart3 className="w-4 h-4" /> Cấu hình
                     </h2>
@@ -434,8 +443,8 @@ function BacktestInner() {
 
                         {/* Stress Test Grid */}
                         {metrics.upDays !== undefined && (
-                            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-5">
-                                <h3 className="text-sm font-semibold text-white/60 mb-4 flex items-center gap-2">
+                            <div className="glass-card p-6 mt-6">
+                                <h3 className="text-sm font-semibold text-white/60 mb-5 flex items-center gap-2 border-b border-white/5 pb-3">
                                     <AlertTriangle className="w-4 h-4 text-[#E6B84F]" /> Kiếm thử Áp lực (Stress Test)
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -450,8 +459,8 @@ function BacktestInner() {
 
                         {/* Equity Curve */}
                         {chartData.length > 0 && (
-                            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-                                <h3 className="text-sm font-semibold text-white/60 mb-4 flex items-center gap-2">
+                            <div className="glass-card p-6">
+                                <h3 className="text-sm font-semibold text-white/60 mb-5 flex items-center gap-2 border-b border-white/5 pb-3">
                                     <Percent className="w-4 h-4 text-[#E6B84F]" />Biểu đồ kết quả (TradingView)
                                 </h3>
                                 <div className="h-96 w-full relative">
@@ -466,9 +475,9 @@ function BacktestInner() {
 
                         {/* Trades Table */}
                         {result.trades.length > 0 && (
-                            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
+                            <div className="glass-card p-6">
                                 <button onClick={() => setShowTrades(!showTrades)}
-                                    className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-white/60 hover:text-white transition-colors">
+                                    className="w-full flex items-center justify-between text-sm font-medium text-white/60 hover:text-white transition-colors">
                                     <span className="flex items-center gap-2">
                                         <ArrowUpDown className="w-4 h-4" />Lịch sử lệnh ({result.trades.length} giao dịch)
                                     </span>

@@ -50,8 +50,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0A0A0F]">
-      <div className="absolute inset-0 pointer-events-none">
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 py-8 relative overflow-x-hidden overflow-y-auto bg-[#0A0A0F] scrollbar-hide">
+      <div className="absolute inset-0 pointer-events-none fixed">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,#FFD700_0%,transparent_65%)] opacity-[0.04]" />
         <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,#00E5FF_0%,transparent_70%)] opacity-[0.03]" />
       </div>

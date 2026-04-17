@@ -37,7 +37,7 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
       ).reduce((sum, p) => sum + p.allocated, 0);
       setEssentialExpense(essentials > 0 ? essentials : pots.reduce((sum, p) => sum + p.allocated, 0) * 0.5);
       const debts = getDebts();
-      const minD = debts.reduce((sum, d) => sum + d.min_payment, 0);
+      const minD = debts.reduce((sum, d) => sum + (d.minPayment ?? 0), 0);
       setDebtMin(minD);
     }, 0);
     return () => window.clearTimeout(timer);
