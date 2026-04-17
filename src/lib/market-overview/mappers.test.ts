@@ -19,7 +19,7 @@ const marketSnapshot = {
         deposit12m: { min: 5.2, max: 7.2, source: "CafeF" },
     },
     aiSummary: "VN-Index yếu nhưng vàng và BTC vẫn giữ nhịp.",
-} as const;
+};
 
 const newsPayload = {
     metrics: {
@@ -34,7 +34,7 @@ const newsPayload = {
             { asset: "Vàng", score: 74, trend: "up", news: "Vàng lập đỉnh ngắn hạn" },
         ],
     },
-} as const;
+};
 
 describe("market-overview mappers", () => {
     it("buildSentimentSnapshot derives zone and asset mood cards", () => {

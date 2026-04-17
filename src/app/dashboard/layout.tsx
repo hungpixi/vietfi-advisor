@@ -81,6 +81,7 @@ const navGroups = [
       },
       { href: "/dashboard/screener", label: "Lọc cổ phiếu", icon: Search },
       { href: "/dashboard/news", label: "Tin tức AI", icon: Newspaper },
+      { href: "/dashboard/backtest", label: "Backtest Pro", icon: LineChart },
     ],
   },
   {

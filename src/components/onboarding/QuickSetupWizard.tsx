@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { completeOnboarding, generateBudgetPots } from "@/lib/onboarding-state";
 import { getCachedUserId, saveBudgetPots, saveIncome } from "@/lib/supabase/user-data";
 import { setBudgetPots, setExpenses, setIncome as setIncomeStorage, setDebts } from "@/lib/storage";
+import type { BudgetPot } from "@/lib/domain/personal-finance/types";
 
 interface QuickSetupProps {
   onComplete: () => void;
@@ -54,13 +55,7 @@ function formatVND(n: number) {
   return n.toString();
 }
 
-interface BudgetPot {
-  id: string;
-  name: string;
-  iconKey: string;
-  allocated: number;
-  color: string;
-}
+// Sử dụng import type { BudgetPot } từ domain layer
 
 const FAST_STEP = 100000; // 0.1tr
 
@@ -228,8 +223,8 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
 
     // Background sync to Supabase if logged in
     if (getCachedUserId()) {
-      saveBudgetPots(finalPots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => {});
-      saveIncome(finalIncome).catch(() => {});
+      saveBudgetPots(finalPots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => { });
+      saveIncome(finalIncome).catch(() => { });
     }
 
     setStep(3); // Show celebration
@@ -291,11 +286,10 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   <button
                     key={chip.value}
                     onClick={() => handleIncomeChip(chip.value)}
-                    className={`py-2.5 px-3 text-xs rounded-lg border transition-all ${
-                      income === chip.value
-                        ? "bg-[#E6B84F]/15 text-[#E6B84F] border-[#E6B84F]/30 shadow-[0_0_12px_rgba(230,184,79,0.1)]"
-                        : "bg-white/[0.03] text-white/40 border-white/[0.06] hover:border-white/10"
-                    }`}
+                    className={`py-2.5 px-3 text-xs rounded-lg border transition-all ${income === chip.value
+                      ? "bg-[#E6B84F]/15 text-[#E6B84F] border-[#E6B84F]/30 shadow-[0_0_12px_rgba(230,184,79,0.1)]"
+                      : "bg-white/[0.03] text-white/40 border-white/[0.06] hover:border-white/10"
+                      }`}
                   >
                     {chip.label}
                   </button>
@@ -459,22 +453,20 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
               <div className="grid grid-cols-2 gap-3 mb-5">
                 <button
                   onClick={() => setHasDebt(true)}
-                  className={`py-6 rounded-lg border text-center transition-all ${
-                    hasDebt === true
-                      ? "bg-[#EF4444]/10 border-[#EF4444]/30 text-[#EF4444]"
-                      : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/10"
-                  }`}
+                  className={`py-6 rounded-lg border text-center transition-all ${hasDebt === true
+                    ? "bg-[#EF4444]/10 border-[#EF4444]/30 text-[#EF4444]"
+                    : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/10"
+                    }`}
                 >
                   <div className="text-2xl mb-1">😰</div>
                   <span className="text-xs font-medium">Có, đang nợ</span>
                 </button>
                 <button
                   onClick={() => setHasDebt(false)}
-                  className={`py-6 rounded-lg border text-center transition-all ${
-                    hasDebt === false
-                      ? "bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]"
-                      : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/10"
-                  }`}
+                  className={`py-6 rounded-lg border text-center transition-all ${hasDebt === false
+                    ? "bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]"
+                    : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/10"
+                    }`}
                 >
                   <div className="text-2xl mb-1">🎉</div>
                   <span className="text-xs font-medium">Không, sạch nợ!</span>
@@ -544,11 +536,10 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                             newAnswers[qi] = opt.score;
                             setRiskAnswers(newAnswers);
                           }}
-                          className={`w-full text-left px-3 py-2 text-[11px] rounded-lg border transition-all ${
-                            riskAnswers[qi] === opt.score
-                              ? "bg-[#AB47BC]/10 border-[#AB47BC]/30 text-[#AB47BC]"
-                              : "bg-white/[0.02] border-white/[0.04] text-white/40 hover:border-white/10"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-[11px] rounded-lg border transition-all ${riskAnswers[qi] === opt.score
+                            ? "bg-[#AB47BC]/10 border-[#AB47BC]/30 text-[#AB47BC]"
+                            : "bg-white/[0.02] border-white/[0.04] text-white/40 hover:border-white/10"
+                            }`}
                         >
                           {opt.label}
                         </button>
@@ -570,8 +561,8 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                       {riskAnswers.reduce((s, a) => s + a, 0) <= 2
                         ? "🛡️ Bảo thủ"
                         : riskAnswers.reduce((s, a) => s + a, 0) <= 4
-                        ? "⚖️ Cân bằng"
-                        : "🚀 Tăng trưởng"}
+                          ? "⚖️ Cân bằng"
+                          : "🚀 Tăng trưởng"}
                     </strong>
                   </span>
                 </motion.div>

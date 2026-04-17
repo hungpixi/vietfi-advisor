@@ -47,7 +47,7 @@ function buildPersonalizedAlert() {
     const debts = getDebts();
     const risk = getRiskResult();
     const essentials = pots.reduce((sum, pot) => sum + (pot.allocated ?? 0), 0);
-    const debtMin = debts.reduce((sum, debt) => sum + (debt.min_payment ?? 0), 0);
+    const debtMin = debts.reduce((sum, debt) => sum + (debt.minPayment ?? 0), 0);
     const freeCashflow = income - essentials - debtMin;
 
     if (freeCashflow < 0) return { type: "danger" as const, icon: "🚨", msg: "Dòng tiền âm. Đừng cố đầu tư hăng hơn thị trường." };

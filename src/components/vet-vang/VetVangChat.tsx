@@ -62,7 +62,7 @@ function getUserDataContext(personaMode: PersonaMode): string {
     }
 
     if (income > 0) {
-      const debtMin = debts.reduce((sum, d) => sum + d.min_payment, 0);
+      const debtMin = debts.reduce((sum, d) => sum + (d.minPayment ?? 0), 0);
       const freeCashflow = income - essentialExpense - debtMin;
       parts.push(`Dư địa đầu tư/tháng (Free Cashflow): ${freeCashflow.toLocaleString("vi-VN")}đ.`);
       if (freeCashflow < 0) {
@@ -81,7 +81,7 @@ function getUserDataContext(personaMode: PersonaMode): string {
         type: (d.type as "personal" | "credit_card" | "mortgage" | "bnpl" | "loan_shark") || "personal",
         principal: d.principal,
         rate: d.rate,
-        minPayment: d.min_payment,
+        minPayment: d.minPayment ?? 0,
       }));
       const dti = analyzeDTI(mappedDebts, income || 1); // fallback income=1 to avoid Infinity
       const debtList = debts.map(d => `${d.name}: lố ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.rate}%/năm`).join("; ");
@@ -467,9 +467,9 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-24 right-6 w-[380px] h-[520px] z-50 flex flex-col rounded-2xl overflow-hidden"
+          className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 w-full h-full md:w-[380px] md:h-[520px] z-[100] flex flex-col md:rounded-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(145deg, rgba(17,19,24,0.98) 0%, rgba(10,11,15,0.99) 100%)",
+            background: "linear-gradient(145deg, rgba(17,19,24,1) 0%, rgba(10,11,15,1) 100%)",
             border: "1px solid rgba(230,184,79,0.15)",
             boxShadow: "0 0 60px rgba(230,184,79,0.08), 0 20px 60px rgba(0,0,0,0.5)",
           }}

@@ -12,6 +12,7 @@
 
 import * as cheerio from 'cheerio'
 import { callGemini } from '@/lib/gemini'
+import { createClient } from '@/lib/supabase/server'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,19 +82,38 @@ export interface MarketSnapshot {
   aiSummary?: string | null
 }
 
-export function getMacroData(): MacroData {
-  return {
-    gdpYoY: [
-      { period: '2025', value: 8.02 },
-      { period: '2024', value: 7.09 },
-      { period: '2023', value: 5.05 },
-      { period: 'Q4/2025', value: 8.46 },
-    ],
-    cpiYoY: [
-      { period: '2025', value: 3.31 },
-      { period: 'Feb 2026', value: 3.35 },
-    ],
-    deposit12m: { min: 5.2, max: 7.2, source: 'CafeF (ước tính)' },
+const FALLBACK_MACRO: MacroData = {
+  gdpYoY: [
+    { period: '2025', value: 8.02 },
+    { period: '2024', value: 7.09 },
+    { period: '2023', value: 5.05 },
+    { period: 'Q4/2025', value: 8.46 },
+  ],
+  cpiYoY: [
+    { period: '2025', value: 3.31 },
+    { period: 'Feb 2026', value: 3.35 },
+  ],
+  deposit12m: { min: 5.2, max: 7.2, source: 'CafeF (ước tính)' },
+}
+
+export async function getMacroData(): Promise<MacroData> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'macro_data')
+      .single()
+
+    if (error || !data) {
+      console.warn('Failed to fetch macro_data from settings:', error)
+      return FALLBACK_MACRO
+    }
+
+    return data.value as MacroData
+  } catch (err) {
+    console.error('getMacroData error:', err)
+    return FALLBACK_MACRO
   }
 }
 
@@ -237,7 +257,8 @@ export async function fetchGoldSjc(usdVndRate: number): Promise<GoldData | null>
 
   const tryDoji = async () => {
     try {
-      const dojiXml = await fetchWithCache('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
+      const apiKey = process.env.DOJI_API_KEY || '258fbd2a72ce8481089d88c678e9fe4f'
+      const dojiXml = await fetchWithCache(`https://giavang.doji.vn/api/giavang/?api_key=${apiKey}`, {
         headers: { 'User-Agent': 'Mozilla/5.0' }
       }).then(r => r.text())
       const m = dojiXml.match(/<Row Name="SJC.*?" .*?Sell="(.*?)"/i)
@@ -267,7 +288,7 @@ export async function fetchSilver(usdVndRate: number): Promise<SilverData | null
     const json = await resp.json() as Record<string, unknown>
     const chart = json.chart as Record<string, unknown> | undefined
     const result = Array.isArray(chart?.result) ? (chart.result[0] as Record<string, unknown>) : undefined
-    
+
     if (!result || !result.meta) return null
     const meta = result.meta as Record<string, unknown>
 
@@ -376,20 +397,21 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
 
   // 1. Fetch DOJI XML
   try {
-    const dojiXml = await fetchWithCache('https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f', {
+    const apiKey = process.env.DOJI_API_KEY || '258fbd2a72ce8481089d88c678e9fe4f'
+    const dojiXml = await fetchWithCache(`https://giavang.doji.vn/api/giavang/?api_key=${apiKey}`, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       next: { revalidate: 600 }
     }).then(r => r.text())
-    
+
     let dojiSjcBuy = 0, dojiSjcSell = 0
     let dojiRingBuy = 0, dojiRingSell = 0
-    
+
     const matches = [...dojiXml.matchAll(/<Row Name="(.*?)" .*?Buy="(.*?)" Sell="(.*?)"/g)]
     for (const m of matches) {
       const name = m[1]
       const buy = parseFloat(m[2].replace(/,/g, '')) * 1000000
       const sell = parseFloat(m[3].replace(/,/g, '')) * 1000000
-      
+
       if (name.includes('SJC') && dojiSjcBuy === 0 && buy > 10000000) {
         dojiSjcBuy = buy; dojiSjcSell = sell
       }
@@ -399,7 +421,7 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
     }
     if (dojiSjcBuy > 0) brands['DOJI_SJC'] = { buy: dojiSjcBuy, sell: dojiSjcSell }
     if (dojiRingBuy > 0) brands['DOJI_NHAN'] = { buy: dojiRingBuy, sell: dojiRingSell }
-  } catch {}
+  } catch { }
 
   // 2. Fetch from webgia.com (BTMC, PNJ, Mi Hong)
   const fetchWebgia = async (brandCode: string, urlId: string) => {
@@ -408,27 +430,27 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
         headers: { 'User-Agent': 'Mozilla/5.0' },
         next: { revalidate: 600 }
       }).then(r => r.text())
-      
+
       const $ = cheerio.load(html)
       let ringBuy = 0, ringSell = 0
       let sjcBuy = 0, sjcSell = 0
-      
+
       $('table tbody tr').each((_, el) => {
         const name = $(el).find('td').first().text().trim().toLowerCase()
         const buyStr = $(el).find('td').eq(1).text().replace(/\D/g, '')
         const sellStr = $(el).find('td').eq(2).text().replace(/\D/g, '')
         if (!buyStr) return
-        
+
         let buy = parseInt(buyStr, 10)
         let sell = parseInt(sellStr, 10)
-        
+
         // Cố gắng chuẩn hóa về giá 1 lượng (~80,000,000)
         // Nếu giá trị < 10,000,000 -> khả năng là giá 1 chỉ -> nhân 10
         if (buy > 100000 && buy < 10000000) buy *= 10
         if (sell > 100000 && sell < 10000000) sell *= 10
-        
+
         if (buy < 10000000 || buy > 150000000) return // Bỏ qua nếu giá vô lý
-        
+
         if ((name.includes('nhẫn') || name.includes('vàng rồng') || name.includes('trơn') || name.includes('9999')) && ringBuy === 0) {
           ringBuy = buy; ringSell = sell
         }
@@ -436,10 +458,10 @@ export async function fetchMultiBrandGold(): Promise<GoldBrands> {
           sjcBuy = buy; sjcSell = sell
         }
       })
-      
+
       if (sjcBuy > 0) brands[`${brandCode}_SJC`] = { buy: sjcBuy, sell: sjcSell }
       if (ringBuy > 0) brands[`${brandCode}_NHAN`] = { buy: ringBuy, sell: ringSell }
-    } catch {}
+    } catch { }
   }
 
   await Promise.allSettled([
@@ -506,13 +528,14 @@ export async function crawlMarketData(): Promise<MarketSnapshot> {
   const usdVndRate = usdVnd?.rate ?? 25085
 
   // Fetch all data in parallel
-  const [vnIndex, goldSjc, btc, silver, news, goldBrands] = await Promise.all([
+  const [vnIndex, goldSjc, btc, silver, news, goldBrands, macro] = await Promise.all([
     fetchVnIndex(),
     fetchGoldSjc(usdVndRate),
     fetchBtc(),
     fetchSilver(usdVndRate),
     fetchNews(),
-    fetchMultiBrandGold()
+    fetchMultiBrandGold(),
+    getMacroData()
   ])
 
   const snapshot: MarketSnapshot = {
@@ -524,7 +547,7 @@ export async function crawlMarketData(): Promise<MarketSnapshot> {
     usdVnd,
     btc,
     news,
-    macro: getMacroData(),
+    macro,
     aiSummary: null,
   }
 

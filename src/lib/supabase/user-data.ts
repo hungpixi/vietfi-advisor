@@ -17,25 +17,8 @@ import {
 
 // ── Types ──────────────────────────────────────────────────────────────
 
-export interface BudgetPot {
-  id: string;
-  name: string;
-  iconKey: string;
-  allocated: number;
-  color: string;
-  sort_order?: number;
-}
-
-export interface Expense {
-  id: string;
-  pot_id?: string | null;
-  amount: number;
-  note?: string;
-  category?: string;
-  created_at?: string;
-  /** Required by budget types — ISO date string */
-  date: string;
-}
+import type { BudgetPot, Expense } from "@/lib/domain/personal-finance/types";
+export type { BudgetPot, Expense };
 
 /** Bundled budget state — pots + expenses for the current month. */
 export interface BudgetData {

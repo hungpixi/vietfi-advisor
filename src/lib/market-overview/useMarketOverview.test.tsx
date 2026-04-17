@@ -20,7 +20,7 @@ vi.mock("../storage", () => ({
     getRiskResult: () => ({ score: 9 }),
     getIncome: () => 30_000_000,
     getBudgetPots: () => [{ name: "Ăn uống", allocated: 5_000_000 }],
-    getDebts: () => [{ min_payment: 3_000_000 }],
+    getDebts: () => [{ minPayment: 3_000_000 }],
 }));
 
 describe("useMarketOverview", () => {

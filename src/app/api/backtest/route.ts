@@ -11,12 +11,32 @@ import { NextResponse } from "next/server";
 import { fetchPriceHistory, type OHLCVBar } from "@/lib/market-data/price-history";
 import { runBacktest, type BacktestConfig, type Strategy } from "@/lib/market-data/backtest-engine";
 import { getGuruStrategy } from "@/lib/market-data/guru-strategies";
+import { createClient } from "@/lib/supabase/server";
 
 const VALID_STRATEGIES: Strategy[] = ["buy-and-hold", "sma-cross", "breakout-52w", "ma30w-stage2", "tactical-allocation"];
 const MIN_CAPITAL = 1_000_000;
 const MAX_CAPITAL = 100_000_000_000;
 
 export async function POST(req: Request) {
+    // ── Auth Guard (Security) ──
+    try {
+        const isDemoBypass = req.headers.get("x-demo-bypass") === "hungpixi-demo";
+
+        if (!isDemoBypass) {
+            if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+                const supabase = await createClient();
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error || !user) {
+                    return NextResponse.json({ error: "Unauthorized. Vui lòng đăng nhập để sử dụng tính năng mô phỏng Backtest." }, { status: 401 });
+                }
+            } else {
+                return NextResponse.json({ error: "Missing Supabase configuration." }, { status: 500 });
+            }
+        }
+    } catch (e) {
+        return NextResponse.json({ error: `Security auth check failed: ${e instanceof Error ? e.message : String(e)}` }, { status: 500 });
+    }
+
     let body: Record<string, unknown>;
 
     try {
@@ -77,7 +97,15 @@ export async function POST(req: Request) {
     }
 
     // ── Fetch and Normalize price history ──
-    const rawBars = await fetchPriceHistory(ticker, fromDate, toDate);
+    let rawBars: OHLCVBar[];
+    try {
+        rawBars = await fetchPriceHistory(ticker, fromDate, toDate);
+    } catch (err: unknown) {
+        return NextResponse.json(
+            { error: `Lỗi truy xuất dữ liệu giá lịch sử: ${err instanceof Error ? err.message : String(err)}` },
+            { status: 500 }
+        );
+    }
 
     // Validate and Normalize (Deduplicate & Sort & Fill Empty Volume)
     const uniqueBarsMap = new Map<string, OHLCVBar>();
