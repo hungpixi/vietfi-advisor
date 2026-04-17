@@ -338,21 +338,27 @@ src/
 
 ---
 
-## Session Memory (2026-04-17)
+## Session Memory & Learning (2026-04-17)
 
-### ✅ Done this session
+### ✅ Done Recently (Online Backtest Data Pipeline)
 
-- Thêm `breakout-52w` + `ma30w-stage2` vào backtest engine
-- Guru page → Backtest Pro flow (URL param `?guru=`, Guru Preset selector, real chart)
-- Fix cache bug: in-memory Map → `next: { revalidate: 3600 }` (persistent Vercel edge)
-- Tạo `saved-strategies.ts` CRUD library
-- Hạ tier Backtest Pro từ MASTER (1000 XP) → **PRO (300 XP)**
-- +30 XP khi chạy backtest (`run_backtest` trong XP_TABLE)
-- Update AGENTS.md + CLAUDE.md memory bank
+- **Kiến trúc dữ liệu:** Đã chính thức chuyển dịch từ local JSON sang **Supabase PostgreSQL** (`ohlcv_bars` table) làm Single Source of Truth cho market data.
+- **Automation Pipeline:** Thành công setup Vercel Cron Endpoint (`/api/cron/market-data/route.ts`) gọi TCBS API (EOD) mỗi 18:30 T2-T6, kết hợp upsert tự động vào Supabase. 
+- **Backfill History:** Đã chạy backfill thành công hơn 1500 nến OHLCV mỗi mã chứng khoán từ 2020 đến nay. Giải quyết triệt để cảnh báo Vercel Serverless Function limit.
+- **Bài học (Lessons Learned):** Lựa chọn kiến trúc Cache/DB phải luôn tính tới Vercel Function Limit. Sử dụng kết hợp Next.js Edge cache `revalidate: 3600` với Supabase PostgreSQL mang lại trải nghiệm tối ưu nhất cho Free tier. Việc gọi trực tiếp TCBS từ Vercel serverless đảm bảo hệ thống không bị timeout.
 
-### 🔜 Next tasks
+### 🔜 Next 3 Sessions Plan (Hoàng + Hưng AI)
 
-1. Save/Load UI trong `backtest/page.tsx` — nút "💾 Lưu" + panel "Chiến lược đã lưu"
-2. Sync saved strategies lên Supabase `user_strategies` table (khi user logged in)
-3. Screener → Backtest bridge ("Test ngay" button)
-4. Playwright E2E cho critical flows
+Để dứt điểm Backtest Pro và chuẩn bị Demo/Launch, 3 phiên làm việc tiếp theo:
+
+**Session 1: Refining Backtest Logic & Supabase Sync (Focus: Business Logic)**
+- **Hoàng:** Fix UX/UI cho Trang Screener và bridge Screener → Backtest. Kiểm tra security các endpoint.
+- **Hưng (AI):** Bổ sung chức năng "Save/Load UI" trong `backtest/page.tsx` và đồng bộ (sync) *saved strategies* từ localStorage lên Supabase `user_strategies` table (gắn với user đã login).
+
+**Session 2: RBAC, Portfolio & VIP Gating (Focus: Scale & Access)**
+- **Hoàng:** Tối ưu hóa UI cho TradingView Charts, hiển thị Benchmark VN-Index rực rỡ và responsive trên Mobile.
+- **Hưng (AI):** Roll out RBAC logic hoàn thiện để gate *Backtest Pro* (Free users bị limit số lần test, VIP/Pro full quyền). Đưa Portfolio Construction logic vào kết quả Backtest (Drawdown, WinRate, Sharpe). 
+
+**Session 3: Content Automation & Demo Launch (Focus: Viral Loop)**
+- **Hoàng:** Review tổng thể System (Final Audit) để chuẩn bị submit WDA2026 & làm slide nội dung.
+- **Hưng (AI):** Vận hành `carousel_generator.py` workflow (kéo từ "Trader Kiếm Cơm") để tạo các template giáo dục tài chính tự động (Carousel TikTok/Shorts) dựa trên kết quả backtest nhằm launch chiến dịch Growth.
