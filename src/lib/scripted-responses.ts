@@ -30,6 +30,8 @@ export interface ScriptedResponseItem {
   isDynamic?: boolean;
 }
 
+const POLITE_DEFAULT_ENABLED = true;
+
 // ── Intent Detection (Keyword-based, NO AI) ─────────────────────
 const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "greeting", patterns: ["xin chào", "hello", "hi", "chào", "ê", "yo", "hey", "mở app", "quay lại"] },
@@ -51,7 +53,7 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "curse", patterns: ["quạu", "bực", "điên", "khùng", "cáu", "ghét"] },
   { intent: "sad", patterns: ["buồn", "hết tiền", "cháy túi", "phá sản", "nghèo", "xui", "xu cà na"] },
   { intent: "bored", patterns: ["chán", "nhàm", "buồn ngủ", "rảnh", "ko biết làm gì"] },
-  { intent: "who_are_you", patterns: ["mày là ai", "ai đây", "bot à", "vẹt à", "giới thiệu"] },
+  { intent: "who_are_you", patterns: ["mày là ai", "bạn là ai", "ai đây", "bot à", "vẹt à", "giới thiệu"] },
   { intent: "help", patterns: ["help", "giúp", "hướng dẫn", "cách dùng", "làm sao"] },
   { intent: "joke", patterns: ["kể chuyện cười", "joke", "funny", "hài", "cười"] },
 ];
@@ -83,6 +85,16 @@ function stripEmoji(text: string): string {
     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2702}-\u{27B0}\u{231A}-\u{231B}\u{23E9}-\u{23F3}\u{23F8}-\u{23FA}\u{25AA}-\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2614}-\u{2615}\u{2648}-\u{2653}\u{267F}\u{2693}\u{26A1}\u{26AA}-\u{26AB}\u{26BD}-\u{26BE}\u{26C4}-\u{26C5}\u{26CE}\u{26D4}\u{26EA}\u{26F2}-\u{26F3}\u{26F5}\u{26FA}\u{26FD}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}]/gu, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+function toPoliteTone(text: string): string {
+  return text
+    .replace(/\bMạy\b/g, "Bạn")
+    .replace(/\bMày\b/g, "Bạn")
+    .replace(/\bmạy\b/g, "bạn")
+    .replace(/\bmày\b/g, "bạn")
+    .replace(/\bTao\b/g, "Tôi")
+    .replace(/\btao\b/g, "tôi");
 }
 
 // ── Helper: tạo response item ───────────────────────────────────
@@ -503,6 +515,11 @@ export function getScriptedResponse(
     }
   }
 
+  if (POLITE_DEFAULT_ENABLED) {
+    item.text = toPoliteTone(item.text);
+    item.ttsText = toPoliteTone(item.ttsText);
+  }
+
   return item;
 }
 
@@ -544,7 +561,8 @@ export function getExpenseRoast(category: string, _amount: number): string {
   };
 
   const pool = roasts[category] || ["Ghi rồi! Tiêu gì cũng ghi nhé."];
-  return pool[Math.floor(Math.random() * pool.length)];
+  const text = pool[Math.floor(Math.random() * pool.length)];
+  return POLITE_DEFAULT_ENABLED ? toPoliteTone(text) : text;
 }
 
 // ── Fun comparisons for high expenses ───────────────────────────

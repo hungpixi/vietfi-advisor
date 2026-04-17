@@ -137,10 +137,18 @@ interface SpeechRecognitionLike {
   start: () => void;
 }
 
+function cleanTextForTTS(text: string): string {
+  return text
+    .replace(/[\u{1F600}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: VetVangChatProps) {
   const [input, setInput] = useState("");
-  const [persona, setPersona] = useState<PersonaMode>("mo_hon");
+  const [persona, setPersona] = useState<PersonaMode>("chuyen_gia");
   const [showConfig, setShowConfig] = useState(false);
+  const [ttsByMessageId, setTtsByMessageId] = useState<Record<string, string>>({});
 
   // Load saved persona on mount
   useEffect(() => {
@@ -156,7 +164,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       {
         id: "greet-1",
         role: "assistant",
-        parts: [{ type: "text", text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
+        parts: [{ type: "text", text: greetingItem?.text || "Chào bạn! Mình hỗ trợ ghi chi tiêu nhé! 🦜" }],
       }
     ]
   });
@@ -172,7 +180,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   useEffect(() => {
     if (error) {
       const fallbackItem = getScriptedResponse("motivate");
-      const fallbackText = fallbackItem?.text || "Tao bận xíu, thử lại nha! 🦜";
+      const fallbackText = fallbackItem?.text || "Mình đang bận một chút, bạn thử lại nhé! 🦜";
       setMessages((prev) => [
         ...prev,
         {
@@ -352,18 +360,20 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     return `${prefix}-${localMessageSeqRef.current}`;
   };
 
-  const addLocalMessage = (userText: string, botText: string) => {
+  const addLocalMessage = (userText: string, botText: string, botTtsText?: string) => {
     const userMsg: UIMessage = {
       id: nextLocalMessageId("user"),
       role: "user",
       parts: [{ type: "text", text: userText }],
     };
+    const botId = nextLocalMessageId("bot");
     const botMsg: UIMessage = {
-      id: nextLocalMessageId("bot"),
+      id: botId,
       role: "assistant",
       parts: [{ type: "text", text: botText }],
     };
     setMessages((prev) => [...prev, userMsg, botMsg]);
+    setTtsByMessageId((prev) => ({ ...prev, [botId]: cleanTextForTTS(botTtsText || botText) }));
   };
 
   // ── Market-related intents that need live data ──
@@ -402,7 +412,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first (0 API calls)
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      addLocalMessage(text, localReply.text);
+      addLocalMessage(text, localReply.text, localReply.ttsText);
       return;
     }
 
@@ -441,7 +451,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     // Try local-first
     const localReply = tryLocalResponse(text);
     if (localReply) {
-      addLocalMessage(text, localReply.text);
+      addLocalMessage(text, localReply.text, localReply.ttsText);
       return;
     }
 
@@ -590,7 +600,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                   </div>
                   {msg.role === "assistant" && msg.id !== "greet-1" && (
                     <button
-                      onClick={() => speakMessage(msg.id, getMessageText(msg))}
+                      onClick={() => speakMessage(msg.id, ttsByMessageId[msg.id] || cleanTextForTTS(getMessageText(msg)))}
                       className={`absolute -bottom-1 right-0 p-1 rounded-full transition-all ${
                         speakingMsgId === msg.id
                           ? "bg-[#E6B84F]/20 text-[#E6B84F] opacity-100"
@@ -636,7 +646,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
               >
                 <span className="text-lg">🦜</span>
                 <div className="bg-red-500/10 text-red-400 rounded-2xl rounded-bl-sm px-3 py-2 border border-red-500/20 text-[13px]">
-                  Bực mình ghê, đường mạng kẹt quá tao nói không được. Thử lại sau nha 🤬
+                  Đường mạng đang chậm nên mình phản hồi chưa được. Bạn thử lại sau nhé.
                 </div>
               </motion.div>
             )}

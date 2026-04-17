@@ -358,7 +358,7 @@ function VetVangFloatWidget() {
       <div className="bg-white/[0.02] rounded-xl p-3 mb-3">
         <p className="text-[13px] text-white/60 italic leading-relaxed">
           {gam.streak >= 3 
-            ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục xài app đi, tao thề sẽ không mổ cho đến khi mày giàu! 🦜&rdquo;`
+            ? `&ldquo;Bản lĩnh đấy! ${gam.streak} ngày liên tục rồi. Cứ tiếp tục dùng app nhé, mình sẽ đồng hành đến khi bạn vững tài chính! 🦜&rdquo;`
             : `&ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi tiền đi đâu! Level ${current.name} rồi mà còn lười hả? 🦜&rdquo;`}
         </p>
       </div>

@@ -264,6 +264,37 @@ src/
     ├── gemini.ts           # Streaming AI (Edge Runtime)
     ├── gemini-batch.ts     # Batch AI (50% cost)
     ├── expense-parser.ts   # Regex → structured expense
+
+## Deployment
+
+- **Platform:** Vercel (Hobby + Hobby Plus)
+- **CI/CD:** GitHub Actions (`vercel-deploy.yml`) — uses Vercel CLI with token to bypass Hobby daily deploy limit
+- **Auto-deploy:** On push to `master` and manual `workflow_dispatch`
+- **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+## Key Files
+
+```
+src/
+├── app/
+│   ├── dashboard/            # All dashboard pages
+│   ├── api/                 # All API routes (Edge Runtime)
+│   ├── login/              # Auth page
+│   └── page.tsx            # Landing page
+├── components/
+│   ├── vet-vang/           # Mascot: VetVangChat, VetVangFloat, AnimatedParrot
+│   ├── gamification/        # Badges, XPToast, Celebration, ShareCard, RequireTier
+│   ├── debt/               # DTI gauge, optimizer timeline
+│   ├── portfolio/          # GoldTracker, CashflowDNA
+│   └── onboarding/         # QuickSetupWizard
+└── lib/
+    ├── calculations/        # Pure TS calculators (debt-optimizer, fg-index, personal-cpi, risk-scoring)
+    ├── supabase/           # Auth, user-data DAL, hooks, migrate-local
+    ├── market-data/        # Crawlers (CafeF, Yahoo, SBV, TCBS, stock-screener)
+    ├── news/               # CafeF RSS news crawler
+    ├── gemini.ts           # Streaming AI (Edge Runtime)
+    ├── gemini-batch.ts     # Batch AI (50% cost)
+    ├── expense-parser.ts   # Regex → structured expense
     ├── scripted-responses.ts # 500+ canned responses (25 intents)
     ├── storage.ts          # 18-key localStorage wrapper
     ├── gamification.ts     # XP, badges, levels
@@ -271,3 +302,57 @@ src/
     ├── guru-personas.ts    # 5 AI mentor prompts (Livermore, Minervini, O'Neil, Darvas, Weinstein)
     └── vetvang-persona.ts # Vẹt Vàng system prompt
 ```
+
+---
+
+## Backtest Pro System (added 2026-04-17)
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/market-data/backtest-engine.ts` | 4 strategies: buy-and-hold, sma-cross, breakout-52w, ma30w-stage2 |
+| `src/lib/market-data/price-history.ts` | TCBS fetch. Cache: **`next: { revalidate: 3600 }`** (không phải in-memory Map) |
+| `src/lib/market-data/guru-strategies.ts` | Map guru ID → BacktestConfig |
+| `src/lib/saved-strategies.ts` | **NEW** — CRUD localStorage cho user saved strategies. Max 20. Key: `vietfi_saved_strategies` |
+| `src/app/api/backtest/route.ts` | POST, hỗ trợ `guru` param tắt |
+| `src/app/dashboard/backtest/page.tsx` | Guru Preset selector + URL param ?guru= + Save/Load UI |
+| `src/app/dashboard/gurus/[id]/page.tsx` | Real backtest chart + CTA "Backtest chiến lược này" |
+
+### Data boundary
+
+| Data | Runs on | Persists |
+|------|---------|----------|
+| Backtest computation | Server (API route) | No |
+| TCBS price data | Server → Next.js edge cache 1h | Yes (Vercel) |
+| XP, level, streak | Client localStorage | Supabase sync |
+| Saved strategies | Client localStorage | `vietfi_saved_strategies` |
+| Backtest results | Client React state | No (ephemeral) |
+
+### ⚠️ Known gotchas
+
+- `price-history.ts`: mock fallback là **random walk** — chỉ dùng khi TCBS không trả data
+- `guru-personas.ts`: `winRate`/`avgReturn` vẫn là **hardcoded mock** — nên tính từ real backtest sau
+- Supabase project `ttwymfmgqpkffexmjqzj` INACTIVE — cần restore trước khi dùng cloud sync
+- `useSearchParams()` trong Next.js 15 bắt buộc wrap trong `<Suspense>`
+
+---
+
+## Session Memory (2026-04-17)
+
+### ✅ Done this session
+
+- Thêm `breakout-52w` + `ma30w-stage2` vào backtest engine
+- Guru page → Backtest Pro flow (URL param `?guru=`, Guru Preset selector, real chart)
+- Fix cache bug: in-memory Map → `next: { revalidate: 3600 }` (persistent Vercel edge)
+- Tạo `saved-strategies.ts` CRUD library
+- Hạ tier Backtest Pro từ MASTER (1000 XP) → **PRO (300 XP)**
+- +30 XP khi chạy backtest (`run_backtest` trong XP_TABLE)
+- Update AGENTS.md + CLAUDE.md memory bank
+
+### 🔜 Next tasks
+
+1. Save/Load UI trong `backtest/page.tsx` — nút "💾 Lưu" + panel "Chiến lược đã lưu"
+2. Sync saved strategies lên Supabase `user_strategies` table (khi user logged in)
+3. Screener → Backtest bridge ("Test ngay" button)
+4. Playwright E2E cho critical flows

@@ -26,6 +26,7 @@ import {
   LineChart,
   Home,
   Search,
+  FlaskConical,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -60,6 +61,7 @@ const navGroups = [
       { href: "/dashboard/sentiment", label: "Nhiệt kế thị trường", icon: Activity },
       { href: "/dashboard/market", label: "Phân tích sâu", icon: LineChart },
       { href: "/dashboard/screener", label: "Lọc Cổ Phiếu", icon: Search },
+      { href: "/dashboard/backtest", label: "Backtest Pro", icon: FlaskConical, badge: "PRO" },
       { href: "/dashboard/news", label: "Tin tức AI", icon: Newspaper },
       { href: "/dashboard/macro", label: "Xu hướng kinh tế", icon: BarChart3 },
       { href: "/dashboard/housing", label: "Thông tin nhà ở", icon: Home },
@@ -182,7 +184,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   // ── Market volatility alerts (client-side, no cron needed) ──
   useEffect(() => {
-    checkMarketAlerts().catch(() => {});
+    checkMarketAlerts().catch(() => { });
   }, []);
 
   return (
@@ -245,6 +247,11 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
                     >
                       <item.icon className={cn("w-4 h-4 flex-shrink-0", active ? "text-[#E6B84F]" : "text-white/30")} />
                       <span className="flex-1">{item.label}</span>
+                      {"badge" in item && item.badge && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-[#E6B84F]/10 text-[#E6B84F] border border-[#E6B84F]/20 flex-shrink-0">
+                          {item.badge as string}
+                        </span>
+                      )}
                       {setupStatus[item.href] !== undefined && (
                         <span className={cn(
                           "w-1.5 h-1.5 rounded-full flex-shrink-0",

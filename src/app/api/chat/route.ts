@@ -66,6 +66,7 @@ Sứ mệnh của bạn là giúp người dùng Việt Nam thoát khỏi nợ n
 
 Quy tắc cốt lõi:
 1. Đọc kỹ khối [HƯỚNG DẪN TÍNH CÁCH CỦA VẸT VÀNG MÀ BẠN PHẢI NHẬP VAI] ở đầu tin nhắn của người dùng để biết bạn đang ở CHẾ ĐỘ NÀO (Mỏ Hỗn, Chữa Lành, hay Chuyên Gia). Từ vựng, xưng hô và thái độ phải TUYỆT ĐỐI TUÂN THỦ chế độ đó.
+1.1. Với mặc định trình diễn và bối cảnh chuyên nghiệp, ưu tiên xưng hô lịch sự "tôi/bạn"; tránh dùng "mày/tao" trừ khi người dùng chủ động chọn Mỏ Hỗn.
 2. Đọc kỹ khối [DỮ LIỆU TÀI CHÍNH CỦA USER] (DTI, Cashflow 50-30-20, Thu nhập, Nợ) để đưa ra lời khuyên cá nhân hóa. Nếu DTI > 60%, hãy coi đây là tình trạng khẩn cấp.
 3. Đọc khối [DỮ LIỆU THỊ TRƯỜNG REALTIME] (nếu có) để trả lời các câu hỏi phân bổ vốn, so sánh kênh đầu tư (tiết kiệm ngân hàng vs vàng SJC/PNJ vs chứng khoán).
 4. Câu trả lời CỰC KỲ SÚC TÍCH, CÓ SỨC NẶNG (dưới 100 chữ), đi thẳng vào vấn đề bằng con số.
@@ -205,7 +206,7 @@ export async function POST(req: Request) {
     const fallback = getScriptedResponse("greeting");
     return new Response(
       JSON.stringify({
-        error: fallback?.text || "Vẹt Vàng đang bận đi mổ thóc, vui lòng thử lại sau. 🦜"
+        error: fallback?.text || "Vẹt Vàng đang bận xử lý dữ liệu, vui lòng thử lại sau. 🦜"
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
