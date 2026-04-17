@@ -77,3 +77,7 @@ context.md
 context.md
 .vercel
 .env*.local
+
+# Market data cache (sync bởi scripts/sync_market_data.py)
+# Chạy: python scripts/sync_market_data.py để tạo lại
+/public/data/ohlcv/
