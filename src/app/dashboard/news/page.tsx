@@ -22,6 +22,7 @@ interface NewsItem {
 }
 
 const allNewsFallback: NewsItem[] = [
+  { id: "vix-vdsc-q1", title: "Cập nhật số liệu CTCK ngày 19/4: Tấp nập công bố BCTC quý 1, Chứng khoán VIX và VDSC gây thất vọng", source: "CafeF", time: "00:52 19/04", sentiment: "neutral" as const, asset: "Chứng khoán", summary: "Đã có thêm một số công ty chứng khoán công bố báo cáo tài chính quý 1 tuy nhiên kết quả tương đối trái ngược." },
   { id: 1, title: "Vàng SJC lập đỉnh mới 93.5 triệu/lượng, chênh thế giới 18 triệu", source: "VnExpress", time: "2 giờ trước", sentiment: "bullish" as const, asset: "Vàng", summary: "Giá vàng SJC tiếp tục tăng mạnh do nhu cầu trú ẩn an toàn và chênh lệch giá thế giới thu hẹp chậm." },
   { id: 2, title: "Fed giữ nguyên lãi suất, Powell cảnh báo rủi ro lạm phát dai dẳng", source: "CafeF", time: "4 giờ trước", sentiment: "bearish" as const, asset: "Chứng khoán", summary: "Fed giữ lãi suất 5.25-5.5%, Powell phát biểu dovish nhưng cảnh báo lạm phát chưa về 2% mục tiêu." },
   { id: 3, title: "NHNN bơm 15.000 tỷ qua OMO, tỷ giá ổn định", source: "NHNN", time: "5 giờ trước", sentiment: "neutral" as const, asset: "Tiết kiệm", summary: "Ngân hàng Nhà nước tiếp tục bơm thanh khoản qua thị trường mở, hỗ trợ ổn định tỷ giá USD/VND." },
@@ -140,9 +141,12 @@ export default function NewsPage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       <motion.div variants={fadeIn} className="mb-6">
         <CyberHeader size="display">Tin tức <span className="text-[#22C55E]">AI</span></CyberHeader>
-        <CyberSubHeader className="mt-1">
-          Phân tích tâm lý thị trường thời gian thực — cung cấp bởi VietFi AI
-        </CyberSubHeader>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            PHÂN TÍCH TÂM LÝ THỊ TRƯỜNG THỜI GIAN THỰC
+          </p>
+        </div>
       </motion.div>
 
       {stale && (
@@ -197,56 +201,56 @@ export default function NewsPage() {
                 variant={news.sentiment === "bullish" ? "success" : news.sentiment === "bearish" ? "danger" : "neutral"}
               >
                 <div
-                  className="p-5 flex items-start gap-4 cursor-pointer"
+                  className="p-1 flex items-start gap-6 cursor-pointer"
                   onClick={() => hasLink && window.open(news.link, "_blank", "noopener,noreferrer")}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/40">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white/50">
                         {news.asset}
                       </span>
                       <span
-                        className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 px-2 py-0.5 rounded border"
-                        style={{ color: s.color, backgroundColor: `${s.color}15`, borderColor: `${s.color}30` }}
+                        className="text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5 px-2.5 py-1 rounded border"
+                        style={{ color: s.color, backgroundColor: `${s.color}15`, borderColor: `${s.color}35` }}
                       >
-                        <SentIcon className="w-3 h-3" /> {s.label}
+                        <SentIcon className="w-3.5 h-3.5" /> {s.label}
                       </span>
                     </div>
 
-                    <CyberHeader size="xs" className="mb-2 group-hover:text-[#22C55E] transition-colors line-clamp-2 leading-tight">
+                    <CyberHeader size="md" className="mb-3 group-hover:text-[#22C55E] transition-colors line-clamp-2 leading-[1.2] !tracking-normal">
                       {news.title}
                     </CyberHeader>
 
-                    <p className="text-[12px] text-white/50 leading-relaxed font-mono uppercase line-clamp-2 mb-4">
+                    <p className="text-[13px] text-white/70 leading-relaxed font-mono uppercase line-clamp-3 mb-6">
                       {news.summary}
                     </p>
 
-                    <div className="flex items-center gap-4">
-                      <CyberSubHeader className="flex items-center gap-1.5">
-                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <div className="flex items-center gap-6">
+                      <CyberSubHeader size="sm" className="flex items-center gap-2 text-white/40">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
                         {news.source.toUpperCase()}
                       </CyberSubHeader>
-                      <CyberSubHeader className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" />
+                      <CyberSubHeader size="sm" className="flex items-center gap-2 text-white/30">
+                        <Clock className="w-3.5 h-3.5" />
                         {news.time.toUpperCase()}
                       </CyberSubHeader>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-3 shrink-0 pt-1">
+                  <div className="flex flex-col items-center gap-4 shrink-0 pt-1">
                     <button
                       onClick={(e) => toggleBookmark(news.id, e)}
-                      className="p-2 rounded-xl transition-all hover:bg-white/5"
+                      className="p-2.5 rounded-xl transition-all hover:bg-white/10"
                       title={isBookmarked ? "Bỏ lưu" : "Lưu tin"}
                     >
                       {isBookmarked
-                        ? <BookmarkCheck className="w-5 h-5 text-[#22C55E] drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                        : <Bookmark className="w-5 h-5 text-white/10 hover:text-white/40" />
+                        ? <BookmarkCheck className="w-6 h-6 text-[#22C55E] drop-shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+                        : <Bookmark className="w-6 h-6 text-white/10 hover:text-white/40" />
                       }
                     </button>
                     {hasLink && (
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all bg-white/5 border border-white/10 group-hover:border-[#22C55E]/30 group-hover:text-[#22C55E]">
-                        <ExternalLink className="w-3.5 h-3.5" />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/5 border border-white/10 group-hover:border-[#22C55E]/40 group-hover:text-[#22C55E]">
+                        <ExternalLink className="w-4 h-4" />
                       </div>
                     )}
                   </div>

@@ -58,9 +58,12 @@ export default function RiskProfilePage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       <motion.div variants={fadeIn} className="mb-6">
         <CyberHeader size="display">Tính cách <span className="text-[#22C55E]">đầu tư</span></CyberHeader>
-        <CyberSubHeader className="mt-1">
-          Thuật toán AI phân tích tâm lý học hành vi — định hình chiến lược phân bổ tài sản
-        </CyberSubHeader>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            THUẬT TOÁN AI PHÂN TÍCH TÂM LÝ HÀNH VI
+          </p>
+        </div>
       </motion.div>
 
       {/* Progress Tracker */}
@@ -200,7 +203,7 @@ export default function RiskProfilePage() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <CyberMetric size="xs" color="text-white">{result.score}</CyberMetric>
-                    <p className="text-[8px] font-black text-white/20 uppercase">Pts</p>
+                    <p className="text-[8px] font-black text-white/20 uppercase">Điểm</p>
                   </div>
                 </div>
 

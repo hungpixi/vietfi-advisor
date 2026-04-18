@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import type { NewsArticle, NewsSentimentLabel } from "@/lib/news/crawler";
 import dynamic from "next/dynamic";
-import { isFirstTimeUser } from "@/lib/onboarding-state";
+import { isFirstTimeUser, getOnboardingData } from "@/lib/onboarding-state";
 import { cn } from "@/lib/utils";
-import { getBudgetPots, getExpenses, getIncome, getRiskResult, getMarketCache } from "@/lib/storage";
+import { getBudgetPots, getExpenses, getIncome, getRiskResult, getMarketCache, getLedgerEntries } from "@/lib/storage";
 import { BASE_ALLOCATIONS, adjustAllocation, type AllocationItem } from "@/lib/constants/allocations";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -122,16 +122,13 @@ function NetWorthCard({
   netWorthMillions,
   monthlyDeltaPct,
   mounted,
+  chartData = [],
 }: {
   netWorthMillions: number | null;
   monthlyDeltaPct: number;
   mounted: boolean;
+  chartData?: { m: string, v: number, amount: string, isCurrent?: boolean, isEmpty?: boolean }[];
 }) {
-  const chartData = [
-    { m: 'T1', v: 40, amount: '4.0 TRIỆU' },
-    { m: 'T2', v: 55, amount: '5.5 TRIỆU' },
-    { m: 'T4', v: 80, amount: netWorthMillions && netWorthMillions >= 1000 ? `${(netWorthMillions / 1000).toFixed(1)} TỶ` : `${netWorthMillions} TRIỆU` }
-  ];
 
   return (
     <div className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/20 group flex flex-col">
@@ -149,13 +146,13 @@ function NetWorthCard({
             <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
               TỔNG TÀI SẢN RÒNG
             </h3>
-            <p className="mt-3 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            <p className="mt-3 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]/90">
               PHÂN TÍCH TÀI SẢN RÒNG
             </p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 pt-2">
-          <p className="font-mono text-[11px] font-black tracking-widest text-white/60">
+          <p className="font-mono text-[12px] font-black tracking-widest text-white/75">
             {mounted ? new Date().toLocaleDateString("vi-VN").toUpperCase() : "--/--/----"}
           </p>
         </div>
@@ -169,14 +166,14 @@ function NetWorthCard({
               {netWorthMillions !== null ? (
                 <AnimatedCounter target={netWorthMillions >= 1000 ? netWorthMillions / 1000 : netWorthMillions} />
               ) : (
-                <span className="text-white/20">—</span>
+                <span className="text-white/40">—</span>
               )}
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="font-heading text-[20px] sm:text-[24px] text-white/70 font-black uppercase tracking-tight leading-none">
+              <span className="font-heading text-[20px] sm:text-[24px] text-white/80 font-black uppercase tracking-tight leading-none">
                 {netWorthMillions && netWorthMillions >= 1000 ? "TỶ" : "TRIỆU"}
               </span>
-              <span className="font-heading text-[16px] sm:text-[20px] text-white/40 font-black tracking-widest leading-none">VND</span>
+              <span className="font-heading text-[16px] sm:text-[20px] text-white/50 font-black tracking-widest leading-none">VND</span>
             </div>
           </div>
 
@@ -203,18 +200,22 @@ function NetWorthCard({
                     animate={{ height: `${d.v}%` }}
                     transition={{ duration: 1.2, delay: i * 0.1, ease: "circOut" }}
                     className={cn(
-                      "w-full rounded-t-md relative",
-                      d.m === 'T4'
-                        ? "bg-gradient-to-t from-[#22C55E]/40 to-[#22C55E] shadow-[0_0_24px_rgba(34,197,94,0.3)]"
-                        : "bg-white/10"
+                      "w-full rounded-t-md relative transition-all duration-500",
+                      d.isEmpty
+                        ? "bg-white/5 border border-dashed border-white/10 opacity-50"
+                        : d.isCurrent
+                          ? "bg-gradient-to-t from-[#22C55E]/40 to-[#22C55E] shadow-[0_0_24px_rgba(34,197,94,0.3)]"
+                          : "bg-white/10"
                     )}
                   >
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-black/90 border border-white/10 px-2.5 py-1 rounded shadow-xl text-[10px] text-white font-mono whitespace-nowrap z-20">
-                      {d.amount}
-                    </div>
+                    {!d.isEmpty && (
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-black/90 border border-white/10 px-2.5 py-1 rounded shadow-xl text-[10px] text-white font-mono whitespace-nowrap z-20">
+                        {d.amount}
+                      </div>
+                    )}
                   </motion.div>
                 </div>
-                <span className="mt-3 font-mono text-[11px] font-black text-white/60 uppercase tracking-widest">{d.m}</span>
+                <span className="mt-3 font-mono text-[12px] font-black text-white/80 uppercase tracking-widest">{d.m}</span>
               </div>
             ))}
           </div>
@@ -280,7 +281,7 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
             <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
               PHÂN BỔ DANH MỤC
             </h3>
-            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+            <p className="mt-4 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/70">
               Gợi ý phân bổ tài sản
             </p>
           </div>
@@ -329,8 +330,8 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
 
           <div className="absolute inset-[28%] flex flex-col items-center justify-center rounded-full border border-white/[0.06] bg-[#070a14] shadow-[inset_0_0_26px_rgba(0,0,0,0.9),0_0_42px_rgba(34,197,94,0.12)]">
             <div className="mb-2 h-2 w-2 animate-pulse rounded-full bg-[#22C55E] shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
-            <span className="font-mono text-[10px] font-black uppercase tracking-[0.22em] text-white/65">Trạng thái</span>
-            <span className="mt-1.5 font-mono text-[13px] font-black uppercase tracking-[0.14em] text-white/85">Tối ưu</span>
+            <span className="font-mono text-[11px] font-black uppercase tracking-[0.22em] text-white/80">Trạng thái</span>
+            <span className="mt-1.5 font-mono text-[14px] font-black uppercase tracking-[0.14em] text-white/95">Tối ưu</span>
           </div>
 
           {chartSegments.map(({ item, labelX, labelY }) => (
@@ -385,7 +386,7 @@ function PortfolioMini({ allocation }: { allocation: AllocationItem[] }) {
 type BriefTakeaway = BriefData["takeaways"][number];
 
 function buildFallbackBriefTakeaways(brief: BriefData): BriefTakeaway[] {
-  const summarySnippet = brief.summary.length > 120 ? `${brief.summary.slice(0, 117)}...` : brief.summary;
+  const summarySnippet = brief.summary;
 
   return [
     {
@@ -461,25 +462,25 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
         <div className="pointer-events-none absolute right-4 top-4 h-7 w-7 border-r border-t border-[#E6B84F]/35" />
         <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-[#E6B84F]/20" />
 
-        <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+        <div className="relative z-10 mb-2 border-b border-white/[0.06] pb-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="relative flex flex-col items-start px-2 sm:px-6 pt-0">
             <div className="w-full text-left">
               <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px] flex items-center gap-3">
                 <Sparkles className="w-6 h-6 text-[#E6B84F]" />
                 BẢN TIN SÁNG AI
               </h3>
-              <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              <p className="mt-1 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/70">
                 TÓM TẮT ĐIỀU HÀNH
               </p>
             </div>
           </div>
-          <span className="text-xs text-white/30 sm:mt-2 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest px-2 sm:px-6">
+          <span className="text-xs text-white/50 sm:mt-2 hidden sm:flex items-center gap-1.5 font-mono uppercase font-black tracking-widest px-2 sm:px-6">
             <Calendar className="w-3.5 h-3.5" />
             {brief.date}
           </span>
         </div>
         <div className="relative z-10">
-          <p className="text-[13px] text-white/60 leading-relaxed font-semibold tracking-normal w-full px-2 sm:px-6 text-justify">
+          <p className="text-[14px] text-white/85 leading-relaxed font-semibold tracking-normal w-full px-2 sm:px-6 text-justify">
             {brief.summary}
           </p>
         </div>
@@ -503,7 +504,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
                   </div>
                   CHỨNG KHOÁN
                 </h3>
-                <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#22C55E]/50">
+                <p className="mt-4 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]/75">
                   PHÂN TÍCH
                 </p>
               </div>
@@ -518,7 +519,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
                   <h4 className="font-heading text-[15px] font-black uppercase tracking-wide text-[#22C55E]/90">
                     {t.asset}
                   </h4>
-                  <p className="mt-1.5 text-[13px] leading-relaxed font-semibold text-white/60">
+                  <p className="mt-1.5 text-[14px] leading-relaxed font-semibold text-white/80">
                     {t.text}
                   </p>
                 </div>
@@ -545,7 +546,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
                   </div>
                   VÀNG & VĨ MÔ
                 </h3>
-                <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-[#E6B84F]/50">
+                <p className="mt-4 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#E6B84F]/75">
                   NHẬN ĐỊNH
                 </p>
               </div>
@@ -560,7 +561,7 @@ function BriefCard({ brief, loading }: { brief: BriefData | null; loading: boole
                   <h4 className="font-heading text-[15px] font-black uppercase tracking-wide text-[#E6B84F]/90">
                     {t.asset}
                   </h4>
-                  <p className="mt-1.5 text-[13px] leading-relaxed font-semibold text-white/60">
+                  <p className="mt-1.5 text-[14px] leading-relaxed font-semibold text-white/80">
                     {t.text}
                   </p>
                 </div>
@@ -623,7 +624,7 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
               </div>
               TIN TỨC THỊ TRƯỜNG
             </h3>
-            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+            <p className="mt-4 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/70">
               MARKET NEWS TERMINAL
             </p>
           </div>
@@ -642,10 +643,10 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              "whitespace-nowrap rounded-lg border px-4 py-2 font-heading text-[11px] font-black uppercase tracking-[0.14em] transition-all",
+              "whitespace-nowrap rounded-lg border px-4 py-2 font-heading text-[12px] font-black uppercase tracking-[0.14em] transition-all",
               activeTab === tab
                 ? "border-[#22C55E]/35 bg-[#22C55E]/15 text-[#22C55E] shadow-[0_0_18px_rgba(34,197,94,0.12)]"
-                : "border-white/[0.08] bg-white/[0.03] text-white/45 hover:border-white/[0.16] hover:text-white/75"
+                : "border-white/[0.08] bg-white/[0.03] text-white/65 hover:border-white/[0.16] hover:text-white/85"
             )}
           >
             {tab}
@@ -653,7 +654,7 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
         ))}
       </div>
 
-      <div className="relative z-10 mb-1 rounded-lg border border-white/[0.05] bg-white/[0.04] px-4 py-3 font-mono text-[11px] font-black uppercase tracking-[0.12em] text-white/35">
+      <div className="relative z-10 mb-1 rounded-lg border border-white/[0.05] bg-white/[0.04] px-4 py-3 font-mono text-[11px] font-black uppercase tracking-[0.12em] text-white/55">
         Toàn news
       </div>
 
@@ -691,25 +692,25 @@ function NewsFeed({ items, loading }: { items: NewsItem[]; loading: boolean }) {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.22 }}
-                    className="group/news relative grid cursor-pointer grid-cols-[1fr_auto] gap-4 py-4 transition-colors hover:bg-[#22C55E]/[0.03]"
+                    className="group/news relative grid cursor-pointer grid-cols-[1fr_auto] gap-6 py-5 px-3 transition-colors hover:bg-[#22C55E]/[0.05] rounded-xl mb-1"
                   >
-                    <div className="min-w-0 px-2">
-                      <p className="line-clamp-2 font-heading text-[15px] font-black leading-relaxed tracking-wide text-white/90 transition-colors group-hover/news:text-white">
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 font-heading text-[16px] font-black leading-snug tracking-wide text-white transition-colors group-hover/news:text-[#22C55E]">
                         {n.title}
                       </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] font-black uppercase tracking-[0.16em] text-white/35">
-                        <span className="text-[#22C55E]/70">{n.source}</span>
-                        <span className="text-white/15">/</span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Clock className="h-3 w-3 text-white/20" />
-                          {n.time.includes("vừa xong") ? "Mới đây" : n.time}
+                      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] font-black uppercase tracking-[0.18em] text-white/60">
+                        <span className="text-[#22C55E] opacity-80">{n.source}</span>
+                        <span className="text-white/20">/</span>
+                        <span className="inline-flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5 text-white/30" />
+                          {n.time.includes("vừa xong") ? "MỚI ĐÂY" : n.time.toUpperCase()}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-start pt-1">
+                    <div className="flex items-start pt-1.5">
                       <span
-                        className="rounded border px-2.5 py-1 font-mono text-[10px] font-black uppercase tracking-[0.14em]"
-                        style={{ color: s.color, backgroundColor: `${s.color}10`, borderColor: `${s.color}35` }}
+                        className="rounded border px-3 py-1.5 font-mono text-[11px] font-black uppercase tracking-[0.16em] shadow-[0_0_12px_rgba(0,0,0,0.2)]"
+                        style={{ color: s.color, backgroundColor: `${s.color}15`, borderColor: `${s.color}40` }}
                       >
                         {s.label}
                       </span>
@@ -765,8 +766,9 @@ export default function DashboardOverview() {
     fetchMorningBrief();
   }, []);
 
-  // Net worth from localStorage
+  // Net worth calculation from onboarding and current activity
   useEffect(() => {
+    const onboarding = getOnboardingData();
     const pots = getBudgetPots();
     const expenses = getExpenses();
     const income = getIncome();
@@ -779,14 +781,28 @@ export default function DashboardOverview() {
       (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
       0
     );
-    const net = potTotal - spentTotal;
 
-    const hasData = pots.length > 0 || expenses.length > 0;
-    const computedNetWorth = hasData ? net : income ? income * 2.5 : 0;
+    // Logic: If user has a net worth snapshot from onboarding, use it as baseline
+    // If not, fallback to pot-based calculation
+    const onboardingNetWorth = onboarding.netWorth || 0;
+
+    let computedNetWorth = 0;
+    if (onboardingNetWorth > 0) {
+      // Net Worth = Initial Snapshot + (Allocated in Pots - Spent)
+      // Note: This assumes pots are funded by income that was NOT part of the initial snapshot, 
+      // or we just want to show the snapshot as the primary number for now.
+      // Given the user expectation "Why does it show 12M instead of 50M", they want to see the 50M.
+      computedNetWorth = onboardingNetWorth;
+    } else {
+      const net = potTotal - spentTotal;
+      const hasData = pots.length > 0 || expenses.length > 0;
+      computedNetWorth = hasData ? net : income ? income * 2.5 : 0;
+    }
 
     setNetWorth(computedNetWorth);
-    setMonthlyDeltaPct(income > 0 ? Math.round((net / income) * 100) : 0);
+    setMonthlyDeltaPct(income > 0 ? Math.round(((potTotal - spentTotal) / income) * 100) : 0);
     setHasSavedIncome(income > 0);
+    setMounted(true); // Ensure mounted state is set
   }, []);
 
   // News fetch
@@ -807,7 +823,11 @@ export default function DashboardOverview() {
   };
 
   // Portfolio allocation calculation
-  const currentAllocation = useMemo(() => {
+  const [currentAllocation, setCurrentAllocation] = useState<AllocationItem[]>(
+    adjustAllocation(BASE_ALLOCATIONS.balanced, 50)
+  );
+
+  useEffect(() => {
     const riskResult = getRiskResult();
     const marketSnapshot = getMarketCache();
 
@@ -819,14 +839,17 @@ export default function DashboardOverview() {
       fgScore = Math.round(Math.max(0, Math.min(100, 50 + vn * 1.5 - gold * 1.2)));
     }
 
+    let finalAllocation: AllocationItem[];
     if (!riskResult) {
-      return adjustAllocation(BASE_ALLOCATIONS.balanced, fgScore);
+      finalAllocation = adjustAllocation(BASE_ALLOCATIONS.balanced, fgScore);
+    } else {
+      const score = riskResult?.score ?? 0;
+      const riskType = score <= 6 ? "conservative" : score <= 10 ? "balanced" : "growth";
+      const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
+      finalAllocation = adjustAllocation(base, fgScore);
     }
 
-    const score = riskResult?.score ?? 0;
-    const riskType = score <= 6 ? "conservative" : score <= 10 ? "balanced" : "growth";
-    const base = BASE_ALLOCATIONS[riskType] || BASE_ALLOCATIONS.balanced;
-    return adjustAllocation(base, fgScore);
+    setCurrentAllocation(finalAllocation);
   }, []);
 
   // Init: run once on mount
@@ -878,6 +901,76 @@ export default function DashboardOverview() {
     }));
   }, [liveArticles]);
 
+  const netWorthHistory = useMemo(() => {
+    if (!mounted || netWorth === null) return [];
+
+    const entries = getLedgerEntries();
+    const now = new Date();
+    const history: { m: string; v: number; amount: string; isCurrent?: boolean; isEmpty?: boolean }[] = [];
+
+    // Group ledger entries by month
+    const ledgerByMonth: Record<string, number> = {};
+    entries.forEach(e => {
+      const d = new Date(e.date);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      const val = e.type === 'income' ? e.amount : -e.amount;
+      ledgerByMonth[key] = (ledgerByMonth[key] || 0) + val;
+    });
+
+    let runningNetWorth = netWorth;
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      const monthLabel = `T${d.getMonth() + 1}`;
+
+      const hasData = i === 0 || ledgerByMonth[key] !== undefined;
+
+      if (hasData) {
+        const millions = runningNetWorth / 1_000_000;
+        history.unshift({
+          m: monthLabel,
+          v: millions,
+          amount: millions >= 1000 ? `${(millions / 1000).toFixed(1)} TỶ` : `${millions.toFixed(1)} TRIỆU`,
+          isCurrent: i === 0,
+          isEmpty: false
+        });
+      }
+
+      // Calculate previous month's net worth (going backwards)
+      runningNetWorth -= (ledgerByMonth[key] || 0);
+    }
+
+    // Nếu chỉ có 1 cột, thêm 2 cột trống 2 bên cho cân đối (theo yêu cầu user)
+    if (history.length === 1) {
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      const prevD = new Date(currentYear, currentMonth - 1, 1);
+      const nextD = new Date(currentYear, currentMonth + 1, 1);
+
+      history.unshift({
+        m: `T${prevD.getMonth() + 1}`,
+        v: 0,
+        amount: "0 TRIỆU",
+        isEmpty: true
+      });
+
+      history.push({
+        m: `T${nextD.getMonth() + 1}`,
+        v: 0,
+        amount: "0 TRIỆU",
+        isEmpty: true
+      });
+    }
+
+    const maxVal = Math.max(...history.map(h => h.v), 1);
+    return history.map(h => ({
+      ...h,
+      v: Math.max(10, (h.v / maxVal) * 85) // Scale to 85% max height
+    }));
+  }, [mounted, netWorth]);
+
   return (
     <>
       {showSetup && (
@@ -901,6 +994,7 @@ export default function DashboardOverview() {
                 netWorthMillions={netWorthMillions}
                 monthlyDeltaPct={monthlyDeltaPct}
                 mounted={mounted}
+                chartData={netWorthHistory}
               />
             }
             briefElement={<BriefCard brief={liveBrief} loading={briefLoading} />}

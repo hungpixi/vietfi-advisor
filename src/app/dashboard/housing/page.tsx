@@ -109,10 +109,13 @@ export default function HousingIntelPage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       {/* Header */}
       <motion.div variants={fadeIn} className="mb-6">
-        <CyberHeader size="display">Housing <span className="text-[#22C55E]">Intel</span></CyberHeader>
-        <CyberSubHeader className="mt-1">
-          Dữ liệu thị trường BĐS &amp; Phân tích tài chính mua nhà cho thế hệ mới
-        </CyberSubHeader>
+        <CyberHeader size="display">Kế hoạch <span className="text-[#22C55E]">An cư</span></CyberHeader>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            PHÂN TÍCH TÀI CHÍNH & THỊ TRƯỜNG BĐS
+          </p>
+        </div>
       </motion.div>
 
       {/* ═══ Giá BĐS per khu vực ═══ */}
@@ -127,8 +130,8 @@ export default function HousingIntelPage() {
               <tr className="border-b border-white/[0.06] bg-white/[0.01]">
                 <th className="text-left py-4 px-2"><CyberSubHeader>Khu vực</CyberSubHeader></th>
                 <th className="text-left py-4 px-2"><CyberSubHeader>Loại</CyberSubHeader></th>
-                <th className="text-right py-4 px-2"><CyberSubHeader>Giá/m²</CyberSubHeader></th>
-                <th className="text-right py-4 px-2"><CyberSubHeader>YOY</CyberSubHeader></th>
+                <th className="text-right py-4 px-2"><CyberSubHeader>Giá/M²</CyberSubHeader></th>
+                <th className="text-right py-4 px-2"><CyberSubHeader>TĂNG TRƯỞNG</CyberSubHeader></th>
               </tr>
             </thead>
             <tbody>
@@ -165,12 +168,12 @@ export default function HousingIntelPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <CyberSubHeader className="mb-1.5 block">THU NHẬP/THÁNG</CyberSubHeader>
+                <CyberSubHeader className="mb-1.5 block uppercase">Thu nhập/Tháng</CyberSubHeader>
                 <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))}
                   className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#22C55E]/40 transition-all" />
               </div>
               <div>
-                <CyberSubHeader className="mb-1.5 block">TIẾT KIÊM/THÁNG</CyberSubHeader>
+                <CyberSubHeader className="mb-1.5 block uppercase">Tiết kiệm/Tháng</CyberSubHeader>
                 <input type="number" value={savings} onChange={(e) => setSavings(Number(e.target.value))}
                   className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none focus:border-[#22C55E]/40 transition-all" />
               </div>
@@ -178,14 +181,14 @@ export default function HousingIntelPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <CyberSubHeader className="mb-1.5 block">KHU VỰC</CyberSubHeader>
+                <CyberSubHeader className="mb-1.5 block uppercase">Khu vực</CyberSubHeader>
                 <select value={targetArea} onChange={(e) => setTargetArea(e.target.value)}
                   className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono uppercase outline-none focus:border-[#22C55E]/40">
                   {AREA_PRICES.map((a) => <option key={a.area} value={a.area} className="bg-black">{a.area}</option>)}
                 </select>
               </div>
               <div>
-                <CyberSubHeader className="mb-1.5 block">DIỆN TÍCH (m²)</CyberSubHeader>
+                <CyberSubHeader className="mb-1.5 block uppercase">Diện tích (m²)</CyberSubHeader>
                 <input type="number" value={apartmentSize} onChange={(e) => setApartmentSize(Number(e.target.value))}
                   className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
               </div>
@@ -234,12 +237,12 @@ export default function HousingIntelPage() {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <CyberSubHeader className="mb-1.5 block">TIỀN THUÊ/THÁNG</CyberSubHeader>
+              <CyberSubHeader className="mb-1.5 block uppercase">Tiền Thuê/Tháng</CyberSubHeader>
               <input type="number" value={rentMonthly} onChange={(e) => setRentMonthly(Number(e.target.value))}
                 className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
             </div>
             <div>
-              <CyberSubHeader className="mb-1.5 block">LÃI SUẤT VAY (%)</CyberSubHeader>
+              <CyberSubHeader className="mb-1.5 block uppercase">Lãi suất vay (%)</CyberSubHeader>
               <input type="number" step="0.1" value={loanRate} onChange={(e) => setLoanRate(Number(e.target.value))}
                 className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white font-mono outline-none" />
             </div>
@@ -276,7 +279,7 @@ export default function HousingIntelPage() {
             <div className="mt-2 pt-3 border-t border-white/10">
               <p className="text-[10px] text-white/30 font-mono uppercase leading-relaxed">
                 {buyVsRent.totalBuyCost < buyVsRent.totalRentCost
-                  ? `💡 Mua nhà tối ưu hơn ${((buyVsRent.totalRentCost - buyVsRent.totalBuyCost) / 1e9).toFixed(1)} tỷ sau {loanYears} năm.`
+                  ? `💡 Mua nhà tối ưu hơn ${((buyVsRent.totalRentCost - buyVsRent.totalBuyCost) / 1e9).toFixed(1)} tỷ sau ${loanYears} năm.`
                   : `💡 Thuê rẻ hơn ${((buyVsRent.totalBuyCost - buyVsRent.totalRentCost) / 1e9).toFixed(1)} tỷ nhưng không sở hữu tài sản.`}
               </p>
             </div>
@@ -288,7 +291,7 @@ export default function HousingIntelPage() {
       <motion.div variants={fadeIn} className="mb-6">
         <div className="flex items-center gap-2 mb-4 px-1">
           <Building2 className="w-4 h-4 text-[#22C55E]" />
-          <CyberHeader size="xs">Dòng Nhà ở xã hội (Social Housing)</CyberHeader>
+          <CyberHeader size="xs">Dòng Nhà ở xã hội</CyberHeader>
         </div>
         <div className="grid md:grid-cols-3 gap-3">
           {SOCIAL_HOUSING.map((h) => (

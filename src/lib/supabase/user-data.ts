@@ -52,7 +52,12 @@ export function getCachedUserId(): string | null {
 
 export async function getUserProfile(): Promise<OnboardingData> {
   const DEFAULT: OnboardingData = {
-    completed: false, income: 0, hasDebt: false, riskProfile: "", setupAt: "",
+    completed: false,
+    income: 0,
+    netWorth: 0,
+    hasDebt: false,
+    riskProfile: "",
+    setupAt: "",
   };
 
   const userId = await getAuthUserId();
@@ -62,7 +67,7 @@ export async function getUserProfile(): Promise<OnboardingData> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("profiles")
-      .select("income, has_debt, risk_profile, setup_at")
+      .select("income, net_worth, has_debt, risk_profile, setup_at")
       .eq("id", userId)
       .single();
 
@@ -71,6 +76,7 @@ export async function getUserProfile(): Promise<OnboardingData> {
     return {
       completed: !!data.setup_at,
       income: data.income ?? 0,
+      netWorth: data.net_worth ?? 0,
       hasDebt: data.has_debt ?? false,
       riskProfile: (data.risk_profile as OnboardingData["riskProfile"]) || "",
       setupAt: data.setup_at ?? "",
@@ -91,6 +97,7 @@ export async function saveUserProfile(
     await supabase.from("profiles").upsert({
       id: userId,
       income: profile.income ?? 0,
+      net_worth: profile.netWorth ?? 0,
       has_debt: profile.hasDebt ?? false,
       risk_profile: profile.riskProfile ?? "",
       setup_at: profile.setupAt || new Date().toISOString(),

@@ -211,4 +211,13 @@ export function setLedgerEntries(entries: LedgerEntry[]): void { setItem(LEDGER_
 const ALL_USER_KEYS = [POTS_KEY, EXPENSES_KEY, INCOME_KEY, DEBTS_KEY, GAMIFICATION_KEY, ONBOARDING_KEY, LESSONS_DONE_KEY, STREAK_FREEZE_KEY, RISK_RESULT_KEY, NEWS_BOOKMARKS_KEY, SOUND_MUTED_KEY, GOLD_KEY];
 export function clearAllUserData(): void {
     for (const key of ALL_USER_KEYS) removeItem(key);
+    if (isServer) return;
+
+    // Catch any newer app keys without having to keep this list perfect forever.
+    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+        const key = localStorage.key(i);
+        if (key?.startsWith("vietfi_")) {
+            localStorage.removeItem(key);
+        }
+    }
 }

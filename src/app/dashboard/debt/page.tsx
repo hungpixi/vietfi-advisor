@@ -13,6 +13,10 @@ import {
   Trash2,
   Check,
   Download,
+  Wallet,
+  Percent,
+  Calendar,
+  Ghost,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -158,8 +162,13 @@ export default function DebtPage() {
       <motion.div variants={fadeIn} className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <CyberHeader size="display" className="mb-0.5">Quỹ Nợ</CyberHeader>
-            <CyberSubHeader>Phân tích dòng tiền &amp; lộ trình thoát nợ tối ưu</CyberSubHeader>
+            <CyberHeader size="display" className="mb-0.5 transition-all duration-500 hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.2)]">Quỹ Nợ</CyberHeader>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="h-1 w-12 bg-[#22C55E]/50" />
+              <CyberSubHeader className="text-[#22C55E] font-black tracking-[0.2em] uppercase">
+                PHÂN TÍCH DÒNG TIỀN & LỘ TRÌNH THOÁT NỢ
+              </CyberSubHeader>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {debts.length > 0 && (
@@ -176,31 +185,78 @@ export default function DebtPage() {
       </motion.div>
 
       {/* Summary Cards */}
-      <motion.div variants={stagger} className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <motion.div variants={fadeIn}>
-          <CyberCard className="p-4" showDecorators={false}>
-            <CyberSubHeader>Tổng nợ</CyberSubHeader>
-            <CyberMetric size="md" color="text-[#EF4444]" className="mt-1">{formatVND(totalDebt)}</CyberMetric>
+          <CyberCard className="p-5 h-full" showDecorators={false}>
+            <div className="flex flex-col h-full gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center border border-[#EF4444]/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                  <Wallet className="w-5 h-5 text-[#EF4444]" />
+                </div>
+                <CyberSubHeader size="xs" color="text-white/50" className="tracking-[0.15em]">Tổng nợ hiện tại</CyberSubHeader>
+              </div>
+              <div>
+                <CyberMetric size="lg" color="text-[#EF4444]" className="tracking-normal">
+                  {formatVND(totalDebt, true)}
+                </CyberMetric>
+              </div>
+            </div>
           </CyberCard>
         </motion.div>
+
         <motion.div variants={fadeIn}>
-          <CyberCard className="p-4" showDecorators={false}>
-            <CyberSubHeader>Tỷ lệ nợ/thu nhập</CyberSubHeader>
-            <CyberMetric size="md" className="mt-1" style={{ color: dtiColor }}>{dtiRatio.toFixed(1)}%</CyberMetric>
-            <div className="text-[10px] font-mono uppercase font-black" style={{ color: dtiColor }}>{dtiLabel}</div>
+          <CyberCard className="p-5 h-full" showDecorators={false}>
+            <div className="flex flex-col h-full gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]" style={{ borderColor: `${dtiColor}33`, backgroundColor: `${dtiColor}11` }}>
+                  <Percent className="w-5 h-5" style={{ color: dtiColor }} />
+                </div>
+                <CyberSubHeader size="xs" color="text-white/50" className="tracking-[0.15em]">Tỷ lệ nợ/thu nhập</CyberSubHeader>
+              </div>
+              <div className="flex flex-col gap-1">
+                <CyberMetric size="lg" className="tracking-normal" style={{ color: dtiColor }}>{dtiRatio.toFixed(1)}%</CyberMetric>
+                <div className="text-[10px] font-mono uppercase font-black px-2 py-0.5 rounded bg-white/5 w-fit" style={{ color: dtiColor, backgroundColor: `${dtiColor}11` }}>{dtiLabel}</div>
+              </div>
+            </div>
           </CyberCard>
         </motion.div>
+
         <motion.div variants={fadeIn}>
-          <CyberCard className="p-4" showDecorators={false}>
-            <CyberSubHeader>Trả/tháng (min)</CyberSubHeader>
-            <CyberMetric size="md" color="text-[#E6B84F]" className="mt-1">{formatVND(totalMonthlyMin)}</CyberMetric>
+          <CyberCard className="p-5 h-full" showDecorators={false}>
+            <div className="flex flex-col h-full gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#E6B84F]/10 flex items-center justify-center border border-[#E6B84F]/20 shadow-[0_0_15px_rgba(230,184,79,0.1)]">
+                  <Calendar className="w-5 h-5 text-[#E6B84F]" />
+                </div>
+                <CyberSubHeader size="xs" color="text-white/50" className="tracking-[0.15em]">Trả tối thiểu/tháng</CyberSubHeader>
+              </div>
+              <div>
+                <CyberMetric size="lg" color="text-[#E6B84F]" className="tracking-normal">
+                  {formatVND(totalMonthlyMin, true)}
+                </CyberMetric>
+              </div>
+            </div>
           </CyberCard>
         </motion.div>
+
         <motion.div variants={fadeIn}>
-          <CyberCard className="p-4 border-[#EF4444]/20" showDecorators={false} variant="danger">
-            <CyberSubHeader>Lãi ẩn (12T)</CyberSubHeader>
-            <CyberMetric size="md" color="text-[#EF4444]" className="mt-1">{formatVND(Math.round(totalHiddenInterest))}</CyberMetric>
-            <CyberSubHeader>Nếu chỉ trả min</CyberSubHeader>
+          <CyberCard className="p-5 h-full border-[#EF4444]/20" showDecorators={false} variant="danger">
+            <div className="flex flex-col h-full gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center border border-[#EF4444]/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                  <Ghost className="w-5 h-5 text-[#EF4444]" />
+                </div>
+                <div className="flex flex-col">
+                  <CyberSubHeader size="xs" color="text-[#EF4444]/70" className="tracking-[0.15em]">Lãi ẩn (12T)</CyberSubHeader>
+                  <span className="text-[8px] font-mono uppercase text-white/30">Nếu chỉ trả tối thiểu</span>
+                </div>
+              </div>
+              <div>
+                <CyberMetric size="lg" color="text-[#EF4444]" className="tracking-normal">
+                  {formatVND(Math.round(totalHiddenInterest), true)}
+                </CyberMetric>
+              </div>
+            </div>
           </CyberCard>
         </motion.div>
       </motion.div>
@@ -320,8 +376,8 @@ export default function DebtPage() {
             {chartData.length > 0 && (
               <CyberCard className="p-4" showDecorators={false}>
                 <CyberSubHeader className="mb-4 block">BIỂU ĐỒ DOMINO</CyberSubHeader>
-                    <div className="h-40 w-full min-w-0">
-                       <ResponsiveContainer width="100%" height="100%">
+                <div className="h-40 w-full min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
                       <XAxis dataKey="month" hide />

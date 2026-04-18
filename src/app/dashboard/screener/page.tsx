@@ -135,9 +135,12 @@ export default function ScreenerPage() {
         <div className="flex items-center justify-between">
           <div>
             <CyberHeader size="display">Lọc <span className="text-[#22C55E]">Cổ Phiếu</span></CyberHeader>
-            <CyberSubHeader className="mt-1">
-              Tìm cổ phiếu tiềm năng từ {stocks.length > 0 ? `${stocks.length} kết quả` : "1500+ mã"} trên sàn VN
-            </CyberSubHeader>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="h-1 w-12 bg-[#22C55E]/50" />
+              <CyberSubHeader className="text-[#22C55E] font-black tracking-[0.2em] uppercase">
+                TÌM KIẾM CƠ HỘI ĐẦU TƯ TIỀM NĂNG
+              </CyberSubHeader>
+            </div>
           </div>
           <button
             onClick={fetchStocks}
@@ -231,7 +234,7 @@ export default function ScreenerPage() {
                 <Sparkles className="w-4 h-4 text-[#22C55E]" />
                 <CyberSubHeader>{stocks.length} CỔ PHIẾU • XẾP THEO {sortKey.toUpperCase()}</CyberSubHeader>
               </div>
-              {fetchedAt && <CyberSubHeader>LIVE: {new Date(fetchedAt).toLocaleTimeString("vi-VN")}</CyberSubHeader>}
+              {fetchedAt && <CyberSubHeader>TRỰC TIẾP: {new Date(fetchedAt).toLocaleTimeString("vi-VN")}</CyberSubHeader>}
             </div>
 
             {/* Table */}
@@ -248,7 +251,7 @@ export default function ScreenerPage() {
                     <ThSortable label="PB" col="pb" onSort={handleSort} icon={<SortIcon col="pb" />} />
                     <ThSortable label="ROE%" col="roe" onSort={handleSort} icon={<SortIcon col="roe" />} />
                     <ThSortable label="Vốn hóa" col="marketCap" onSort={handleSort} icon={<SortIcon col="marketCap" />} />
-                    <ThSortable label="Rating" col="rating" onSort={handleSort} icon={<SortIcon col="rating" />} />
+                    <ThSortable label="Đánh giá" col="rating" onSort={handleSort} icon={<SortIcon col="rating" />} />
                     <ThSortable label="Điểm" col="compositeScore" onSort={handleSort} icon={<SortIcon col="compositeScore" />} />
                   </tr>
                 </thead>

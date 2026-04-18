@@ -14,7 +14,17 @@ export default function GurusPage() {
   const gurus = Object.values(GURU_PERSONAS);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <motion.div variants={fadeIn} className="mb-6">
+        <CyberHeader size="display">Hội đồng <span className="text-[#22C55E]">Gurus</span></CyberHeader>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            PHÂN TÍCH CHIẾN LƯỢC THEO CÁC HUYỀN THOẠI
+          </p>
+        </div>
+      </motion.div>
+
       {/* Hero Section */}
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         <CyberCard className="p-8 md:p-12 text-center" showDecorators={true} variant="success">

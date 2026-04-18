@@ -309,7 +309,10 @@ export default function BudgetPage() {
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const remaining = income - totalSpent;
 
-  const pieData = pots.map((p) => ({ name: p.name, value: getSpent(p.id) || p.allocated * 0.01, color: p.color }));
+  const pieData = pots.map((p) => {
+    const spent = getSpent(p.id);
+    return { name: p.name, value: totalSpent === 0 ? p.allocated : spent, color: p.color };
+  });
   const recentExpenses = [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
   return (
@@ -399,14 +402,63 @@ export default function BudgetPage() {
           <CyberCard className="h-full" glowColor="rgba(255,255,255,0.05)">
             <h3 className="font-heading text-[15px] font-black uppercase tracking-wider text-white mb-6">Cơ cấu Ngân sách</h3>
 
-            <div className="w-full min-w-0 h-56 -mt-4">
+            <div className="w-full min-w-0 h-64 -mt-2 relative flex items-center justify-center">
+              {/* Center Label Overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 pt-4">
+                <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/20">
+                  {totalSpent === 0 ? "NGÂN SÁCH" : "ĐÃ CHI"}
+                </span>
+                <span className={cn(
+                  "font-heading text-[20px] font-black tracking-tighter mt-1",
+                  totalSpent === 0 ? "text-white/40" : "text-[#22C55E]"
+                )}>
+                  {formatVND(totalSpent === 0 ? totalAllocated : totalSpent)}
+                </span>
+                {totalSpent > 0 && (
+                  <span className="text-[9px] font-mono font-black text-white/20 mt-1 uppercase tracking-widest">
+                    {Math.round((totalSpent / totalAllocated) * 100)}% Phân bổ
+                  </span>
+                )}
+              </div>
+
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
-                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} fillOpacity={0.8} />)}
+                  <Tooltip
+                    contentStyle={{
+                      background: "#08110f",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 12,
+                      padding: "8px 12px",
+                      color: "#FFF",
+                      fontSize: 11,
+                      fontVariantNumeric: "slashed-zero"
+                    }}
+                    formatter={(value: number, name: string) => [formatFull(value), name]}
+                  />
+                  <Pie
+                    data={pots.length === 0 ? [{ name: "Trống", value: 1, color: "rgba(255,255,255,0.05)" }] : pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={90}
+                    paddingAngle={pots.length > 1 ? 4 : 0}
+                    dataKey="value"
+                    stroke="none"
+                    animationBegin={0}
+                    animationDuration={1200}
+                  >
+                    {(pots.length === 0 ? [{ name: "Trống", value: 1, color: "rgba(255,255,255,0.05)" }] : pieData).map((entry, i) => (
+                      <Cell
+                        key={i}
+                        fill={totalSpent === 0 && pots.length > 0 ? "rgba(255,255,255,0.05)" : entry.color}
+                        fillOpacity={totalSpent === 0 ? 0.3 : 0.8}
+                        className="transition-all duration-500"
+                        style={{
+                          filter: totalSpent > 0 && entry.value === 0 ? "grayscale(1)" : "none",
+                        }}
+                      />
+                    ))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: "#08110f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "8px 12px", color: "#FFF", fontSize: 11, fontVariantNumeric: "slashed-zero" }}
-                    formatter={(value: unknown) => formatFull(value as number)} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

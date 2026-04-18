@@ -254,7 +254,7 @@ export function MarketCard({ label, value, change, icon: Icon }: MarketCardData)
       <div className="pointer-events-none absolute bottom-3 left-3 h-3 w-3 border-b border-l border-white/10" />
 
       <div className="mb-1.5 flex items-center justify-between relative z-10 border-b border-white/[0.06] pb-1.5">
-        <span className="font-heading text-[12px] font-black uppercase tracking-wide text-white/90 transition-colors">
+        <span className="font-heading text-[12px] font-black uppercase tracking-wide text-white transition-colors">
           {label}
         </span>
         <div className={cn("p-1.5 rounded-lg border", positive ? "bg-[#22C55E]/10 border-[#22C55E]/20" : "bg-[#EF4444]/10 border-[#EF4444]/20")}>
@@ -317,22 +317,22 @@ export function FGGauge({
       <div className="pointer-events-none absolute bottom-4 left-4 h-7 w-7 border-b border-l border-white/20" />
 
       {/* Header */}
-      <div className="relative z-10 mb-6 border-b border-white/[0.06] pb-6">
-        <div className="relative flex flex-col items-start px-2 sm:px-6 pt-2">
+      <div className="relative z-10 mb-2 border-b border-white/[0.06] pb-2">
+        <div className="relative flex flex-col items-start px-2 sm:px-6 pt-0">
           <div className="w-full text-left">
             <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
               TÂM LÝ THỊ TRƯỜNG
             </h3>
-            <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+            <p className="mt-1 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/75">
               NHIỆT KẾ THỊ TRƯỜNG
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 relative z-10 w-full h-full pb-4">
+      <div className="flex flex-col gap-2 relative z-10 w-full h-full pb-4">
         {/* Top: market sentiment gauge (styled to match reference) */}
-        <div className="relative flex w-full flex-col items-center justify-center pt-2">
+        <div className="relative flex w-full flex-col items-center justify-center pt-0">
           <svg viewBox="0 0 180 124" className="w-full max-w-[280px] overflow-visible">
             {/* Base track */}
             <path
@@ -407,7 +407,7 @@ export function FGGauge({
             return (
               <div key={indicator.label} className="group/bar">
                 <div className="mb-1">
-                  <span className="font-heading text-[15px] font-black tracking-wide text-white/90">{indicator.label}</span>
+                  <span className="font-heading text-[15px] font-black tracking-wide text-white">{indicator.label}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="h-1.5 w-full bg-[#1F222A] rounded-full overflow-hidden border border-white/[0.02]">
@@ -419,7 +419,7 @@ export function FGGauge({
                       style={{ backgroundColor: barColor, boxShadow: `0 0 10px ${barColor}40` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/60 w-8 text-right shrink-0">{indicator.value}</span>
+                  <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/85 w-8 text-right shrink-0">{indicator.value}</span>
                 </div>
               </div>
             );
@@ -429,11 +429,11 @@ export function FGGauge({
           <div className="mt-4 relative p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
             <div className="flex gap-3 items-start relative z-10">
-              <div className="flex-shrink-0 mt-0.5 rounded-full w-4 h-4 border border-white/30 flex items-center justify-center font-mono text-[9px] text-white/50">
+              <div className="flex-shrink-0 mt-0.5 rounded-full w-4 h-4 border border-white/40 flex items-center justify-center font-mono text-[9px] text-white/70">
                 i
               </div>
-              <p className="text-[13px] font-medium text-white/60 leading-relaxed font-sans">
-                <span className="text-white/80 font-semibold mr-1">AI Commentary:</span>
+              <p className="text-[13px] font-medium text-white/80 leading-relaxed font-sans">
+                <span className="text-white font-semibold mr-1">AI Commentary:</span>
                 {quote} {action}
               </p>
             </div>

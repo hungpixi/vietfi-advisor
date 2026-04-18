@@ -214,7 +214,12 @@ export default function LearnPage() {
         <div className="flex items-center justify-between">
           <div>
             <CyberHeader size="display">Học tài chính <span className="text-[#22C55E]">60s</span></CyberHeader>
-            <CyberSubHeader className="mt-1">Kiến thức cơ bản giúp bạn định hình tư duy đầu tư dài hạn</CyberSubHeader>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="h-1 w-12 bg-[#22C55E]/50" />
+              <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+                KIẾN THỨC CĂN BẢN TRONG 1 PHÚT
+              </p>
+            </div>
           </div>
           <div className="text-right">
             <CyberTypography size="xs" variant="mono" className="text-white/20 font-black tracking-widest uppercase">TIẾN ĐỘ</CyberTypography>
@@ -249,7 +254,7 @@ export default function LearnPage() {
                       <CyberTypography size="sm" className={cn("font-black", done ? "text-[#22C55E]/80" : "text-white")}>
                         {l.title.toUpperCase()}
                       </CyberTypography>
-                      <CyberSubHeader>{l.slides.length} SLIDES + QUIZ PHÂN TÍCH</CyberSubHeader>
+                      <CyberSubHeader>{l.slides.length} TRANG + QUIZ PHÂN TÍCH</CyberSubHeader>
                     </div>
                     <div className="text-right">
                       <CyberTypography size="xs" variant="mono" className={cn("font-black", done ? "text-[#22C55E]/30" : "text-[#22C55E]")}>+{l.xp} XP</CyberTypography>

@@ -23,12 +23,15 @@ function CashflowContent() {
   return (
     <div className="min-h-screen">
       <div className="mb-8 border-b border-white/[0.06] pb-6">
-        <h1 className="font-heading text-[28px] md:text-[36px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)]">
+        <h1 className="font-heading text-[32px] md:text-[44px] font-black uppercase leading-[1.1] tracking-tight text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-500">
           Dòng tiền
         </h1>
-        <p className="mt-2 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/40">
-          Theo dõi thu chi &amp; quản lý ngân sách theo hũ
-        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            QUẢN LÝ THU CHI & NGÂN SÁCH
+          </p>
+        </div>
       </div>
 
       <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/[0.06] rounded-xl w-fit mb-8 shadow-inner">

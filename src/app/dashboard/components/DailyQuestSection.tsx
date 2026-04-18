@@ -107,7 +107,7 @@ export function DailyQuestSection({
               <h3 className="font-heading text-[24px] font-black uppercase leading-[1.1] tracking-wider text-white drop-shadow-[0_2px_15px_rgba(255,255,255,0.08)] sm:text-[32px]">
                 {title}
               </h3>
-              <p className="mt-4 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/50">
+              <p className="mt-4 font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/75">
                 {statusText}
               </p>
 
@@ -124,7 +124,7 @@ export function DailyQuestSection({
                     )}
                   />
                 </div>
-                <span className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/30">
+                <span className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-white/60">
                   {completedCount}/{quests.length} ĐÃ HOÀN TẤT
                 </span>
               </div>
@@ -190,7 +190,7 @@ export function DailyQuestSection({
                     <p
                       className={cn(
                         "font-heading text-[15px] font-black uppercase tracking-wide",
-                        quest.completed ? "text-slate-400" : "text-white/90"
+                        quest.completed ? "text-slate-400" : "text-white"
                       )}
                     >
                       {quest.title}
@@ -207,15 +207,15 @@ export function DailyQuestSection({
                     </span>
                   </div>
 
-                  <p className={cn("mt-1.5 text-[13px] leading-relaxed font-semibold", quest.completed ? "text-slate-500" : "text-white/60")}>
+                  <p className={cn("mt-1.5 text-[14px] leading-relaxed font-semibold", quest.completed ? "text-slate-500" : "text-white/80")}>
                     {quest.description}
                   </p>
 
                   <div className="mt-4 flex items-center justify-between">
                     <span
                       className={cn(
-                        "font-mono text-[10px] font-black uppercase tracking-wider",
-                        quest.completed ? "text-slate-500" : "text-[#22C55E]/70"
+                        "font-mono text-[11px] font-black uppercase tracking-wider",
+                        quest.completed ? "text-slate-500" : "text-[#22C55E]"
                       )}
                     >
                       {quest.completed ? "Trạng thái: Đã xong" : "Hành động: Khám phá"}

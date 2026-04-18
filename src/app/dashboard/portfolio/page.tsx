@@ -142,9 +142,12 @@ export default function PortfolioPage() {
     <motion.div initial="hidden" animate="visible" variants={stagger}>
       <motion.div variants={fadeIn} className="mb-6">
         <CyberHeader size="display">Cố vấn <span className="text-[#22C55E]">Danh mục</span></CyberHeader>
-        <CyberSubHeader className="mt-1">
-          Hệ thống tối ưu hóa tài sản dựa trên Modern Portfolio Theory &amp; Market Sentiment
-        </CyberSubHeader>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="h-1 w-12 bg-[#22C55E]/50" />
+          <p className="font-mono text-[12px] font-black uppercase tracking-[0.2em] text-[#22C55E]">
+            TỐI ƯU HÓA TÀI SẢN THEO CHỈ SỐ THỊ TRƯỜNG
+          </p>
+        </div>
       </motion.div>
 
       {/* Input Module */}
@@ -169,7 +172,7 @@ export default function PortfolioPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Shield className="w-4 h-4 text-[#22C55E]" />
-              <CyberSubHeader>KHẨU VỊ RỦI RO {hasRiskDNA && <span className="text-[#22C55E] tracking-widest">(AUTO-SYNCED)</span>}</CyberSubHeader>
+              <CyberSubHeader>KHẨU VỊ RỦI RO {hasRiskDNA && <span className="text-[#22C55E] tracking-widest">(TỰ ĐỘNG)</span>}</CyberSubHeader>
             </div>
             <div className="flex gap-2">
               {Object.entries(riskLabels).map(([val, label]) => (
@@ -220,7 +223,7 @@ export default function PortfolioPage() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <CyberTypography size="sm" variant="mono" className="text-white font-black">{riskType.toUpperCase()}</CyberTypography>
-                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Strategy</p>
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">CHIẾN LƯỢC</p>
                 </div>
               </div>
 
@@ -243,11 +246,11 @@ export default function PortfolioPage() {
         </div>
 
         {/* AI Insight Column */}
-        <div className="lg:col-span-3 min-w-0">
+        <div className="lg:col-span-3 min-0">
           <CyberCard className="p-6 h-full" variant="success">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="w-4 h-4 text-[#22C55E]" />
-              <CyberHeader size="xs">Cố vấn AI — Live Insight</CyberHeader>
+              <CyberHeader size="xs">Cố vấn AI — Trực tiếp</CyberHeader>
             </div>
 
             {/* Market Context Pills */}
@@ -266,7 +269,7 @@ export default function PortfolioPage() {
                 </div>
               )}
               <div className="px-3 py-1 rounded-full text-[9px] font-black border bg-white/5 border-white/10 text-white/40">
-                SENTIMENT: {fgScore} ({fgScore <= 40 ? "FEAR" : fgScore >= 60 ? "GREED" : "NEUTRAL"})
+                TÂM LÝ: {fgScore} ({fgScore <= 40 ? "SỢ HÃI" : fgScore >= 60 ? "THAM LAM" : "TRUNG LẬP"})
               </div>
             </div>
 
@@ -375,9 +378,9 @@ export default function PortfolioPage() {
               <CyberHeader size="xs">Dự phóng tăng trưởng 10 năm</CyberHeader>
             </div>
             <div className="flex gap-4">
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#22C55E]" /><span className="text-[8px] font-black text-white/40 uppercase">Best</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#E6B84F]" /><span className="text-[8px] font-black text-white/40 uppercase">Base</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#EF4444]" /><span className="text-[8px] font-black text-white/40 uppercase">Worst</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#22C55E]" /><span className="text-[8px] font-black text-white/40 uppercase">TỐT</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#E6B84F]" /><span className="text-[8px] font-black text-white/40 uppercase">CƠ BẢN</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#EF4444]" /><span className="text-[8px] font-black text-white/40 uppercase">XẤU</span></div>
             </div>
           </div>
           <div className="h-64 min-w-0">
