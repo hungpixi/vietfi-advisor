@@ -127,3 +127,37 @@ describe("runBacktest — sma-cross", () => {
         expect(lastBm).toBeGreaterThan(firstBm);
     });
 });
+
+// ── WQ Alpha Mean Reversion ──
+
+describe("runBacktest — wq-mean-reversion", () => {
+    it("trả về empty list nếu số bar nhỏ hơn lookback", () => {
+        const bars = makeBars([100, 110, 120]);
+        const result = runBacktest(bars, { strategy: "wq-mean-reversion", capital: 10_000_000, wqLookback: 10 });
+        expect(result.trades).toHaveLength(0);
+    });
+
+    it("mua khi giá giảm sâu dưới threshold", () => {
+        const closes = Array.from({ length: 20 }, () => 100);
+        closes.push(95);
+        closes.push(105);
+        const bars = makeBars(closes);
+        const result = runBacktest(bars, { strategy: "wq-mean-reversion", capital: 100_000_000, wqLookback: 10, wqThreshold: -0.5 });
+        expect(result.trades.length).toBeGreaterThan(0);
+        expect(result.trades[0].type).toBe("BUY");
+    });
+});
+
+// ── WQ Volatility Breakout ──
+
+describe("runBacktest — wq-vol-breakout", () => {
+    it("mua khi volume đột biến và giá tăng", () => {
+        const closes = Array.from({ length: 20 }, (_, i) => 100 + i);
+        const bars = makeBars(closes);
+        bars[18].volume = 5_000_000;
+        const result = runBacktest(bars, { strategy: "wq-vol-breakout", capital: 100_000_000, wqLookback: 10, wqThreshold: 2.0 });
+        expect(result.trades.length).toBeGreaterThan(0);
+        expect(result.trades[0].type).toBe("BUY");
+    });
+});
+

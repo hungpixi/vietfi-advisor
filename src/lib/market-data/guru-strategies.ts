@@ -75,6 +75,32 @@ export const GURU_STRATEGIES: Record<string, GuruStrategy> = {
             "Mua tại điểm breakout từ nền tảng Cup & Handle. Xác nhận bằng SMA10 > SMA30. Bán tự động khi mất -7% từ điểm mua.",
         sampleTicker: "ACB",
     },
+    "wq-alpha-mr": {
+        guruId: "wq-alpha-mr",
+        config: {
+            strategy: "wq-mean-reversion" as Strategy,
+            capital: 100_000_000,
+            wqLookback: 20,
+            wqThreshold: -2.0,
+        },
+        strategyLabel: "Alpha 01: Z-Score Mean Reversion",
+        description:
+            "Alpha signal: Mua khi giá giảm quá sâu lệch xa trung bình 20 ngày (Z-Score < -2.0). Bán khi giá hồi về mức trung bình. (Mô phỏng tư duy WorldQuant Alpha).",
+        sampleTicker: "VND",
+    },
+    "wq-alpha-vol": {
+        guruId: "wq-alpha-vol",
+        config: {
+            strategy: "wq-vol-breakout" as Strategy,
+            capital: 100_000_000,
+            wqLookback: 20,
+            wqThreshold: 2.0,
+        },
+        strategyLabel: "Alpha 02: Volatility Breakout",
+        description:
+            "Alpha signal: Mua khi động lượng khối lượng đột biến (Volume > 200% trung bình 20 ngày) đi kèm giá tăng. Exit sau 10 ngày hoặc khi mất đà tăng. (Mô phỏng tư duy WorldQuant Alpha).",
+        sampleTicker: "SSI",
+    },
 };
 
 /**

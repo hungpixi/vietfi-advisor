@@ -9,7 +9,7 @@ import type { OHLCVBar } from "./price-history";
 
 // ── Types ──
 
-export type Strategy = "buy-and-hold" | "sma-cross" | "breakout-52w" | "ma30w-stage2" | "tactical-allocation";
+export type Strategy = "buy-and-hold" | "sma-cross" | "breakout-52w" | "ma30w-stage2" | "tactical-allocation" | "wq-mean-reversion" | "wq-vol-breakout";
 
 export interface BacktestConfig {
     strategy: Strategy;
@@ -19,6 +19,8 @@ export interface BacktestConfig {
     equityWeight?: number; // default 0.7 (70%)
     cashYield?: number;    // default 0.06 (6% APR)
     tradingFee?: number;   // default 0.002 (0.2%)
+    wqLookback?: number;   // lookback period for WQ alphas
+    wqThreshold?: number;  // signal threshold for WQ alphas
 }
 
 export interface EquityPoint {
@@ -653,6 +655,187 @@ function runTacticalAllocation(
     };
 }
 
+// ── Alpha: WQ Mean Reversion ──
+
+function runWqMeanReversion(bars: OHLCVBar[], capital: number, fee: number, lookback: number, threshold: number): BacktestResult {
+    if (bars.length < lookback) return emptyResult(capital);
+    const closes = bars.map(b => b.close);
+    const trades: Trade[] = [];
+    const equity: EquityPoint[] = [];
+
+    let cash = capital;
+    let shares = 0;
+    let buyCost = 0;
+    let totalFees = 0;
+    const winTrades: boolean[] = [];
+
+    const bmShares = Math.floor(capital / closes[0]);
+    const bmLeftover = capital - bmShares * closes[0];
+
+    for (let i = 0; i < bars.length; i++) {
+        const bar = bars[i];
+
+        let zScore = null;
+        if (i >= lookback - 1) {
+            const periodSlice = closes.slice(i - lookback + 1, i + 1);
+            const Math_mean = periodSlice.reduce((s, v) => s + v, 0) / lookback;
+            const variance = periodSlice.reduce((s, v) => s + Math.pow(v - Math_mean, 2), 0) / (lookback > 1 ? lookback - 1 : 1);
+            const std = Math.sqrt(variance);
+            if (std !== 0) zScore = (bar.close - Math_mean) / std;
+        }
+
+        if (zScore !== null) {
+            // Buy condition
+            if (shares === 0 && zScore < threshold) {
+                const adjustedPrice = bar.close * (1 + fee);
+                shares = Math.floor(cash / adjustedPrice);
+                if (shares > 0) {
+                    buyCost = adjustedPrice;
+                    const totalCost = shares * adjustedPrice;
+                    cash -= totalCost;
+                    totalFees += shares * bar.close * fee;
+                    trades.push({ type: "BUY", date: bar.date, price: adjustedPrice, shares, value: totalCost });
+                }
+            }
+            // Sell condition
+            else if (shares > 0 && zScore > 0) {
+                const sellValue = shares * bar.close * (1 - fee);
+                const pnl = sellValue - shares * buyCost;
+                winTrades.push(pnl > 0);
+                trades.push({
+                    type: "SELL",
+                    date: bar.date,
+                    price: bar.close,
+                    shares,
+                    value: sellValue,
+                    pnl,
+                    pnlPct: (pnl / (shares * buyCost)) * 100
+                });
+                totalFees += shares * bar.close * fee;
+                cash += sellValue;
+                shares = 0;
+                buyCost = 0;
+            }
+        }
+
+        equity.push({
+            date: bar.date,
+            equity: cash + shares * bar.close,
+            benchmark: bmShares * bar.close + bmLeftover,
+        });
+    }
+
+    const finalCapital = cash + shares * bars[bars.length - 1].close * (1 - fee);
+    const weeklyReturns = equity.slice(1).map((p, i) => (p.equity - equity[i].equity) / equity[i].equity);
+    const winRate = winTrades.length > 0 ? (winTrades.filter(Boolean).length / winTrades.length) * 100 : 0;
+
+    return {
+        equity, trades,
+        metrics: {
+            cagr: calcCAGR(capital, finalCapital, bars.length),
+            totalReturn: ((finalCapital - capital) / capital) * 100,
+            sharpe: calcSharpe(weeklyReturns),
+            maxDrawdown: calcMaxDrawdown(equity.map(e => e.equity)),
+            winRate, numTrades: trades.length, finalCapital, totalFees,
+            benchmarkCagr: calcCAGR(capital, (bmShares * bars[bars.length - 1].close + bmLeftover), bars.length),
+            ...computeStressMetrics(bars),
+        }
+    };
+}
+
+// ── Alpha: WQ Volatility Breakout ──
+
+function runWqVolBreakout(bars: OHLCVBar[], capital: number, fee: number, lookback: number, threshold: number): BacktestResult {
+    if (bars.length < lookback) return emptyResult(capital);
+    const closes = bars.map(b => b.close);
+    const volumes = bars.map(b => b.volume);
+    const trades: Trade[] = [];
+    const equity: EquityPoint[] = [];
+
+    let cash = capital;
+    let shares = 0;
+    let buyCost = 0;
+    let totalFees = 0;
+    let daysSinceBuy = 0;
+    const maxHoldDays = 10;
+    const winTrades: boolean[] = [];
+
+    const bmShares = Math.floor(capital / closes[0]);
+    const bmLeftover = capital - bmShares * closes[0];
+
+    for (let i = 0; i < bars.length; i++) {
+        const bar = bars[i];
+
+        let volRatio = null;
+        let priceDelta = null;
+        if (i >= lookback) {
+            const volSlice = volumes.slice(i - lookback, i);
+            const meanVol = volSlice.reduce((s, v) => s + v, 0) / lookback;
+            if (meanVol > 0) volRatio = bar.volume / meanVol;
+            priceDelta = bar.close - closes[i - 1];
+        }
+
+        if (shares === 0 && volRatio !== null && priceDelta !== null) {
+            if (volRatio > threshold && priceDelta > 0) {
+                const adjustedPrice = bar.close * (1 + fee);
+                shares = Math.floor(cash / adjustedPrice);
+                if (shares > 0) {
+                    buyCost = adjustedPrice;
+                    const totalCost = shares * adjustedPrice;
+                    cash -= totalCost;
+                    totalFees += shares * bar.close * fee;
+                    trades.push({ type: "BUY", date: bar.date, price: adjustedPrice, shares, value: totalCost });
+                    daysSinceBuy = 0;
+                }
+            }
+        }
+        else if (shares > 0) {
+            daysSinceBuy++;
+            if (bar.close < closes[i - 1] || daysSinceBuy >= maxHoldDays) {
+                const sellValue = shares * bar.close * (1 - fee);
+                const pnl = sellValue - shares * buyCost;
+                winTrades.push(pnl > 0);
+                trades.push({
+                    type: "SELL",
+                    date: bar.date,
+                    price: bar.close,
+                    shares,
+                    value: sellValue,
+                    pnl,
+                    pnlPct: (pnl / (shares * buyCost)) * 100
+                });
+                totalFees += shares * bar.close * fee;
+                cash += sellValue;
+                shares = 0;
+                buyCost = 0;
+            }
+        }
+
+        equity.push({
+            date: bar.date,
+            equity: cash + shares * bar.close,
+            benchmark: bmShares * bar.close + bmLeftover,
+        });
+    }
+
+    const finalCapital = cash + shares * bars[bars.length - 1].close * (1 - fee);
+    const weeklyReturns = equity.slice(1).map((p, i) => (p.equity - equity[i].equity) / equity[i].equity);
+    const winRate = winTrades.length > 0 ? (winTrades.filter(Boolean).length / winTrades.length) * 100 : 0;
+
+    return {
+        equity, trades,
+        metrics: {
+            cagr: calcCAGR(capital, finalCapital, bars.length),
+            totalReturn: ((finalCapital - capital) / capital) * 100,
+            sharpe: calcSharpe(weeklyReturns),
+            maxDrawdown: calcMaxDrawdown(equity.map(e => e.equity)),
+            winRate, numTrades: trades.length, finalCapital, totalFees,
+            benchmarkCagr: calcCAGR(capital, (bmShares * bars[bars.length - 1].close + bmLeftover), bars.length),
+            ...computeStressMetrics(bars),
+        }
+    };
+}
+
 // ── Main export ──
 
 export function runBacktest(bars: OHLCVBar[], config: BacktestConfig): BacktestResult {
@@ -669,6 +852,10 @@ export function runBacktest(bars: OHLCVBar[], config: BacktestConfig): BacktestR
             return runMa30wStage2(bars, capital, tradingFee);
         case "tactical-allocation":
             return runTacticalAllocation(bars, capital, equityWeight, cashYield, tradingFee);
+        case "wq-mean-reversion":
+            return runWqMeanReversion(bars, capital, tradingFee, config.wqLookback || 20, config.wqThreshold || -2);
+        case "wq-vol-breakout":
+            return runWqVolBreakout(bars, capital, tradingFee, config.wqLookback || 20, config.wqThreshold || 2);
         default:
             return runBuyAndHold(bars, capital, tradingFee);
     }

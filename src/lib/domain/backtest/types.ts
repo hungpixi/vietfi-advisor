@@ -11,7 +11,9 @@ export type Strategy =
     | "sma-cross"
     | "breakout-52w"
     | "ma30w-stage2"
-    | "tactical-allocation";
+    | "tactical-allocation"
+    | "wq-mean-reversion"
+    | "wq-vol-breakout";
 
 export interface BacktestConfig {
     strategy: Strategy;
@@ -21,6 +23,8 @@ export interface BacktestConfig {
     equityWeight?: number; // default 0.7 (70%)
     cashYield?: number;    // default 0.06 (6% APR)
     tradingFee?: number;   // default 0.002 (0.2%)
+    wqLookback?: number;   // default 10 or 20
+    wqThreshold?: number;  // signal threshold
 }
 
 export interface EquityPoint {
