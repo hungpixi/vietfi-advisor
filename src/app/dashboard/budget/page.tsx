@@ -50,7 +50,7 @@ function formatFull(n: number) {
 /* ─── CyberCard Component ─── */
 function CyberCard({ children, className, glowColor = "rgba(34,197,94,0.08)" }: { children: React.ReactNode; className?: string; glowColor?: string }) {
   return (
-    <div className={cn("group relative overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/30", className)}>
+    <div className={cn("group relative min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500 hover:border-[#22C55E]/30", className)}>
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,31,24,0.92)_0%,rgba(7,11,20,0.98)_72%)] z-0" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] [background-size:32px_32px] z-0" />
       <div
@@ -399,7 +399,7 @@ export default function BudgetPage() {
           <CyberCard className="h-full" glowColor="rgba(255,255,255,0.05)">
             <h3 className="font-heading text-[15px] font-black uppercase tracking-wider text-white mb-6">Cơ cấu Ngân sách</h3>
 
-            <div className="w-full h-56 -mt-4">
+            <div className="w-full min-w-0 h-56 -mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">

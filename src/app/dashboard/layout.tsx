@@ -2,7 +2,8 @@
 // Force HMR rebuild to fix Next.js hydration cache mismatch
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import VetVangFloat from "@/components/vet-vang/VetVangFloat";
 import { CyberBackground } from "@/components/ui/CyberBackground";
 import {
@@ -28,6 +29,7 @@ import {
   LineChart,
   Home,
   Search,
+  LogOut,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
@@ -245,7 +247,15 @@ function GamificationBar() {
 /* ═══════════════════ SIDEBAR ═══════════════════ */
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [setupStatus, setSetupStatus] = useState<Record<string, boolean>>({});
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   useEffect(() => {
     const check = () => {
@@ -355,6 +365,20 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               </div>
             </div>
           ))}
+
+          {/* Logout Button */}
+          <div className="pt-4 border-t border-white/[0.04]">
+            <button
+              onClick={() => {
+                onClose();
+                handleLogout();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[15px] transition-all duration-300 group text-danger/60 hover:text-danger hover:bg-danger/10 text-left"
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 text-danger/40 group-hover:text-danger" />
+              <span className="flex-1 font-semibold">Đăng xuất</span>
+            </button>
+          </div>
         </nav>
 
         {/* Vẹt Vàng Mini Card */}

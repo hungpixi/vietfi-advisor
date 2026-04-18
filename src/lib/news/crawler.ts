@@ -63,9 +63,6 @@ const RSS_FEEDS: Record<string, string> = {
 
   // Tuổi Trẻ (Kinh doanh)
   'Kinh tế (Tuổi Trẻ)': 'https://tuoitre.vn/rss/kinh-doanh.rss',
-
-  // Quốc tế (Bloomberg/Reuters/Yahoo Finance via Yahoo)
-  'Thị trường Quốc tế (Yahoo Finance)': 'https://finance.yahoo.com/rss/topstories',
 }
 
 const POSITIVE_KEYWORDS = [

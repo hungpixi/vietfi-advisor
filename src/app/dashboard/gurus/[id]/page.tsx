@@ -143,7 +143,7 @@ export default function GuruDetailPage() {
             {/* Performance Chart */}
             <div className="bg-black/40 border border-[#333] rounded-2xl p-6">
               <h2 className="font-semibold text-lg text-white mb-6">Mô phỏng hiệu suất Danh mục</h2>
-              <div className="h-64 w-full">
+              <div className="h-64 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={mockPerformanceData}>
                     <defs>

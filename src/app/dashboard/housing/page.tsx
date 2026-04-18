@@ -246,7 +246,7 @@ export default function HousingIntelPage() {
           </div>
 
           {/* Chart */}
-          <div className="h-[140px] mb-6">
+          <div className="h-[140px] mb-6 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={buyVsRent.chartData} layout="vertical" margin={{ left: -10, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />

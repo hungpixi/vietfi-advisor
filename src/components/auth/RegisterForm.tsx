@@ -43,19 +43,23 @@ export default function RegisterForm() {
       });
 
       if (signUpError) {
-        // Vietnamese error messages
+        // Log the full error to console for technical debugging
+        console.error("Supabase technical error:", signUpError);
+
+        // Map some common errors to Vietnamese, otherwise show raw message
         if (signUpError.message.includes("already registered")) {
           setError("Email này đã được đăng ký!");
         } else if (signUpError.message.includes("valid email")) {
           setError("Email không hợp lệ!");
         } else {
-          setError("Đăng ký thất bại. Vui lòng thử lại!");
+          // HIỂN THỊ LỖI THẬT TỪ HỆ THỐNG
+          setError(`Lỗi hệ thống: ${signUpError.message}`);
         }
         setIsLoading(false);
         return;
       }
 
-      // Show success message
+
       setError("");
       alert(
         "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản."
@@ -80,12 +84,8 @@ export default function RegisterForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Field */}
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1.5">
             Email
           </label>
           <input
@@ -95,16 +95,12 @@ export default function RegisterForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="you@example.com"
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text placeholder-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
           />
         </div>
 
-        {/* Password Field */}
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1.5">
             Mật khẩu
           </label>
           <input
@@ -115,16 +111,12 @@ export default function RegisterForm() {
             required
             minLength={6}
             placeholder="Tối thiểu 6 ký tự"
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text placeholder-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
           />
         </div>
 
-        {/* Confirm Password Field */}
         <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-1.5">
             Xác nhận mật khẩu
           </label>
           <input
@@ -135,53 +127,43 @@ export default function RegisterForm() {
             required
             minLength={6}
             placeholder="Nhập lại mật khẩu"
-            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text placeholder-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+            className="w-full px-4 py-2.5 bg-bg border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
           />
         </div>
 
-        {/* Error Message */}
+
         {error && (
           <div className="p-3 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
             {error}
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading}
           className="w-full py-2.5 bg-gradient-primary text-bg font-semibold rounded-lg hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {isLoading ? (
-            <>
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <span>Đang đăng ký...</span>
-            </>
-          ) : (
-            <span>Đăng ký</span>
-          )}
+          {isLoading ? "Đang đăng ký..." : "Đăng ký"}
         </button>
       </form>
 
       {/* OAuth Buttons */}
       <OAuthButtons />
 
-      {/* Login Link */}
+      {/* Guest Login Button */}
+      <button
+        onClick={() => {
+          document.cookie = "vietfi_guest=true; path=/; max-age=86400";
+          window.location.href = "/dashboard";
+        }}
+        className="w-full py-2.5 bg-secondary/10 text-text-secondary font-medium rounded-lg hover:bg-secondary/20 transition-all duration-200 flex items-center justify-center gap-2 border border-border"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Tiếp tục với tư cách Khách</span>
+      </button>
+
       <p className="text-center text-sm text-text-secondary">
         Đã có tài khoản?{" "}
         <Link

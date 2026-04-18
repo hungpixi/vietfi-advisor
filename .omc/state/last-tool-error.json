@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /d D:\\\\vietfi-advisor && cat tsconfig.json\"}",
-  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: too many arguments",
-  "timestamp": "2026-04-07T10:14:06.664Z",
-  "retry_count": 2
+  "tool_input_preview": "{\"command\":\"rm -rf src/app/api/auth/[...all] && rmdir src/app/api/auth 2>/dev/null || true && npm run build\",\"timeout\":600000,\"description\":\"Remove empty auth API directory and rerun Next.js build\"}",
+  "error": "Exit code 1\n\n> vietfi-advisor@0.1.0 build\n> next build\n\n▲ Next.js 16.2.3 (Turbopack)\n- Environments: .env\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 6.4s\n  Running TypeScript ...\nFailed to type check.\n\n.next/dev/types/validator.ts:278:39\nType error: Cannot find module '../../../src/app/api/auth/[...all]/route.js' or its corresponding type declarations.\n\n  \u001b[90m276 |\u001b[0m {\n  \u001b[90m277 |\u001b[0m   \u001b[36mtype\u001b[0m __IsExpected<\u001b[33mSpecific\u001b[0m \u001b[36mextends\u001b[0m \u001b[33mRouteHand...",
+  "timestamp": "2026-04-18T14:50:45.002Z",
+  "retry_count": 3
 }

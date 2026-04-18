@@ -320,8 +320,8 @@ export default function DebtPage() {
             {chartData.length > 0 && (
               <CyberCard className="p-4" showDecorators={false}>
                 <CyberSubHeader className="mb-4 block">BIỂU ĐỒ DOMINO</CyberSubHeader>
-                <div className="h-40 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-40 w-full min-w-0">
+                       <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0a" vertical={false} />
                       <XAxis dataKey="month" hide />

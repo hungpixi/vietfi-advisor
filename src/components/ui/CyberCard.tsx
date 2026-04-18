@@ -20,7 +20,7 @@ export function CyberCard({
     return (
         <div
             className={cn(
-                "group relative overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500",
+                "group relative min-w-0 overflow-hidden rounded-xl border border-white/10 bg-[#08110f] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] transition-all duration-500",
                 hoverBorderColor,
                 className
             )}

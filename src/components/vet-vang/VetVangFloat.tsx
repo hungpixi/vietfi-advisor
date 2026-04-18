@@ -130,6 +130,7 @@ export default function VetVangFloat() {
                   src={getMascotImage()}
                   alt="Vẹt Vàng AI"
                   fill
+                  sizes="80px"
                   className="object-contain filter drop-shadow-[0_0_10px_rgba(230,184,79,0.4)]"
                 />
 

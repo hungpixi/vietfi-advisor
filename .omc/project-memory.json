@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1776329766274,
+  "lastScanned": 1776523372005,
   "projectRoot": "D:\\vietfi-advisor",
   "techStack": {
     "languages": [
@@ -96,7 +96,7 @@
       "path": "design-exports",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1776329766232,
+      "lastAccessed": 1776523371954,
       "keyFiles": [
         "9nb0s.png",
         "AL84F.png",
@@ -109,16 +109,18 @@
       "path": "design-system",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776329766233,
+      "lastAccessed": 1776523371955,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 3,
-      "lastAccessed": 1776329766241,
+      "fileCount": 5,
+      "lastAccessed": 1776523371963,
       "keyFiles": [
         "deployment-vinahost-node.md",
+        "PLAN-dashboard-background.md",
+        "PLAN-spending-insights-ux.md",
         "PLAN-vietfi-audit-upgrade.md",
         "wda2026-report-sections-vietfi.md"
       ]
@@ -127,14 +129,14 @@
       "path": "fg-index",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776329766242,
+      "lastAccessed": 1776523371964,
       "keyFiles": []
     },
     "public": {
       "path": "public",
       "purpose": "Public files",
       "fileCount": 8,
-      "lastAccessed": 1776329766243,
+      "lastAccessed": 1776523371964,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -146,44 +148,51 @@
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 8,
-      "lastAccessed": 1776329766243,
+      "fileCount": 17,
+      "lastAccessed": 1776523371965,
       "keyFiles": [
+        "aggregate.js",
+        "check_alphas.ts",
+        "comprehensive_backtest.ts",
         "debug_clone.py",
-        "export_tts_data.ts",
-        "generate-tts-bank.ts",
-        "generate_audio.py",
-        "list_voices.py"
+        "export_tts_data.ts"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 1,
-      "lastAccessed": 1776329766243,
+      "lastAccessed": 1776523371965,
       "keyFiles": [
         "proxy.ts"
       ]
+    },
+    "supabase": {
+      "path": "supabase",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1776523371965,
+      "keyFiles": []
     },
     "tests": {
       "path": "tests",
       "purpose": "Test files",
       "fileCount": 0,
-      "lastAccessed": 1776329766244,
+      "lastAccessed": 1776523371965,
       "keyFiles": []
     },
     "vietfi-appwrite": {
       "path": "vietfi-appwrite",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1776329766244,
+      "lastAccessed": 1776523371966,
       "keyFiles": []
     },
     "voice_ref": {
       "path": "voice_ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1776329766244,
+      "lastAccessed": 1776523371966,
       "keyFiles": [
         "zinzin.vi.vtt"
       ]
@@ -192,7 +201,7 @@
       "path": "docs\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1776329766245,
+      "lastAccessed": 1776523371967,
       "keyFiles": [
         "vietfi-onboarding-flow.png",
         "vietfi-system-architecture.png"
@@ -202,7 +211,7 @@
       "path": "public\\assets",
       "purpose": "Static assets",
       "fileCount": 10,
-      "lastAccessed": 1776329766245,
+      "lastAccessed": 1776523371968,
       "keyFiles": [
         "icon-192.png",
         "icon-512.png",
@@ -213,7 +222,7 @@
       "path": "public\\docs",
       "purpose": "Documentation",
       "fileCount": 57,
-      "lastAccessed": 1776329766246,
+      "lastAccessed": 1776523371969,
       "keyFiles": [
         "audit_budget_1773931000033.png",
         "audit_cpi_retry_1773931015040.png",
@@ -224,7 +233,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 4,
-      "lastAccessed": 1776329766247,
+      "lastAccessed": 1776523371969,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -235,25 +244,25 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 0,
-      "lastAccessed": 1776329766247,
+      "lastAccessed": 1776523371970,
       "keyFiles": []
     },
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
-      "fileCount": 17,
-      "lastAccessed": 1776329766247,
+      "fileCount": 22,
+      "lastAccessed": 1776523371970,
       "keyFiles": [
-        "expense-parser.ts",
-        "gamification.ts",
-        "gemini-batch.ts"
+        "api-security.ts",
+        "auth-client.ts",
+        "auth.ts"
       ]
     },
     "src\\test": {
       "path": "src\\test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1776329766247,
+      "lastAccessed": 1776523371972,
       "keyFiles": [
         "setup.ts"
       ]
@@ -262,9 +271,20 @@
       "path": "src\\utils",
       "purpose": "Utility functions",
       "fileCount": 1,
-      "lastAccessed": 1776329766248,
+      "lastAccessed": 1776523371972,
       "keyFiles": [
         "supabase.ts"
+      ]
+    },
+    "supabase\\migrations": {
+      "path": "supabase\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 3,
+      "lastAccessed": 1776523371973,
+      "keyFiles": [
+        "20260416000000_security_rls_policies.sql",
+        "20260417000000_app_settings.sql",
+        "20260418112300_market_data_schema.sql"
       ]
     }
   },
@@ -282,6 +302,12 @@
       "type": "file"
     },
     {
+      "path": "",
+      "accessCount": 16,
+      "lastAccessed": 1776523852338,
+      "type": "directory"
+    },
+    {
       "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
       "accessCount": 9,
       "lastAccessed": 1775559451922,
@@ -294,10 +320,10 @@
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 5,
-      "lastAccessed": 1775556871088,
-      "type": "directory"
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1776523750124,
+      "type": "file"
     },
     {
       "path": "next.config.ts",
@@ -315,6 +341,18 @@
       "path": "src\\app\\dashboard\\layout.tsx",
       "accessCount": 2,
       "lastAccessed": 1775556948169,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\login\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776523670393,
+      "type": "file"
+    },
+    {
+      "path": "middleware.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776523688025,
       "type": "file"
     },
     {
@@ -345,6 +383,120 @@
       "path": "src\\app\\dashboard\\budget\\page.tsx",
       "accessCount": 1,
       "lastAccessed": 1775556535860,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\screener\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776450366893,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\stock-screener\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776450372163,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\market-data\\stock-screener.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776450376225,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\market-data\\crawler.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776450588408,
+      "type": "file"
+    },
+    {
+      "path": "docs\\PLAN-login-fix.md",
+      "accessCount": 1,
+      "lastAccessed": 1776523526336,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\auth\\login\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776523533961,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523534295,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\auth-client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523546118,
+      "type": "file"
+    },
+    {
+      "path": "src\\utils\\supabase.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523546182,
+      "type": "file"
+    },
+    {
+      "path": "src\\utils\\supabase\\server.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523546267,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\auth\\LoginForm.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776523546320,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\supabase\\client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523559407,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\supabase\\middleware.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523559687,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\login\\actions.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523559756,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\auth\\register\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776523559893,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\auth\\[...all]\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523597589,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\auth\\confirm\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523597663,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\auth\\RegisterForm.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776523597721,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\security\\origin.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776523597840,
       "type": "file"
     }
   ],

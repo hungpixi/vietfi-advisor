@@ -47,6 +47,13 @@ export default function LoginForm() {
     }
   };
 
+  const handleGuest = () => {
+    // Set a client-side cookie so middleware lets us through
+    document.cookie = "vietfi_guest=true; path=/; max-age=86400"; // 1 day
+    router.push("/dashboard");
+    router.refresh();
+  };
+
   return (
     <div className="glass-card p-6 space-y-5">
       <div className="text-center mb-6">
@@ -95,8 +102,6 @@ export default function LoginForm() {
           />
         </div>
 
-        {/* Forgot Password Link - removed until page exists */}
-
         {/* Error Message */}
         {error && (
           <div className="p-3 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
@@ -139,6 +144,17 @@ export default function LoginForm() {
       {/* OAuth Buttons */}
       <OAuthButtons />
 
+      {/* Guest Login Button */}
+      <button
+        onClick={handleGuest}
+        className="w-full py-2.5 bg-secondary/10 text-text-secondary font-medium rounded-lg hover:bg-secondary/20 transition-all duration-200 flex items-center justify-center gap-2 border border-border"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Tiếp tục với tư cách Khách</span>
+      </button>
+
       {/* Register Link */}
       <p className="text-center text-sm text-text-secondary">
         Chưa có tài khoản?{" "}
@@ -152,3 +168,4 @@ export default function LoginForm() {
     </div>
   );
 }
+

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Calculator, AlertTriangle, Download } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CPI_CATEGORIES, calculatePersonalCPI } from "@/lib/calculations/personal-cpi";
 import { getBudgetPots, getExpenses } from "@/lib/storage";
 import RequireTier from "@/components/gamification/RequireTier";
@@ -10,6 +10,8 @@ import { UserRole } from "@/lib/rbac";
 import { CyberCard } from "@/components/ui/CyberCard";
 import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
 import { cn } from "@/lib/utils";
+import { SmartWeightSlider } from "@/components/dashboard/SmartWeightSlider";
+import { rebalanceWeights } from "@/lib/calculations/rebalance";
 
 const BUDGET_TO_CPI: Record<string, string> = {
   "Ăn uống": "food",
@@ -21,6 +23,28 @@ const BUDGET_TO_CPI: Record<string, string> = {
   "Học tập": "education",
 };
 
+const PRESETS = [
+  { name: "Mặc định GSO", icon: "📊", description: "Theo dữ liệu Tổng cục Thống kê 2025" },
+  { name: "Tiết kiệm", icon: "🌱", description: "Cắt giảm tối đa giải trí và mua sắm" },
+  { name: "Thành thị Pro", icon: "🏙️", description: "Chi phí nhà ở và đi lại cao hơn" },
+  { name: "Sinh viên", icon: "🎓", description: "Tập trung vào giáo dục và ăn uống" },
+];
+
+const STRATEGY_WEIGHTS: Record<string, Record<string, number>> = {
+  "Mặc định GSO": {
+    food: 33.56, housing: 18.82, transport: 9.37, education: 6.17, healthcare: 5.04, entertainment: 4.29, other: 22.75
+  },
+  "Tiết kiệm": {
+    food: 45, housing: 20, transport: 8, education: 5, healthcare: 5, entertainment: 2, other: 15
+  },
+  "Thành thị Pro": {
+    food: 25, housing: 30, transport: 15, education: 5, healthcare: 5, entertainment: 8, other: 12
+  },
+  "Sinh viên": {
+    food: 40, housing: 15, transport: 5, education: 20, healthcare: 3, entertainment: 5, other: 12
+  }
+};
+
 const fadeIn = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.06 } } };
 
@@ -30,11 +54,8 @@ export default function PersonalCPIPage() {
     CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
     return init;
   });
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
   const [imported, setImported] = useState(false);
-
-  useEffect(() => {
-    // Initial load if needed
-  }, []);
 
   const importFromBudget = () => {
     try {
@@ -64,7 +85,7 @@ export default function PersonalCPIPage() {
 
       if (total > 0) {
         for (const id of Object.keys(newWeights)) {
-          newWeights[id] = Math.round((newWeights[id] / total) * 100);
+          newWeights[id] = (newWeights[id] / total) * 100;
         }
       }
 
@@ -73,10 +94,30 @@ export default function PersonalCPIPage() {
     } catch { /* ignore */ }
   };
 
+  const applyPreset = (name: string) => {
+    const preset = STRATEGY_WEIGHTS[name];
+    if (preset) {
+      setWeights(preset);
+      setImported(false);
+      setLockedIds(new Set());
+    }
+  };
+
   const result = calculatePersonalCPI(weights);
 
   const handleSlider = (id: string, value: number) => {
-    setWeights((prev) => ({ ...prev, [id]: value }));
+    if (lockedIds.has(id)) return;
+    const newWeights = rebalanceWeights(weights, id, value, lockedIds);
+    setWeights(newWeights);
+  };
+
+  const toggleLock = (id: string) => {
+    setLockedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   return (
@@ -184,13 +225,28 @@ export default function PersonalCPIPage() {
           </CyberCard>
         </motion.div>
 
+        {/* Strategy Presets */}
+        <motion.div variants={fadeIn} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => applyPreset(preset.name)}
+              className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#22C55E]/30 transition-all text-left group"
+            >
+              <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">{preset.icon}</div>
+              <div className="text-[10px] font-black uppercase text-white/80 mb-1">{preset.name}</div>
+              <div className="text-[9px] text-white/30 uppercase leading-tight">{preset.description}</div>
+            </button>
+          ))}
+        </motion.div>
+
         {/* Sliders Container */}
         <motion.div variants={fadeIn}>
           <CyberCard className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-[#22C55E]" />
-                <CyberHeader size="xs">Trọng số chi tiêu</CyberHeader>
+                <CyberHeader size="xs">Trọng số chi tiêu (Tổng: 100%)</CyberHeader>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -201,7 +257,7 @@ export default function PersonalCPIPage() {
                   )}
                 >
                   <Download className="w-3 h-3" />
-                  {imported ? "Đã nhập" : "Nhập dữ liệu"}
+                  {imported ? "Dữ liệu thực" : "Nhập dữ liệu"}
                 </button>
                 <button
                   onClick={() => {
@@ -209,6 +265,7 @@ export default function PersonalCPIPage() {
                     CPI_CATEGORIES.forEach((c) => { init[c.id] = c.officialWeight; });
                     setWeights(init);
                     setImported(false);
+                    setLockedIds(new Set());
                   }}
                   className="text-[10px] font-black uppercase text-white/20 hover:text-white/40 transition-colors"
                 >
@@ -217,40 +274,26 @@ export default function PersonalCPIPage() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-x-12 gap-y-6 mb-8">
-              {CPI_CATEGORIES.map((cat) => {
-                const w = weights[cat.id] || 0;
-                const catResult = result.categories.find((c) => c.name === cat.name);
-                return (
-                  <div key={cat.id} className="group/slider">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg grayscale group-hover/slider:grayscale-0 transition-all">{cat.emoji}</span>
-                        <CyberTypography size="xs" className="text-white/80">{cat.name}</CyberTypography>
-                      </div>
-                      <div className="text-right">
-                        <CyberMetric size="xs" className="block text-white">{catResult?.userWeight.toFixed(0)}%</CyberMetric>
-                        <CyberSubHeader className="block">GSO: {cat.officialWeight}%</CyberSubHeader>
-                      </div>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={60}
-                      step={1}
-                      value={w}
-                      onChange={(e) => handleSlider(cat.id, Number(e.target.value))}
-                      className="w-full h-1.5 rounded-full appearance-none bg-white/5 cursor-pointer accent-[#22C55E] hover:bg-white/10 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#22C55E] [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(34,197,94,0.5)]"
-                    />
-                  </div>
-                );
-              })}
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
+              {CPI_CATEGORIES.map((cat) => (
+                <SmartWeightSlider
+                  key={cat.id}
+                  id={cat.id}
+                  name={cat.name}
+                  emoji={cat.emoji}
+                  value={weights[cat.id] || 0}
+                  officialWeight={cat.officialWeight}
+                  isLocked={lockedIds.has(cat.id)}
+                  onValueChange={handleSlider}
+                  onLockToggle={toggleLock}
+                />
+              ))}
             </div>
 
             {/* Contribution Progress Bars */}
             <div className="mt-8 pt-8 border-t border-white/[0.04]">
               <CyberSubHeader className="mb-4 block">ĐÓNG GÓP VÀO LẠM PHÁT CÁ NHÂN</CyberSubHeader>
-              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+              <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
                 {result.categories
                   .sort((a, b) => b.contribution - a.contribution)
                   .map((cat) => (
@@ -258,9 +301,11 @@ export default function PersonalCPIPage() {
                       <span className="text-sm w-6">{cat.emoji}</span>
                       <CyberTypography size="xs" className="w-24 text-white/40 truncate">{cat.name}</CyberTypography>
                       <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div
+                        <motion.div
                           className="h-full rounded-full bg-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-                          style={{ width: `${(cat.contribution / result.personalRate) * 100}%` }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(cat.contribution / result.personalRate) * 100}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
                         />
                       </div>
                       <CyberTypography size="xs" variant="mono" className="text-white/30 w-12 text-right">{cat.contribution.toFixed(2)}%</CyberTypography>

@@ -229,6 +229,7 @@ function Navbar() {
               src="/assets/icon.png"
               alt="VietFi"
               fill
+              sizes="40px"
               className="object-contain"
             />
           </div>
@@ -1490,7 +1491,7 @@ function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8">
+              <div className="relative w-8 h-8">
                 <Image
                   src="/assets/icon.png"
                   alt="VietFi"

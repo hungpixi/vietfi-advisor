@@ -243,7 +243,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* AI Insight Column */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 min-w-0">
           <CyberCard className="p-6 h-full" variant="success">
             <div className="flex items-center gap-2 mb-6">
               <Sparkles className="w-4 h-4 text-[#22C55E]" />
@@ -334,7 +334,7 @@ export default function PortfolioPage() {
           <p className="text-[11px] text-white/40 font-mono uppercase mb-6">
             Giả lập đầu tư {formatVND(capital / 1000000 * 1000000)} từ đầu năm 2021 đến nay:
           </p>
-          <div className="h-64 mb-6">
+          <div className="h-64 mb-6 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={backtestData?.history.filter((_, i) => i % 12 === 0).map((d) => ({
                 year: d.year,
@@ -380,7 +380,7 @@ export default function PortfolioPage() {
               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#EF4444]" /><span className="text-[8px] font-black text-white/40 uppercase">Worst</span></div>
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-64 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={projection}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />

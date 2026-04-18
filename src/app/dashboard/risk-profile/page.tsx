@@ -176,7 +176,7 @@ export default function RiskProfilePage() {
               </div>
 
               <div className="flex flex-col items-center">
-                <div className="w-full aspect-square max-w-[180px] mb-6 relative">
+                <div className="w-full min-w-0 aspect-square max-w-[180px] mb-6 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie

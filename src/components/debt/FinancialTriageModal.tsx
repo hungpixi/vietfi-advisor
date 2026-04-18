@@ -291,7 +291,7 @@ export function FinancialTriageModal({ onClose, debts, dtiRatio }: TriageProps) 
                     <h4 className="text-[11px] font-bold text-white/40 uppercase mb-4 tracking-widest flex items-center gap-2">
                       <TrendingDown className="w-4 h-4" /> Bản đồ tiên lượng (Forecasting)
                     </h4>
-                    <div className="h-[200px] w-full">
+                    <div className="h-[200px] w-full min-w-0">
                        <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={simulation.chartData}>
                             <XAxis dataKey="name" hide />
