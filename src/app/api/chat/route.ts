@@ -1,5 +1,4 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { streamText } from "ai";
+import { streamLLM } from "@/lib/infrastructure/llm/client";
 import {
   checkFixedWindowRateLimit,
   getClientIdentifier,
@@ -7,7 +6,6 @@ import {
   rateLimitResponse,
   readJsonWithLimit,
 } from "@/lib/api-security";
-import { checkLlmRateLimit } from "@/lib/llm-limiter";
 import { parseExpenseWithContext, type ParsedExpense } from "@/lib/expense-parser";
 import {
   detectIntent,
@@ -118,14 +116,15 @@ export async function POST(req: Request) {
     }
 
     const parsed = await readJsonWithLimit(req, MAX_BODY_BYTES);
-    if (!parsed.ok) return parsed.response;
+    if (parsed.ok === false) return parsed.response;
 
-    if (!parsed.value || typeof parsed.value !== "object" || !Array.isArray((parsed.value as RequestBody).messages)) {
+    const body = parsed.value as RequestBody;
+    if (!body || typeof body !== "object" || !Array.isArray(body.messages)) {
       return jsonError("Invalid request format", 400);
     }
 
-    const sanitized = sanitizeMessages((parsed.value as RequestBody).messages);
-    if (!sanitized.ok) return sanitized.response;
+    const sanitized = sanitizeMessages(body.messages);
+    if (sanitized.ok === false) return sanitized.response;
 
     const expense = parseExpenseWithContext(sanitized.userText);
     if (expense && expense.confidence >= 0.5) {
@@ -138,28 +137,7 @@ export async function POST(req: Request) {
       if (response) return createTextResponse(response.text);
     }
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL;
-    if (!GEMINI_API_KEY) {
-      return jsonError("AI service is not configured.", 500);
-    }
-
-    try {
-      checkLlmRateLimit();
-    } catch (error) {
-      return rateLimitResponse(60, (error as Error).message);
-    }
-
-    const google = createGoogleGenerativeAI({
-      apiKey: GEMINI_API_KEY,
-      ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {}),
-    });
-
-    const result = streamText({
-      model: google("gemini-1.5-flash"),
-      system: SYSTEM_PROMPT,
-      messages: sanitized.messages,
-    });
+    const result = await streamLLM(sanitized.messages, SYSTEM_PROMPT);
 
     const streamResult = result as {
       toDataStreamResponse?: () => Response;
@@ -168,6 +146,7 @@ export async function POST(req: Request) {
     const response = streamResult.toDataStreamResponse
       ? streamResult.toDataStreamResponse()
       : streamResult.toTextStreamResponse?.() ?? new Response("Streaming error", { status: 500 });
+
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (error) {

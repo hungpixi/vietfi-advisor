@@ -308,6 +308,18 @@
       "type": "directory"
     },
     {
+      "path": "src\\app\\api\\chat\\route.ts",
+      "accessCount": 14,
+      "lastAccessed": 1776544083880,
+      "type": "file"
+    },
+    {
+      "path": ".",
+      "accessCount": 14,
+      "lastAccessed": 1776544259449,
+      "type": "directory"
+    },
+    {
       "path": "src\\app\\dashboard\\components\\MarketSection.tsx",
       "accessCount": 9,
       "lastAccessed": 1775559451922,
@@ -315,26 +327,32 @@
     },
     {
       "path": "src",
-      "accessCount": 6,
-      "lastAccessed": 1775556526683,
+      "accessCount": 7,
+      "lastAccessed": 1776543241409,
       "type": "directory"
     },
     {
       "path": "package.json",
+      "accessCount": 4,
+      "lastAccessed": 1776543065670,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 4,
+      "lastAccessed": 1776543767358,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
       "accessCount": 3,
-      "lastAccessed": 1776523750124,
+      "lastAccessed": 1776543432734,
       "type": "file"
     },
     {
       "path": "next.config.ts",
       "accessCount": 2,
       "lastAccessed": 1775556870864,
-      "type": "file"
-    },
-    {
-      "path": "tsconfig.json",
-      "accessCount": 2,
-      "lastAccessed": 1775556889098,
       "type": "file"
     },
     {
@@ -497,6 +515,42 @@
       "path": "src\\lib\\security\\origin.ts",
       "accessCount": 1,
       "lastAccessed": 1776523597840,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\infrastructure\\llm\\client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776543071106,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\vet-vang\\VetVangChat.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776543082558,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\infrastructure\\llm\\batch.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776543101584,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\vet-vang\\VetVangConfig.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776543123917,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\gemini.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776543216603,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\api-security.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776543424179,
       "type": "file"
     }
   ],

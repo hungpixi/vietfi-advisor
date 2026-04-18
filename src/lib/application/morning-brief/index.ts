@@ -50,7 +50,7 @@ function formatTakeaways(articles: NewsArticle[]): MorningBriefTakeaway[] {
     return articles.slice(0, 4).map((article) => ({
         emoji: sentimentToEmoji(article.sentiment),
         asset: article.asset || article.category || "Thị trường",
-        text: (article.summary || article.title).slice(0, 120),
+        text: (article.summary || article.title).trim(), // Loại bỏ slice cứng 120
     }));
 }
 
@@ -71,9 +71,9 @@ function normalizeAiMorningBriefResponse(aiRes: unknown, articles: NewsArticle[]
                 Boolean(item) && typeof item.emoji === "string" && typeof item.asset === "string" && typeof item.text === "string"
             )
             .slice(0, 4)
-            .map((item) => ({ emoji: item.emoji.slice(0, 8), asset: item.asset.slice(0, 48), text: item.text.slice(0, 240) }))
+            .map((item) => ({ emoji: item.emoji.trim(), asset: item.asset.trim(), text: item.text.trim() }))
         : [];
-    return { summary: raw.summary.trim().slice(0, 2500), takeaways: takeaways.length > 0 ? takeaways : formatTakeaways(articles) };
+    return { summary: raw.summary.trim(), takeaways: takeaways.length > 0 ? takeaways : formatTakeaways(articles) };
 }
 
 function normalizeMorningBrief(aiRes: unknown, articles: NewsArticle[], source: "gemini" | "heuristic"): MorningBriefData {
@@ -117,7 +117,7 @@ export async function buildMorningBrief(): Promise<MorningBriefData> {
         });
         return normalizeMorningBrief(aiResponse, newsSnapshot.articles, "gemini");
     } catch (err) {
-        console.error("[morning-brief] Gemini generation failed:", err);
+        console.error("[morning-brief] LLM generation failed:", err);
         return buildSimulatedGeminiBrief(marketSnapshot, newsSnapshot);
     }
 }

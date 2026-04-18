@@ -322,7 +322,7 @@ async function reviewWithAi(signalText: string, currentAsset: string): Promise<A
       sentimentScore,
       asset: ALLOWED_ASSETS.has(result.asset) ? result.asset : currentAsset,
       confidence,
-      reason: String(result.reason || '').slice(0, 220),
+      reason: String(result.reason || '').trim(),
     }
   } catch {
     return null
@@ -421,7 +421,7 @@ function parseRssItems(xml: string, section: string, limit: number, maxChars: nu
         node.find('encoded').first().text().trim() ||
         summaryHtml
 
-      const summary = stripHtml(summaryHtml).slice(0, 320)
+      const summary = stripHtml(summaryHtml).trim()
       const content = includeContent
         ? trimTrailingNoise(stripHtml(contentHtml)).slice(0, maxChars)
         : ''
