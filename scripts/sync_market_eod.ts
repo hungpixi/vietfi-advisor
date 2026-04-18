@@ -125,8 +125,15 @@ async function fetchOHLCV(ticker: string, fromDateStr: string, toDateStr: string
 async function upsertToSupabase(bars: any[]) {
     if (bars.length === 0) return 0;
 
-    // Insert to existing ohlcv_bars schema to bypass migration
-    const pushBars = bars.map(b => ({
+    // Deduplicate logic using Map based on ticker-date
+    const uniqueMap = new Map();
+    bars.forEach(b => {
+        const key = `${b.symbol}-${b.date}`;
+        uniqueMap.set(key, b);
+    });
+    const cleanBars = Array.from(uniqueMap.values());
+
+    const pushBars = cleanBars.map(b => ({
         ticker: b.symbol,
         date: b.date,
         open: b.open,
@@ -136,16 +143,16 @@ async function upsertToSupabase(bars: any[]) {
         volume: b.volume
     }));
 
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('ohlcv_bars')
-        .upsert(pushBars, { onConflict: 'ticker,date' })
-        .select('id');
+        .upsert(pushBars, { onConflict: 'ticker,date' });
 
     if (error) {
         console.error(`  ⚠️ Supabase insert error:`, error.message);
         return 0;
     }
-    return data ? data.length : 0;
+
+    return pushBars.length;
 }
 
 // Ensure ticker exists in tickers table to satisfy foreign key constraint
@@ -165,31 +172,45 @@ async function ensureTickerExists(ticker: string) {
 }
 
 async function main() {
-    console.log("🚀 Starting EOD Market Data Sync (daily_ohlcv schema) ...");
+    console.log("🚀 Starting HISTORICAL Market Data Sync (ohlcv_bars schema) ...");
     const today = new Date().toISOString().split('T')[0];
-    const fromDate = "2026-01-01"; // Fetch only 2026 for speed
+    const fromDate = "2020-01-01"; // Fetch full history for realistic backtest
 
-    // We'll sync 3 tickers for this showcase/MVP
-    const VN30 = ["FPT", "VCB", "MBB"];
+    // We'll sync VN30 for this showcase/MVP
+    const VN30 = [
+        "ACB", "BCM", "BID", "BVH", "CTG", "FPT", "GAS", "GVR", "HDB", "HPG",
+        "MBB", "MSN", "MWG", "PLX", "POW", "SAB", "SHB", "SSB", "SSI", "STB",
+        "TCB", "TPB", "VCB", "VHM", "VIB", "VIC", "VJC", "VNM", "VPB", "VRE", "VNINDEX"
+    ];
     let totalUpserted = 0;
 
     for (const ticker of VN30) {
         process.stdout.write(`⏳ ${ticker}... `);
 
         // Check latest date for incremental update
-        const { data: latestRow } = await supabase
+        // (Bypass for HISTORICAL SYNC)
+        /*
+        const { data, error } = await supabase
             .from('ohlcv_bars')
             .select('date')
             .eq('ticker', ticker)
             .order('date', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
+
+        if (error) {
+            console.error(`\n❌ Error checking max date for ${ticker}:`, error.message);
+            continue;
+        }
+
+        if (data && data.length > 0) {
+            const lastDate = new Date(data[0].date);
+            // Request data from the next day
+            lastDate.setDate(lastDate.getDate() + 1);
+            syncFrom = lastDate.toISOString().split('T')[0];
+        }
+        */
 
         let syncFrom = fromDate;
-        if (latestRow && latestRow.date) {
-            const nextDate = new Date(new Date(latestRow.date).getTime() + 86400000);
-            syncFrom = nextDate.toISOString().split('T')[0];
-        }
 
         if (syncFrom > today) {
             console.log(`✅ Up-to-date`);
@@ -199,10 +220,8 @@ async function main() {
         await ensureTickerExists(ticker);
 
         const bars = await fetchOHLCV(ticker, syncFrom, today);
-        console.log(`\n[DRY RUN] Demo Data fetching cho ${ticker}: `);
-        console.table(bars.slice(0, 3)); // show top 3
         const n = await upsertToSupabase(bars);
-        totalUpserted += bars.length;
+        totalUpserted += n;
 
         console.log(`✅ Fetched ${bars.length} bars (${syncFrom} → ${today}). Supabase Upsert Status: ${n} rows.`);
 

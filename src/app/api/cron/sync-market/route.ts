@@ -53,15 +53,34 @@ async function fetchOHLCVDNSE(ticker: string, fromDateStr: string, toDateStr: st
 // Helper: Upsert
 async function upsertToSupabase(bars: any[]) {
     if (bars.length === 0) return 0;
-    const { data, error } = await supabase
+
+    // Deduplicate logic using Map based on ticker-date
+    const uniqueMap = new Map();
+    bars.forEach(b => {
+        const key = `${b.symbol}-${b.date}`;
+        uniqueMap.set(key, b);
+    });
+    const cleanBars = Array.from(uniqueMap.values());
+
+    const pushBars = cleanBars.map(b => ({
+        ticker: b.symbol,
+        date: b.date,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: b.volume
+    }));
+
+    const { error } = await supabase
         .from('ohlcv_bars')
-        .upsert(bars, { onConflict: 'ticker,date' })
-        .select('id');
+        .upsert(pushBars, { onConflict: 'ticker,date' });
+
     if (error) {
-        console.error(`Supabase insert error:`, error.message);
+        console.error(`Supabase error:`, error.message);
         return 0;
     }
-    return data ? data.length : 0;
+    return pushBars.length;
 }
 
 export async function GET(request: Request) {

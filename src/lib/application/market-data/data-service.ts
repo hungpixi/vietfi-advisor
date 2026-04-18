@@ -19,9 +19,9 @@ export class MarketDataService {
      */
     async getHistoricalData(ticker: string, fromDate: string, toDate: string): Promise<OHLCV[]> {
         const { data, error } = await this.supabase
-            .from('daily_ohlcv')
-            .select('date, open, high, low, close, volume, value, adj_close')
-            .eq('symbol', ticker.toUpperCase())
+            .from('ohlcv_bars')
+            .select('*')
+            .eq('ticker', ticker.toUpperCase())
             .gte('date', fromDate)
             .lte('date', toDate)
             .order('date', { ascending: true });
