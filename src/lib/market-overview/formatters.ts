@@ -1,11 +1,11 @@
 import type { MarketZone } from "./types";
 
 export function getZone(score: number): MarketZone {
-    if (score <= 20) return { label: "Cực kỳ Sợ hãi", color: "#ea3943" };
-    if (score <= 40) return { label: "Sợ hãi", color: "#ea3943" };
-    if (score <= 60) return { label: "Bình thường", color: "#f3d42f" };
-    if (score <= 80) return { label: "Tham lam", color: "#16c784" };
-    return { label: "Cực kỳ Tham lam", color: "#16c784" };
+    if (score <= 20) return { label: "Cực kỳ sợ hãi", color: "#EF4444" };
+    if (score <= 40) return { label: "Sợ hãi", color: "#F97316" };
+    if (score <= 60) return { label: "Trung lập", color: "#F1D17A" };
+    if (score <= 80) return { label: "Tham lam", color: "#22C55E" };
+    return { label: "Cực kỳ tham lam", color: "#10B981" };
 }
 
 export function formatPercent(value: number): string {

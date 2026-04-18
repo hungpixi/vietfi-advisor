@@ -89,7 +89,7 @@ export function SmartWeightSlider({
                             className="h-full bg-gradient-to-r from-[#22C55E]/40 to-[#22C55E]"
                             initial={false}
                             animate={{ width: `${currentPos}%` }}
-                            transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                            transition={{ type: "tween", ease: "linear", duration: 0.05 }}
                         />
                     </div>
 
@@ -124,7 +124,7 @@ export function SmartWeightSlider({
                         )}
                         initial={false}
                         animate={{ left: `calc(${currentPos}% - 8px)` }}
-                        transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                        transition={{ type: "tween", ease: "linear", duration: 0.05 }}
                     />
                 </div>
 

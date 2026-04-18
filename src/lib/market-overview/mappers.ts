@@ -16,9 +16,12 @@ export function buildSentimentSnapshot(
     marketSnapshot: { vnIndex?: { changePct?: number } | null; goldSjc?: { changePct?: number } | null; btc?: { changePct24h?: number } | null; usdVnd?: { rate?: number } | null } | null,
     history: Array<{ date: string; score: number }>,
 ) {
-    const score = Math.max(0, Math.min(100, newsPayload.metrics?.overallNewsScore ?? 48));
     const vnChange = marketSnapshot?.vnIndex?.changePct ?? 0;
     const goldChange = marketSnapshot?.goldSjc?.changePct ?? 0;
+
+    // SYNC with dashboard formula (MarketSection.tsx)
+    const marketScore = 50 + vnChange * 1.5 - goldChange * 1.2;
+    const score = Math.max(0, Math.min(100, Math.round(marketScore)));
     const btcChange = marketSnapshot?.btc?.changePct24h ?? 0;
     const fxRate = marketSnapshot?.usdVnd?.rate ?? 25_500;
     const fxPressure = (fxRate - 25_500) / 40;

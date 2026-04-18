@@ -34,7 +34,7 @@ export function CyberTypography({
         "2xl": "text-[48px] tracking-tighter leading-[1.1]",
         "3xl": "text-[64px] tracking-tighter leading-[1.1]",
         "4xl": "text-[72px] tracking-tighter leading-[1.1]",
-        display: "text-[24px] sm:text-[32px] font-black uppercase leading-[1.1] tracking-wider",
+        display: "text-[32px] sm:text-[44px] font-black uppercase leading-[1.1] tracking-tight text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]",
     };
 
     return (

@@ -2,6 +2,7 @@ import { getZone } from "@/lib/market-overview/formatters";
 import type { AssetMoodCard, SentimentDriver } from "@/lib/market-overview/types";
 import { CyberCard } from "@/components/ui/CyberCard";
 import { CyberHeader, CyberMetric, CyberSubHeader, CyberTypography } from "@/components/ui/CyberTypography";
+import { cn } from "@/lib/utils";
 
 export function SentimentTab({
     score,
@@ -44,33 +45,52 @@ export function SentimentTab({
 
     return (
         <div className="space-y-6">
-            <CyberCard className="p-5" variant="success">
-                <CyberSubHeader>Nhiệt độ thị trường hôm nay</CyberSubHeader>
-                <div className="mt-3 flex items-end gap-3">
-                    <CyberMetric size="4xl" color="text-white">{score}</CyberMetric>
-                    <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase mb-2 border" style={{ color: zone.color, backgroundColor: `${zone.color}18`, borderColor: `${zone.color}30` }}>
-                        {zone.label}
-                    </span>
+            <CyberCard className="p-1" variant="success">
+                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <CyberSubHeader className="!tracking-[0.2em]">NHIỆT ĐỘ THỊ TRƯỜNG HÔM NAY</CyberSubHeader>
+                        <div className="mt-4 flex items-center gap-4">
+                            <CyberMetric size="4xl" className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">{score}</CyberMetric>
+                            <span className="h-8 w-px bg-white/10 mx-2" />
+                            <span className="rounded-xl px-4 py-2 text-[13px] font-black uppercase border shadow-lg" style={{ color: zone.color, backgroundColor: `${zone.color}15`, borderColor: `${zone.color}35` }}>
+                                {zone.label}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="h-full hidden md:block">
+                        <div className="w-32 h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full transition-all duration-1000" style={{ width: `${score}%`, backgroundColor: zone.color }} />
+                        </div>
+                    </div>
                 </div>
             </CyberCard>
 
-            <section className="grid gap-3 grid-cols-2 md:grid-cols-5">
+            <section className="grid gap-4 grid-cols-2 md:grid-cols-5">
                 {drivers.map((driver) => (
-                    <CyberCard key={driver.label} className="p-4" showDecorators={false}>
-                        <CyberSubHeader>{driver.label}</CyberSubHeader>
-                        <CyberMetric size="sm" className="mt-1 block">{driver.value}</CyberMetric>
+                    <CyberCard key={driver.label} className="p-1" showDecorators={false}>
+                        <div className="p-4 text-center">
+                            <CyberSubHeader size="xs" className="mb-2 opacity-50">{driver.label}</CyberSubHeader>
+                            <CyberMetric size="md" className="block text-white font-mono">{driver.value}</CyberMetric>
+                        </div>
                     </CyberCard>
                 ))}
             </section>
 
-            <section className="grid gap-3 md:grid-cols-2">
+            <section className="grid gap-4 md:grid-cols-2">
                 {mergedAssetSentiments.map((asset) => (
-                    <CyberCard key={asset.asset} className="p-4" variant={asset.score > 50 ? "success" : "danger"}>
-                        <div className="flex items-center justify-between mb-2">
-                            <CyberHeader size="xs">{asset.asset}</CyberHeader>
-                            <CyberMetric size="xs" color="text-white/40">{asset.score}/100</CyberMetric>
+                    <CyberCard key={asset.asset} className="p-1" variant={asset.score > 50 ? "success" : "danger"}>
+                        <div className="p-5 flex flex-col h-full">
+                            <div className="flex items-center justify-between mb-4 border-b border-white/[0.05] pb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("w-1 h-4 rounded-full", asset.score > 50 ? "bg-[#22C55E]" : "bg-[#EF4444]")} />
+                                    <CyberHeader size="sm" className="tracking-widest">{asset.asset}</CyberHeader>
+                                </div>
+                                <CyberMetric size="xs" className="text-white/30 font-mono">{asset.score}/100</CyberMetric>
+                            </div>
+                            <p className="text-[13px] text-white/70 font-mono uppercase leading-relaxed text-justify mb-2 italic">
+                                "{asset.news}"
+                            </p>
                         </div>
-                        <p className="text-[12px] text-white/50 font-mono uppercase leading-relaxed">{asset.news}</p>
                     </CyberCard>
                 ))}
             </section>
