@@ -2,8 +2,9 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 import fs from 'fs';
 import { queryOHLCV } from '../src/lib/market-data/ohlcv-db';
-import { runBacktest } from '../src/lib/market-data/backtest-engine';
+import { Trade, runBacktest } from '../src/lib/market-data/backtest-engine';
 import { GURU_STRATEGIES } from '../src/lib/market-data/guru-strategies';
+import { OHLCVBar } from '../src/lib/market-data/price-history';
 
 const TICKERS = ["FPT", "VCB", "SSI", "HPG", "MWG"];
 const PERIODS = {
@@ -13,7 +14,7 @@ const PERIODS = {
     "All_Time": { from: "2018-01-01", to: "2026-04-18" }
 };
 
-function calculateExtraMetrics(trades) {
+function calculateExtraMetrics(trades: Trade[]) {
     let grossProfit = 0;
     let grossLoss = 0;
     let netProfit = 0;
@@ -21,9 +22,10 @@ function calculateExtraMetrics(trades) {
     if (sellTrades.length === 0) return { profitFactor: 0, avgProfitPerTrade: 0 };
 
     for (const t of sellTrades) {
-        if (t.pnl > 0) grossProfit += t.pnl;
-        else grossLoss += Math.abs(t.pnl);
-        netProfit += t.pnl;
+        const pnl = t.pnl || 0;
+        if (pnl > 0) grossProfit += pnl;
+        else grossLoss += Math.abs(pnl);
+        netProfit += pnl;
     }
     const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 999 : 0) : grossProfit / grossLoss;
     const avgProfitPerTrade = netProfit / sellTrades.length;
@@ -31,17 +33,17 @@ function calculateExtraMetrics(trades) {
 }
 
 async function main() {
-    const rawData = {};
+    const rawData: Record<string, { bars: OHLCVBar[] }> = {};
     for (const ticker of TICKERS) {
         rawData[ticker] = { bars: [] };
         try {
             rawData[ticker].bars = await queryOHLCV(ticker, "2018-01-01", "2026-04-18");
-        } catch (e) {
+        } catch (e: any) {
             console.error(`Failed to load ${ticker}: ${e.message}`);
         }
     }
 
-    const results = [];
+    const results: any[] = [];
 
     for (const [guruId, guru] of Object.entries(GURU_STRATEGIES)) {
         for (const [periodName, dates] of Object.entries(PERIODS)) {

@@ -19,7 +19,7 @@ import {
     getSavedStrategies, saveStrategy, deleteStrategy,
     type SavedStrategy,
 } from "@/lib/saved-strategies";
-import type { BacktestResult, BacktestMetrics, Trade } from "@/lib/market-data/backtest-engine";
+import type { BacktestResult, BacktestMetrics, Trade, Strategy } from "@/lib/market-data/backtest-engine";
 import type { OHLCVBar } from "@/lib/market-data/price-history";
 import { CyberHeader, CyberSubHeader } from "@/components/ui/CyberTypography";
 import dynamic from "next/dynamic";
@@ -30,7 +30,7 @@ const TradingViewChart = dynamic(
 );
 
 /* ─── Types ─── */
-type Strategy = "buy-and-hold" | "sma-cross" | "breakout-52w" | "ma30w-stage2" | "tactical-allocation";
+
 
 interface BacktestResponse extends BacktestResult {
     ticker: string;
