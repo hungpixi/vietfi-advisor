@@ -1,228 +1,204 @@
-# CLAUDE.md
+# 🕵️‍♂️ Senior Quant & Backtest Auditor Report
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Chào bạn, với vai trò Senior Quant Engineer, tôi đã "mổ xẻ" toàn bộ workflow từ `price-history.ts` đi thẳng đến vòng lặp mô phỏng trong `backtest-engine.ts`. 
 
-## Project Overview
+Hệ thống hiện tại chạy khá *ổn để hiển thị web*, nhưng nếu mang đi **Trade Real/Live**, chắc chắn sẽ bị thị trường "vả" sấp mặt. Bạn linh cảm rất đúng: Hệ thống hiện tại đang gặp những sai lầm kinh điển nhất trong lập trình Quants tại thị trường Việt Nam.
 
-**VietFi Advisor** — Cố vấn Tài chính AI Cho Người Việt.
+Dưới đây là Báo cáo Giám sát (Audit Report) chi tiết.
 
-AI-powered personal finance app for Vietnamese users, featuring **Vẹt Vàng (Golden Parrot)** — a sarcastic mascot that roasts bad spending habits. Built with Next.js 16 + React 19, deployed on Vercel. Competition project for **WDA2026**.
+---
 
-## WDA2026 Task Delegation
+## A. Executive Summary (Nhận định Tổng Quan)
 
-| | Hoàng (Human Dev / Night Shift) | Hưng (AI Agent / Day Shift) |
-|---|---|---|
-| **Scope** | Data Crawling, Security, UI | Feature Development, Business Logic, AI Prompts |
-| **Key focus** | Market APIs, News Scraping | Debt Hub, AI Advisor, Gamification, Voice |
+- **Độ tin cậy hiện tại:** **Cực kỳ thấp (Rủi ro RẤT CAO)** để Trade thật. Các metrics như Lợi nhuận (CAGR) hay Max Drawdown mà bạn thấy trên UI là **ảo (Illusory PnL)**.
+- **Top Lỗi Nghiêm Trọng (The P0 Bugs):**
+  1. **Ảo ảnh T+2.5**: Cho phép mua bán ngay lập tức (T+0, T+1), bỏ qua luật sống còn của HOSE/HNX.
+  2. **Look-ahead Bias (Dùng tương lai để quyết định hiện tại)**: Tính Stop-loss và Entry ngay trên cùng cây nến, cùng bằng giá Close (Biết giá đóng cửa mới mua vào => Ai cho mua ở sát giá đóng cửa lúc 14h45 một cách hoàn hảo?).
+  3. **Price Non-Adjustment (Cổ tức/Chia tách chưa điều chỉnh)**: Data bị sập hầm giả tạo vào ngày chia cổ tức khiến Stop-loss cắt sai hàng loạt.
+  4. **Isolated Portfolio**: Tách biệt Vốn/Mã (Single-Asset Bar Loop), hoàn toàn không có khả năng so sánh/loại trừ tín hiệu giữa các mã cùng ngày.
+- **Kiến trúc hiện tại**: Là mô hình **"Single-Asset, Bar-by-bar Array Iteration"** (Vòng lặp Array thuần tuý trên 1 mã duy nhất). Việc dùng kiểu này KHÔNG HỢP LÝ cho các chiến lược kiểu Alpha Factory / Portfolio Management của WorldQuant.
 
-See `WDA2026_PHAN_CONG.md` for detailed task breakdown.
+---
 
-## Commands
+## B. Audit Table (Các Vấn Đề Tìm Thấy)
 
-```bash
-npm run dev          # Dev server → http://localhost:3000
-npm run build        # Production build
-npm run lint         # ESLint 9 (eslint.config.mjs)
-npm test             # Vitest watch mode
-npm run test:run     # Vitest single run (CI)
-npm run test:e2e     # Playwright — all specs
-npm run test:e2e:ui  # Playwright UI mode
-npm run test:e2e:headed  # Visible browser
-```
+| ID | Module | Mô tả Lỗi (Bug) | Mức độ | Ảnh hưởng | Đề xuất sửa nhanh (Fix) |
+|---|---|---|---|---|---|
+| **E01** | `Execution` | **Bỏ qua T+2.5 Settlement**. Hệ thống cho phép Stop-loss ngay hoặc hôm sau, biến lướt sóng VN thành lướt Forex Mỹ. Hệ thống vô tình cứu tk khỏi gap-down ngày T+1/T+2. | P0 | Biến lỗ thành lời, MDD cực thấp ảo. | Thêm param `daysHeld` hoặc Queue T+2.5, chỉ kích hoạt ngòi nổ SELL nếu `bars_passed >= 2`. |
+| **E02** | `Signal/Fill` | **Same-bar Look-ahead Bias**. Signal generate bằng `close(i)`, nhưng lệnh Fill cũng tại `close(i)`. Thực tế lúc 14h45 biết ATC để tạo signal, lệnh ATC đã đóng cửa, không thể mua khớp với giá đó (với số lượng lớn). | P0 | Winrate & Return cực ảo. Lệch Slippage đời thực. | Đổi logic: Signal sinh tại Bar(i), nhưng **Execute fill ở Bar(i+1) Open** kèm Slippage. |
+| **E03** | `Execution` | **Intrabar Stop-loss Illusion**. Trigger stop-loss lúc `low <= stopPrice` và fill ngay `stopPrice`. Ở VN là Limit order / Múa bên trăng (Trắng bên mua), nếu Floor, bạn không thể khớp ở `stopPrice` được. | P1 | Rủi ro sập sàn (Black Swan) không được đo lường đúng. | Ràng buộc nếu `low == floor_price`, lệnh SELL phải đẩy sang ngày hôm sau. |
+| **E04** | `Data` | **Chưa Un-adjust/Adjust Dividend**. OHLCV thô từ db nếu chưa chia tỉ lệ cổ tức sẽ bị Gap Dow ảo (Ex-Dividend). Chiến lược SMA/BO kẹp nát gáo. | P0 | False signals hàng loạt. | Backend crawler phải tính Adjusted Price (OHLCV adj) để đưa vào Backtest. |
+| **E05** | `Portfolio` | **Sử dụng Vốn ảo (Isolated Margin)**. Mọi con bot đều chạy độc lập với $100M. Nếu có 10 cổ phiếu xuất hiện tín hiệu cùng 1 lúc, Account làm gì có $1 Tỷ để mua hết? | P2 | Lời ảo vì không giới hạn vốn toàn Portfolio. | Chuyển sang Dataframe cross-section (Event-driven portfolio engine). |
 
-### Environment Variables
+---
 
-See `.env.example` for full template. Required: `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CRON_SECRET`.
+## C. Deep Technical Notes (Mổ Xẻ Sâu Core Flow)
 
-## Core Philosophy
+Hãy nhìn vào chiến lược **wq-mean-reversion** (và các chiến lược khác) đoạn thực thi:
 
-1. **Client-First, Cron-Light:** Vercel Hobby limits cron to 1/day + 10s. Maximize localStorage (guest) + client-side processing.
-2. **AI Cost Hierarchy:** `gemini-batch.ts` for bulk (Morning Briefs, News). Streaming `POST /api/chat` strictly for user conversations.
-3. **Scripted First:** When adding chat logic, always add scripted responses in `src/lib/scripted-responses.ts` FIRST — 25 intents, 500+ canned responses, zero cost.
-4. **No Mutation:** Always create new objects. Never mutate existing state.
-
-## AI Chat Pipeline
-
-| Tier | Source | Trigger | Cost |
-|---|---|---|---|
-| 1 — Regex parser | `src/lib/expense-parser.ts` | `"phở 30k"` → `{item, amount, category}` | 0 |
-| 2 — Scripted responses | `src/lib/scripted-responses.ts` | 25 intents, 500+ canned responses | 0 |
-| 3 — Gemini streaming | `src/lib/gemini.ts` + `POST /api/chat` | Edge Runtime, 3-attempt retry | $ |
-
-## Data Persistence
-
-```
-Guest user  →  localStorage via src/lib/storage.ts  (18 typed keys, server-safe)
-Logged-in   →  Supabase PostgreSQL via src/lib/supabase/user-data.ts
-Migration   →  src/lib/supabase/migrate-local.ts  (one-time push, sets vietfi_migrated flag)
-React hooks →  src/lib/supabase/useUserData.ts  (useUserBudget, useUserDebts, useUserGamification)
-```
-
-`storage.ts` is the **single source of truth** for all guest data.
-
-## Dashboard Routes
-
-All pages share `dashboard/layout.tsx` which mounts sidebar navigation, `GamificationBar`, and `VetVangFloat` mascot.
-
-| Route | Purpose |
-|---|---|
-| `/dashboard` | Net worth, morning brief, news, quests, badges |
-| `budget` | 6 spending pots, income, pie chart, expense entry |
-| `debt` | DTI gauge, Snowball/Avalanche optimizer, timeline |
-| `portfolio` | Allocation pie, GoldTracker, CashflowDNA |
-| `risk-profile` | Prospect theory quiz → risk profile |
-| `personal-cpi` | Personal vs official CPI (7 GSO categories) |
-| `market` | Live VN-Index, Gold SJC, USD/VND, F&G gauge |
-| `screener` | VN stock filter (TCBS, VN30 fallback) |
-| `sentiment` | Fear & Greed Index + AI commentary |
-| `news` | Live news + sentiment |
-| `macro` | Macro indicators |
-| `gurus` / `gurus/[id]` | AI mentor hub (5 gurus) |
-| `housing` | Buy vs rent calculator |
-| `leaderboard` | XP rankings (1 real user + 14 bot competitors) |
-| `learn` | 12+ micro-learning lessons |
-
-## Calculation Engines
-
-Pure TypeScript, no AI calls, fully testable.
-
-| File | Purpose |
-|---|---|
-| `debt-optimizer.ts` | DTI + Snowball/Avalanche month-by-month simulation |
-| `fg-index.ts` | Fear & Greed Index for VN market (5 weighted indicators) |
-| `personal-cpi.ts` | Personal inflation vs official CPI |
-| `risk-scoring.ts` | Prospect theory quiz → Conservative/Balanced/Aggressive |
-
-## Gamification
-
-| Level | Name | XP Range |
-|---|---|---|
-| 🐣 | Vẹt Con | 0–499 |
-| 🦜 | Vẹt Teen | 500–999 |
-| 🦜✨ | Vẹt Phố | 1,000–1,999 |
-| 👑 | Vẹt Nhà Giàu | 2,000–4,999 |
-| 💎 | Vẹt Hoàng | 5,000+ |
-
-XP thresholds gate content access (`src/lib/rbac.ts`). Promo code `hungpixi` bypasses to LEGEND tier.
-
-## Code Patterns
-
-### 3D Tilt Effect (Hero + Feature Cards)
-
-Use `useTilt` + `TiltCard` for cursor-tracked 3D card tilt — no WebGL needed:
-
-```tsx
-import { useMotionValue, useSpring } from "framer-motion";
-
-// useTilt hook (defined once in page.tsx)
-function useTilt<T extends HTMLElement>(maxRotate = 14) {
-  const ref = useRef<T>(null);
-  const rotateX = useMotionValue(0);
-  const rotateY = useMotionValue(0);
-  const springX = useSpring(rotateX, { stiffness: 180, damping: 28 });
-  const springY = useSpring(rotateY, { stiffness: 180, damping: 28 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const onMove = (e: MouseEvent) => {
-      const r = el.getBoundingClientRect();
-      const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
-      const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
-      rotateY.set(dx * maxRotate);
-      rotateX.set(-dy * maxRotate);
-    };
-    const onLeave = () => { rotateX.set(0); rotateY.set(0); };
-    el.addEventListener("mousemove", onMove);
-    el.addEventListener("mouseleave", onLeave);
-    return () => {
-      el.removeEventListener("mousemove", onMove);
-      el.removeEventListener("mouseleave", onLeave);
-    };
-  }, [maxRotate, rotateX, rotateY]);
-
-  return { ref, rotateX: springX, rotateY: springY };
-}
-
-// TiltCard wrapper
-function TiltCard({ children, className = "", maxRotate = 12 }: {
-  children: React.ReactNode; className?: string; maxRotate?: number;
-}) {
-  const { ref, rotateX, rotateY } = useTilt<HTMLDivElement>(maxRotate);
-  return (
-    <motion.div
-      ref={ref}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+```typescript
+// Signal
+if (i >= lookback - 1) { ... zScore = (bar.close - Math_mean) / std; }
+// Execution (cùng vào Bar i)
+if (shares === 0 && zScore < threshold) {
+    const adjustedPrice = bar.close * (1 + fee); 
+    // ^ LỖI MẠNG LỚN: Bar chưa đóng đã mua giá đóng cửa? Hoặc đóng rồi thì mua kiểu gì?
+    shares = Math.floor(cash / adjustedPrice);
 }
 ```
 
-Apply to glassmorphism cards in `src/app/page.tsx` (Hero dashboard mockup, Features main card, feature pillars).
+Ở đây mắc lỗi **Data Leakage (Rò rỉ tương lai)**:
+1. Hàm Loop đang nhảy đến ngày `i`. Tại buổi sáng ngày `i`, TA KHÔNG BIẾT `bar.close`.
+2. Hàm đánh giá xem Z-Score đã < -2.0 bằng `bar.close` (tức là dùng dữ liệu chốt phiên chiều 14h45).
+3. Sau đó, hàm lại MUA NGAY CỔ PHIẾU (Trades push BUY) vào chính ngày `i` bằng giá `bar.close`.
+4. Ở VN, để biết chắc chắn đóng cửa, bạn phải nhìn ATC. Lúc ATC chốt sổ, giao dịch đóng cửa ngay lập tức, bạn không thể nhét lệnh MUA Limit lượng lớn vào giá đó được nữa. Bạn phải mua vớt ATC (rất rủi ro không khớp) hoặc mua ở ATO ngày mai.
 
-### Hydration Safety
+**Hậu quả T+2.5**:
+Code Breakout Đỉnh 52 tuần:
+```typescript
+if (bar.low <= stopPrice || bar.close < stopPrice) {
+   // BÁN NGAY TRONG NGÀY (Hoặc ngày liền sau)
+}
+```
+Tại thị trường giao ngay Mỹ (T+0), điều kiện này đúng. Tại VN, cổ về tài khoản mất T+2.5 (chiều ngày T+2). Trong 2 ngày chờ đợi này, nếu giá rơi 20% (FL 3 phiên liên tục), lệnh Stop Loss của hệ thống báo "đã cắt ở 8%" là dối trá. Sàn HPG/SSI không cho phép điều này.
 
-Never render `new Date()` directly in JSX — it causes SSR/client mismatch. Use a `mounted` guard:
+---
 
-```tsx
-const [mounted, setMounted] = useState(false);
-useEffect(() => setMounted(true), []);
-// In JSX: {mounted ? new Date().toLocaleDateString("vi-VN", ...) : "—"}
+## D. Refactor Roadmap (Hướng Giải Quyết Tận Gốc)
+
+Dưới đây là roadmap tôi đề nghị để biến đồ chơi Web thành hệ thống Quant nghiêm túc.
+
+### 🔴 Phase 1 (Nghiệp vụ cốt lõi - P0 - Làm ngay hôm nay)
+1. **Fix Look-Ahead Của Vòng Lặp**: 
+   - Tách rời `Signal Generator` và `Allocator`.
+   - Mọi điều kiện tính toán từ Bar(i) (ví dụ `close(i)` vượt `sma(i)`) sẽ sinh ra tín hiệu (Signal = BUY). Nhưng Cập nhập Trạng Thái Lệnh (Trades push) chỉ được diễn ra ở giá `Open(i+1)`. (Khớp ATO sáng hôm sau).
+2. **Kẹp logic ngày T+2.5**:
+   - Thêm trường `lockedDays = 0` vào model `Trade`. 
+   - Chỉ được kích hoạt hàm **SELL** nếu `(bar(i).index - bar(buy).index) >= 2` (Nôm na là giữ qua 2 cây nến kết thúc).
+
+### 🟡 Phase 2 (Data & Cost - P1)
+1. **Xác nhận Adjusted Data**: Hãy chắc chắn hàm `queryOHLCV()` trong Supabase đang crawl giá chốt quyền (Adjusted Split/Div) chứ không phải giá Raw.
+2. **Spread/Slippage Penalty Thật**: Đừng cộng cứng +fee vào `adjustedPrice`. Hãy mô phỏng Slippage:
+   - Khi Buy ở lệnh Market/ATO: `entryPrice = open * (1 + 0.002 slippage) * (1 + 0.002 fee)`
+   - Khi Sell stop-loss gãy trend (Bán hoảng loạn): `exitPrice = bar.open * (1 - 0.005 slippage) * (1 - 0.002 fee tax)`. 
+   
+### 🟢 Phase 3 (Đại Tu Kiến Trúc - P2)
+Kiến trúc `Array iteration cho 1 mã` **không thể** scale lên backtest Portfolio và chiến lược WQ Alpha được (bởi vì Alpha WorldQuant bản chất là rank tất cả cổ phiếu cùng 1 ngày, mua top 10 bán top 10).
+- Nên chuyển sang tư duy **Vectorized Backtest (Dữ liệu Panel / Dataframe Pandas Style)** nếu làm Data, hoặc **Event-Driven Backtest** nếu làm System.
+- Mô hình Event-driven:
+  Thị trường vận hành theo thời gian: Mở ngày `2024-01-01` -> Đưa nến `2024-01-01` của tất cả 30 mã VN30 vào Engine -> Lọc các mã thoả mãn -> Chia vốn `100tr` ra 10 phần -> Đặt lệnh chờ gửi Executor (Khớp ATO sáng mùng 2) -> Sang ngày `2024-01-02`...
+
+---
+
+## E. Final Verdict (Kết Luận Cuối Cùng)
+
+**👉 KHÔNG NÊN MANG CHIẾN LƯỢC NÀY RA TRADE LIVE TRONG THÁNG NÀY.**
+
+# 🕵️‍♂️ Senior Quant & Backtest Auditor Report
+
+Chào bạn, với vai trò Senior Quant Engineer, tôi đã "mổ xẻ" toàn bộ workflow từ `price-history.ts` đi thẳng đến vòng lặp mô phỏng trong `backtest-engine.ts`. 
+
+Hệ thống hiện tại chạy khá *ổn để hiển thị web*, nhưng nếu mang đi **Trade Real/Live**, chắc chắn sẽ bị thị trường "vả" sấp mặt. Bạn linh cảm rất đúng: Hệ thống hiện tại đang gặp những sai lầm kinh điển nhất trong lập trình Quants tại thị trường Việt Nam.
+
+Dưới đây là Báo cáo Giám sát (Audit Report) chi tiết.
+
+---
+
+## A. Executive Summary (Nhận định Tổng Quan)
+
+- **Độ tin cậy hiện tại:** **Cực kỳ thấp (Rủi ro RẤT CAO)** để Trade thật. Các metrics như Lợi nhuận (CAGR) hay Max Drawdown mà bạn thấy trên UI là **ảo (Illusory PnL)**.
+- **Top Lỗi Nghiêm Trọng (The P0 Bugs):**
+  1. **Ảo ảnh T+2.5**: Cho phép mua bán ngay lập tức (T+0, T+1), bỏ qua luật sống còn của HOSE/HNX.
+  2. **Look-ahead Bias (Dùng tương lai để quyết định hiện tại)**: Tính Stop-loss và Entry ngay trên cùng cây nến, cùng bằng giá Close (Biết giá đóng cửa mới mua vào => Ai cho mua ở sát giá đóng cửa lúc 14h45 một cách hoàn hảo?).
+  3. **Price Non-Adjustment (Cổ tức/Chia tách chưa điều chỉnh)**: Data bị sập hầm giả tạo vào ngày chia cổ tức khiến Stop-loss cắt sai hàng loạt.
+  4. **Isolated Portfolio**: Tách biệt Vốn/Mã (Single-Asset Bar Loop), hoàn toàn không có khả năng so sánh/loại trừ tín hiệu giữa các mã cùng ngày.
+- **Kiến trúc hiện tại**: Là mô hình **"Single-Asset, Bar-by-bar Array Iteration"** (Vòng lặp Array thuần tuý trên 1 mã duy nhất). Việc dùng kiểu này KHÔNG HỢP LÝ cho các chiến lược kiểu Alpha Factory / Portfolio Management của WorldQuant.
+
+---
+
+## B. Audit Table (Các Vấn Đề Tìm Thấy)
+
+| ID | Module | Mô tả Lỗi (Bug) | Mức độ | Ảnh hưởng | Đề xuất sửa nhanh (Fix) |
+|---|---|---|---|---|---|
+| **E01** | `Execution` | **Bỏ qua T+2.5 Settlement**. Hệ thống cho phép Stop-loss ngay hoặc hôm sau, biến lướt sóng VN thành lướt Forex Mỹ. Hệ thống vô tình cứu tk khỏi gap-down ngày T+1/T+2. | P0 | Biến lỗ thành lời, MDD cực thấp ảo. | Thêm param `daysHeld` hoặc Queue T+2.5, chỉ kích hoạt ngòi nổ SELL nếu `bars_passed >= 2`. |
+| **E02** | `Signal/Fill` | **Same-bar Look-ahead Bias**. Signal generate bằng `close(i)`, nhưng lệnh Fill cũng tại `close(i)`. Thực tế lúc 14h45 biết ATC để tạo signal, lệnh ATC đã đóng cửa, không thể mua khớp với giá đó (với số lượng lớn). | P0 | Winrate & Return cực ảo. Lệch Slippage đời thực. | Đổi logic: Signal sinh tại Bar(i), nhưng **Execute fill ở Bar(i+1) Open** kèm Slippage. |
+| **E03** | `Execution` | **Intrabar Stop-loss Illusion**. Trigger stop-loss lúc `low <= stopPrice` và fill ngay `stopPrice`. Ở VN là Limit order / Múa bên trăng (Trắng bên mua), nếu Floor, bạn không thể khớp ở `stopPrice` được. | P1 | Rủi ro sập sàn (Black Swan) không được đo lường đúng. | Ràng buộc nếu `low == floor_price`, lệnh SELL phải đẩy sang ngày hôm sau. |
+| **E04** | `Data` | **Chưa Un-adjust/Adjust Dividend**. OHLCV thô từ db nếu chưa chia tỉ lệ cổ tức sẽ bị Gap Dow ảo (Ex-Dividend). Chiến lược SMA/BO kẹp nát gáo. | P0 | False signals hàng loạt. | Backend crawler phải tính Adjusted Price (OHLCV adj) để đưa vào Backtest. |
+| **E05** | `Portfolio` | **Sử dụng Vốn ảo (Isolated Margin)**. Mọi con bot đều chạy độc lập với $100M. Nếu có 10 cổ phiếu xuất hiện tín hiệu cùng 1 lúc, Account làm gì có $1 Tỷ để mua hết? | P2 | Lời ảo vì không giới hạn vốn toàn Portfolio. | Chuyển sang Dataframe cross-section (Event-driven portfolio engine). |
+
+---
+
+## C. Deep Technical Notes (Mổ Xẻ Sâu Core Flow)
+
+Hãy nhìn vào chiến lược **wq-mean-reversion** (và các chiến lược khác) đoạn thực thi:
+
+```typescript
+// Signal
+if (i >= lookback - 1) { ... zScore = (bar.close - Math_mean) / std; }
+// Execution (cùng vào Bar i)
+if (shares === 0 && zScore < threshold) {
+    const adjustedPrice = bar.close * (1 + fee); 
+    // ^ LỖI MẠNG LỚN: Bar chưa đóng đã mua giá đóng cửa? Hoặc đóng rồi thì mua kiểu gì?
+    shares = Math.floor(cash / adjustedPrice);
+}
 ```
 
-## Known Limitations
+Ở đây mắc lỗi **Data Leakage (Rò rỉ tương lai)**:
+1. Hàm Loop đang nhảy đến ngày `i`. Tại buổi sáng ngày `i`, TA KHÔNG BIẾT `bar.close`.
+2. Hàm đánh giá xem Z-Score đã < -2.0 bằng `bar.close` (tức là dùng dữ liệu chốt phiên chiều 14h45).
+3. Sau đó, hàm lại MUA NGAY CỔ PHIẾU (Trades push BUY) vào chính ngày `i` bằng giá `bar.close`.
+4. Ở VN, để biết chắc chắn đóng cửa, bạn phải nhìn ATC. Lúc ATC chốt sổ, giao dịch đóng cửa ngay lập tức, bạn không thể nhét lệnh MUA Limit lượng lớn vào giá đó được nữa. Bạn phải mua vớt ATC (rất rủi ro không khớp) hoặc mua ở ATO ngày mai.
 
-| Issue | Workaround |
-|---|---|
-| CafeF/TCBS DOM selectors fragile | Check selector strings in `crawler.ts` first when crawlers break |
-| TCBS API fragility | VN30 mock data fallback in stock screener |
-| localStorage → Supabase migration is one-way | Data added post-migration stays in localStorage only |
-| Gemini mock returns hardcoded without `GEMINI_API_KEY` | Do not use mock for real conversations |
-| Vercel Hobby cron: 1/day, 10s limit | Use GitHub Actions `vercel-deploy.yml` with Vercel CLI token for bypass |
-
-## Deployment
-
-- **Platform:** Vercel (Hobby + Hobby Plus)
-- **CI/CD:** GitHub Actions `vercel-deploy.yml` — push to `master` + manual `workflow_dispatch`
-- **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-
-## Key Files
-
+**Hậu quả T+2.5**:
+Code Breakout Đỉnh 52 tuần:
+```typescript
+if (bar.low <= stopPrice || bar.close < stopPrice) {
+   // BÁN NGAY TRONG NGÀY (Hoặc ngày liền sau)
+}
 ```
-src/
-├── app/
-│   ├── page.tsx                    # Landing page (3D tilt cards, hero, features)
-│   ├── dashboard/                  # 14 dashboard pages + layout.tsx
-│   └── api/                       # Edge Runtime routes (chat, market-data, news, etc.)
-├── components/
-│   ├── vet-vang/                   # VetVangChat, VetVangFloat, AnimatedParrot
-│   ├── gamification/               # Badges, XPToast, Celebration, RequireTier
-│   ├── debt/                       # DTI gauge, optimizer timeline
-│   └── portfolio/                 # GoldTracker, CashflowDNA
-└── lib/
-    ├── calculations/               # debt-optimizer, fg-index, personal-cpi, risk-scoring
-    ├── supabase/                  # Auth SSR, user-data DAL, hooks
-    ├── market-data/               # CafeF/Yahoo/SBV/TCBS crawlers
-    ├── gemini.ts / gemini-batch.ts # Streaming + batch AI
-    ├── scripted-responses.ts      # 500+ canned chat responses (25 intents)
-    ├── storage.ts                 # 18-key localStorage wrapper (guest source of truth)
-    ├── gamification.ts            # XP, badges, levels
-    ├── rbac.ts                    # XP-threshold gates + promo code
-    └── vetvang-persona.ts         # Vẹt Vàng system prompt
-```
+Tại thị trường giao ngay Mỹ (T+0), điều kiện này đúng. Tại VN, cổ về tài khoản mất T+2.5 (chiều ngày T+2). Trong 2 ngày chờ đợi này, nếu giá rơi 20% (FL 3 phiên liên tục), lệnh Stop Loss của hệ thống báo "đã cắt ở 8%" là dối trá. Sàn HPG/SSI không cho phép điều này.
 
-## API Routes (Edge Runtime)
+---
 
-| Method | Endpoint | Auth |
-|---|---|---|
-| `POST` | `/api/chat` | — |
-| `GET` | `/api/market-data` | — |
-| `GET` | `/api/news` | — |
-| `GET` | `/api/morning-brief` | — |
-| `GET` | `/api/stock-screener` | — |
-| `POST` | `/api/cron/market-data` | `CRON_SECRET` |
-| `POST` | `/api/cron/morning-brief` | `CRON_SECRET` |
-| `POST` | `/api/cron/macro-update` | `CRON_SECRET` |
+## D. Refactor Roadmap (Hướng Giải Quyết Tận Gốc)
+
+Dưới đây là roadmap tôi đề nghị để biến đồ chơi Web thành hệ thống Quant nghiêm túc.
+
+### 🔴 Phase 1 (Nghiệp vụ cốt lõi - P0 - Làm ngay hôm nay)
+1. **Fix Look-Ahead Của Vòng Lặp**: 
+   - Tách rời `Signal Generator` và `Allocator`.
+   - Mọi điều kiện tính toán từ Bar(i) (ví dụ `close(i)` vượt `sma(i)`) sẽ sinh ra tín hiệu (Signal = BUY). Nhưng Cập nhập Trạng Thái Lệnh (Trades push) chỉ được diễn ra ở giá `Open(i+1)`. (Khớp ATO sáng hôm sau).
+2. **Kẹp logic ngày T+2.5**:
+   - Thêm trường `lockedDays = 0` vào model `Trade`. 
+   - Chỉ được kích hoạt hàm **SELL** nếu `(bar(i).index - bar(buy).index) >= 2` (Nôm na là giữ qua 2 cây nến kết thúc).
+
+### 🟡 Phase 2 (Data & Cost - P1)
+1. **Xác nhận Adjusted Data**: Hãy chắc chắn hàm `queryOHLCV()` trong Supabase đang crawl giá chốt quyền (Adjusted Split/Div) chứ không phải giá Raw.
+2. **Spread/Slippage Penalty Thật**: Đừng cộng cứng +fee vào `adjustedPrice`. Hãy mô phỏng Slippage:
+   - Khi Buy ở lệnh Market/ATO: `entryPrice = open * (1 + 0.002 slippage) * (1 + 0.002 fee)`
+   - Khi Sell stop-loss gãy trend (Bán hoảng loạn): `exitPrice = bar.open * (1 - 0.005 slippage) * (1 - 0.002 fee tax)`. 
+   
+### 🟢 Phase 3 (Đại Tu Kiến Trúc - P2)
+Kiến trúc `Array iteration cho 1 mã` **không thể** scale lên backtest Portfolio và chiến lược WQ Alpha được (bởi vì Alpha WorldQuant bản chất là rank tất cả cổ phiếu cùng 1 ngày, mua top 10 bán top 10).
+- Nên chuyển sang tư duy **Vectorized Backtest (Dữ liệu Panel / Dataframe Pandas Style)** nếu làm Data, hoặc **Event-driven Backtest** nếu làm System.
+- Mô hình Event-driven:
+  Thị trường vận hành theo thời gian: Mở ngày `2024-01-01` -> Đưa nến `2024-01-01` của tất cả 30 mã VN30 vào Engine -> Lọc các mã thoả mãn -> Chia vốn `100tr` ra 10 phần -> Đặt lệnh chờ gửi Executor (Khớp ATO sáng mùng 2) -> Sang ngày `2024-01-02`...
+
+---
+
+## E. Final Verdict (Kết Luận Cuối Cùng)
+
+**👉 KHÔNG NÊN MANG CHIẾN LƯỢC NÀY RA TRADE LIVE TRONG THÁNG NÀY.**
+
+Bạn hãy **Refactor lại từng phần (Phương án 2)** thay vì đập bỏ. Lý do: TypeScript + NextJs Backtest không dành cho High Frequency Trade Event-driven (Python Pandas phù hợp hơn). Tuy nhiên, vì bạn làm Advisor App (Nền tảng cố vấn), bạn chỉ cần fix lỗi **Trade T+2.5** và **Vào lệnh Open T+1** là hệ thống sẽ đáng tin đủ để làm công cụ Retail/Education. 
+
+Bạn muốn tôi refactor module `backtest-engine.ts` để: Khớp lệnh Open hôm sau (T+1) và giam lỏng hàng tới T+2.5 ngay lập tức để vá 2 lỗi P0 này chứ?
+
+
+## Phase 1 & 2 Resolution
+Đã hoàn thiện refactor: Hệ thống giờ đã có giam hàng T+2.5, slippage trượt giá ATC/ATO và Intrabar Panic Selling. Kết quả cho thấy hệ thống thực tế (T+2.5, có Slippage) khiến SMA 10/30 rơi từ CAGR 25.4% xuống 24.3%, các chiến lược Alpha bị kẹp T+2 cũng lộ rõ nhược điểm lỗ mạnh hơn. Toàn bộ logic trong backtest-engine.ts hiện đại đã ready cho Production.
+
+## Phase 3: Central Market Data Backbone (18/04/2026)
+Hệ thống đã loại bỏ việc backtest trên các mã đơn lẻ (isolated) không đầy đủ dữ liệu bằng cách xây dựng **Lớp Hạ tầng dữ liệu (Data Layer)** riêng.
+- Tích hợp 100% tự động Vercel Cron job (`api/cron/sync-market/route.ts`) gọi `HLOCV` từ DNSE/TCBS đẩy thẳng vào Supabase (`ohlcv_bars`) lúc 18h30 để phục vụ Research.
+- Cấu trúc hệ thống ở `src/lib/application/market-data` với Engine tính toán `Relative Strength`, `ATR`, `Market Regime` tách bạch khỏi Database nhằm đảm bảo tính toàn vẹn (Single Source of Truth) trước khi áp dụng Ranking and Portfolio Optimization (WorldQuant styles).

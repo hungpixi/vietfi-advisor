@@ -1,8 +1,8 @@
 /**
  * VietFi Backtest Engine — TypeScript vectorized
- *
- * Strategies: buy-and-hold | sma-cross | breakout-52w | ma30w-stage2
- * Metrics: CAGR, Sharpe Ratio, Max Drawdown, Win Rate
+ * Refactored Phase 1 & 2: Added T+2.5 Settlement locks and ATC/Panic Slippage models.
+ * 
+ * Strategies: buy-and-hold | sma-cross | breakout-52w | ma30w-stage2 | wq-mean-reversion | wq-vol-breakout
  */
 
 import type { OHLCVBar } from "./price-history";
@@ -81,12 +81,13 @@ function calcCAGR(startCapital: number, endCapital: number, bars: number): numbe
 function calcSharpe(returns: number[]): number {
     if (returns.length < 2) return 0;
     const mean = returns.reduce((s, r) => s + r, 0) / returns.length;
+    const Math_mean = mean;
     const variance =
-        returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / (returns.length - 1);
+        returns.reduce((s, r) => s + Math.pow(r - Math_mean, 2), 0) / (returns.length - 1);
     const stdDev = Math.sqrt(variance);
     if (stdDev === 0) return 0;
     // Annualize: daily → *sqrt(252)
-    return (mean / stdDev) * Math.sqrt(252);
+    return (Math_mean / stdDev) * Math.sqrt(252);
 }
 
 function calcMaxDrawdown(equityCurve: number[]): number {
@@ -204,6 +205,7 @@ function runSmaCross(
     let prevSlow: number | null = null;
     const winTrades: boolean[] = [];
     let totalFees = 0;
+    let daysHeld = 0;
 
     // Benchmark: buy-and-hold reference
     const bmShares = Math.floor(capital / closes[0]);
@@ -214,6 +216,8 @@ function runSmaCross(
         const curFast = sma(closes, fast, i);
         const curSlow = sma(closes, slow, i);
 
+        if (shares > 0) daysHeld++;
+
         // Crossover detection
         if (
             curFast !== null &&
@@ -223,34 +227,37 @@ function runSmaCross(
         ) {
             // Golden cross: fast crosses above slow → BUY
             if (prevFast <= prevSlow && curFast > curSlow && shares === 0) {
-                const adjustedPrice = bar.close * (1 + fee);
+                const slippagePrice = bar.close * 1.002; // Mua ATC có slippage 0.2%
+                const adjustedPrice = slippagePrice * (1 + fee);
                 shares = Math.floor(cash / adjustedPrice);
                 if (shares > 0) {
                     buyCost = adjustedPrice; // Cost per share
                     const totalCost = shares * adjustedPrice;
                     cash -= totalCost;
-                    totalFees += shares * bar.close * fee;
+                    totalFees += shares * slippagePrice * fee;
                     trades.push({
                         type: "BUY",
                         date: bar.date,
-                        price: adjustedPrice, // UI Fix
+                        price: adjustedPrice,
                         shares,
                         value: totalCost,
                     });
+                    daysHeld = 0; // Vừa mua xong thì khoá
                 }
             }
 
-            // Death cross: fast crosses below slow → SELL
-            if (prevFast >= prevSlow && curFast < curSlow && shares > 0) {
-                totalFees += shares * bar.close * fee;
-                const sellValue = shares * bar.close * (1 - fee);
+            // Death cross: fast crosses below slow → SELL (Requires T+2 Unlocked)
+            if (prevFast >= prevSlow && curFast < curSlow && shares > 0 && daysHeld >= 2) {
+                const slippagePrice = bar.close * 0.998; // Bán ATC có slippage 0.2%
+                totalFees += shares * slippagePrice * fee;
+                const sellValue = shares * slippagePrice * (1 - fee);
                 const pnl = sellValue - shares * buyCost;
                 const pnlPct = (pnl / (shares * buyCost)) * 100;
                 winTrades.push(pnl > 0);
                 trades.push({
                     type: "SELL",
                     date: bar.date,
-                    price: bar.close,
+                    price: slippagePrice,
                     shares,
                     value: sellValue,
                     pnl,
@@ -259,6 +266,7 @@ function runSmaCross(
                 cash += sellValue;
                 shares = 0;
                 buyCost = 0;
+                daysHeld = 0;
             }
         }
 
@@ -342,6 +350,7 @@ function runBreakout52W(bars: OHLCVBar[], capital: number, fee: number): Backtes
     const trailingStopPct = 0.15; // Cắt lỗ động (Trailing) -15% từ đỉnh cao nhất
     let trailingPeak = 0;
     const winTrades: boolean[] = [];
+    let daysHeld = 0;
 
     // Benchmark: buy-and-hold reference
     const bmShares = Math.floor(capital / closes[0]);
@@ -349,41 +358,42 @@ function runBreakout52W(bars: OHLCVBar[], capital: number, fee: number): Backtes
 
     for (let i = breakoutPeriod; i < bars.length; i++) {
         const bar = bars[i];
-        // Đỉnh 52 tuần trước (không tính bar hiện tại)
         const high52w = Math.max(...closes.slice(i - breakoutPeriod, i));
+
+        if (shares > 0) daysHeld++;
 
         // ─ BUY: Giá vượt đỉnh 52 tuần
         if (shares === 0 && bar.close > high52w) {
-            const adjustedPrice = bar.close * (1 + fee);
+            const slippagePrice = bar.close * 1.002;
+            const adjustedPrice = slippagePrice * (1 + fee);
             shares = Math.floor(cash / adjustedPrice);
             if (shares > 0) {
                 buyCost = adjustedPrice;
-                trailingPeak = bar.close; // Khởi tạo đỉnh trailing
+                trailingPeak = bar.close;
                 const totalCost = shares * adjustedPrice;
                 cash -= totalCost;
-                totalFees += shares * bar.close * fee;
+                totalFees += shares * slippagePrice * fee;
                 trades.push({ type: "BUY", date: bar.date, price: adjustedPrice, shares, value: totalCost });
+                daysHeld = 0;
             }
         }
 
-        // ─ SELL: Stop-loss / Trailing Stop / Đảo chiều
-        if (shares > 0) {
-            trailingPeak = Math.max(trailingPeak, bar.high); // Cập nhật mức cao nhất
+        // ─ SELL: Stop-loss / Trailing Stop / Đảo chiều (Only if Unlocked T+2.5)
+        if (shares > 0 && daysHeld >= 2) {
+            trailingPeak = Math.max(trailingPeak, bar.high);
 
             const hardStop = buyCost * (1 - stopLossPct);
             const trailStop = trailingPeak * (1 - trailingStopPct);
             const stopPrice = Math.max(hardStop, trailStop);
 
-            // Check if lowest price of the week/day hits our stop
             if (bar.low <= stopPrice || bar.close < stopPrice) {
-                // If it gapped down below stop price on Open, we suffer the gap.
                 let fillPrice = bar.open < stopPrice ? bar.open : stopPrice;
 
-                // Add explicit fee explicitly
-                totalFees += shares * fillPrice * (fee + 0.005); // 0.5% slippage on emergency stops
-                fillPrice = fillPrice * (1 - (fee + 0.005));
+                // Panic sell slippage (0.5%)
+                fillPrice = fillPrice * 0.995;
 
-                const sellValue = shares * fillPrice;
+                totalFees += shares * fillPrice * fee;
+                const sellValue = shares * fillPrice * (1 - fee);
                 const pnl = sellValue - shares * buyCost;
                 winTrades.push(pnl > 0);
                 trades.push({ type: "SELL", date: bar.date, price: fillPrice, shares, value: sellValue, pnl, pnlPct: (pnl / (shares * buyCost)) * 100 });
@@ -391,6 +401,7 @@ function runBreakout52W(bars: OHLCVBar[], capital: number, fee: number): Backtes
                 shares = 0;
                 buyCost = 0;
                 trailingPeak = 0;
+                daysHeld = 0;
             }
         }
 
@@ -440,6 +451,7 @@ function runMa30wStage2(bars: OHLCVBar[], capital: number, fee: number): Backtes
     let trailingPeak = 0;
     const trailingStopPct = 0.15; // 15% trailing stop
     const winTrades: boolean[] = [];
+    let daysHeld = 0;
 
     const bmShares = Math.floor(capital / closes[0]);
     const bmLeftover = capital - bmShares * closes[0];
@@ -450,27 +462,31 @@ function runMa30wStage2(bars: OHLCVBar[], capital: number, fee: number): Backtes
         const ma30prev = sma(closes, maPeriod, i - 1);
         if (ma30 === null || ma30prev === null) continue;
 
+        if (shares > 0) daysHeld++;
+
         const isAboveMa = bar.close > ma30;
-        const ma30Rising = ma30 > ma30prev;  // MA30 đang hướng lên = Giai đoạn 2
+        const ma30Rising = ma30 > ma30prev;
         const prevClose = closes[i - 1];
         const prevAboveMa = prevClose > (ma30prev ?? ma30);
 
-        // BUY: giá vượt MA30 từ dưới lên VÀ MA30 đang hướng lên
+        // BUY
         if (shares === 0 && isAboveMa && !prevAboveMa && ma30Rising) {
-            const adjustedPrice = bar.close * (1 + fee);
+            const slippagePrice = bar.close * 1.002;
+            const adjustedPrice = slippagePrice * (1 + fee);
             shares = Math.floor(cash / adjustedPrice);
             if (shares > 0) {
                 buyCost = adjustedPrice;
                 trailingPeak = bar.close;
                 const totalCost = shares * adjustedPrice;
                 cash -= totalCost;
-                totalFees += shares * bar.close * fee;
-                trades.push({ type: "BUY", date: bar.date, price: bar.close, shares, value: totalCost });
+                totalFees += shares * slippagePrice * fee;
+                trades.push({ type: "BUY", date: bar.date, price: slippagePrice, shares, value: totalCost });
+                daysHeld = 0;
             }
         }
 
-        // SELL: giá rơi xuống dưới MA30 VÀ MA30 không còn tăng, HOẶC dính trailing stop
-        if (shares > 0) {
+        // SELL (T+2)
+        if (shares > 0 && daysHeld >= 2) {
             trailingPeak = Math.max(trailingPeak, bar.high);
             const trailStop = trailingPeak * (1 - trailingStopPct);
             const hitTrailingStop = bar.low <= trailStop || bar.close < trailStop;
@@ -480,7 +496,9 @@ function runMa30wStage2(bars: OHLCVBar[], capital: number, fee: number): Backtes
                 let fillPrice = bar.close;
                 if (hitTrailingStop && !trendBroken) {
                     fillPrice = bar.open < trailStop ? bar.open : trailStop;
-                    fillPrice = fillPrice * (1 - 0.005); // 0.5% slippage on emergency stops
+                    fillPrice = fillPrice * 0.995; // 0.5% slippage on emergency stops
+                } else {
+                    fillPrice = fillPrice * 0.998; // 0.2% slippage logic
                 }
 
                 totalFees += shares * fillPrice * fee;
@@ -492,6 +510,7 @@ function runMa30wStage2(bars: OHLCVBar[], capital: number, fee: number): Backtes
                 shares = 0;
                 buyCost = 0;
                 trailingPeak = 0;
+                daysHeld = 0;
             }
         }
 
@@ -533,7 +552,7 @@ function runTacticalAllocation(
     cashYield: number = 0.06,
     fee: number = 0.002
 ): BacktestResult {
-    const trendPeriod = 200; // 40 tuần ~ 200 ngày
+    const trendPeriod = 200;
     if (bars.length < trendPeriod) return emptyResult(capital);
 
     const closes = bars.map((b) => b.close);
@@ -542,49 +561,47 @@ function runTacticalAllocation(
 
     let cash = capital;
     let shares = 0;
-    let averageCost = 0; // WAC
+    let averageCost = 0;
     let totalFees = 0;
     const winTrades: boolean[] = [];
+    let daysSinceLastTrade = 0;
 
     const bmShares = Math.floor(capital / closes[0]);
     const bmLeftover = capital - bmShares * closes[0];
 
-    const dailyYield = cashYield / 252; // cash yield is daily now
+    const dailyYield = cashYield / 252;
 
     for (let i = 0; i < bars.length; i++) {
         const bar = bars[i];
+        daysSinceLastTrade++;
 
-        // Sinh lời phần tiền mặt
         if (cash > 0) {
             cash = cash * (1 + dailyYield);
         }
 
         const ma40 = sma(closes, trendPeriod, i);
 
-        // Bắt đầu giao dịch từ tuần thứ 40
         if (i >= trendPeriod && ma40 !== null) {
             const isBullMarket = bar.close > ma40;
             const currentPortfolioValue = cash + shares * bar.close;
 
-            // Dynamic Allocation: Bull = 70% Equity, Bear = 30% Equity
-            const targetWeight = isBullMarket ? equityWeight : 0.3; // 30% phòng thủ thay vì 0%
+            const targetWeight = isBullMarket ? equityWeight : 0.3;
             const targetEquityValue = currentPortfolioValue * targetWeight;
             const targetShares = Math.floor(targetEquityValue / (bar.close * (1 + fee)));
 
-            // Tái cân bằng (Rebalance) nếu lệch quá 5% hoặc mua mới
             const currentEquityValue = shares * bar.close;
             const deviation = Math.abs(currentEquityValue - targetEquityValue) / currentPortfolioValue;
 
-            if (shares === 0 || deviation > 0.05) {
+            if (shares === 0 || (deviation > 0.05 && daysSinceLastTrade >= 2)) {
                 const sharesDiff = targetShares - shares;
 
-                // MUA
+                // BUY
                 if (sharesDiff > 0) {
-                    const buyCost = sharesDiff * bar.close * (1 + fee);
+                    const slippagePrice = bar.close * 1.002;
+                    const buyCost = sharesDiff * slippagePrice * (1 + fee);
                     cash -= buyCost;
-                    totalFees += sharesDiff * bar.close * fee;
+                    totalFees += sharesDiff * slippagePrice * fee;
 
-                    // Tính WAC
                     const totalCostBefore = shares * averageCost;
                     shares = targetShares;
                     averageCost = (totalCostBefore + buyCost) / shares;
@@ -592,22 +609,23 @@ function runTacticalAllocation(
                     trades.push({
                         type: "BUY",
                         date: bar.date,
-                        price: bar.close * (1 + fee), // UI fix
+                        price: slippagePrice * (1 + fee),
                         shares: sharesDiff,
                         value: buyCost
                     });
+                    daysSinceLastTrade = 0;
                 }
-                // BÁN
-                else if (sharesDiff < 0) {
+                // SELL
+                else if (sharesDiff < 0 && daysSinceLastTrade >= 2) {
                     const sellShares = Math.abs(sharesDiff);
-                    const sellValue = sellShares * bar.close * (1 - fee);
+                    const slippagePrice = bar.close * 0.998;
+                    const sellValue = sellShares * slippagePrice * (1 - fee);
                     cash += sellValue;
-                    totalFees += sellShares * bar.close * fee;
+                    totalFees += sellShares * slippagePrice * fee;
 
                     const pnl = sellValue - sellShares * averageCost;
                     const pnlPct = (pnl / (sellShares * averageCost)) * 100;
-                    if (pnl > 0) winTrades.push(true);
-                    else winTrades.push(false);
+                    winTrades.push(pnl > 0);
 
                     shares = targetShares;
                     if (shares === 0) averageCost = 0;
@@ -615,12 +633,13 @@ function runTacticalAllocation(
                     trades.push({
                         type: "SELL",
                         date: bar.date,
-                        price: bar.close,
+                        price: slippagePrice,
                         shares: sellShares,
                         value: sellValue,
                         pnl,
                         pnlPct
                     });
+                    daysSinceLastTrade = 0;
                 }
             }
         }
@@ -634,7 +653,6 @@ function runTacticalAllocation(
 
     const finalCapital = cash + shares * bars[bars.length - 1].close * (1 - fee);
     const weeklyReturns = equity.slice(1).map((p, i) => (p.equity - equity[i].equity) / equity[i].equity);
-
     const winRate = winTrades.length > 0 ? (winTrades.filter(Boolean).length / winTrades.length) * 100 : 0;
 
     return {
@@ -645,7 +663,7 @@ function runTacticalAllocation(
             totalReturn: ((finalCapital - capital) / capital) * 100,
             sharpe: calcSharpe(weeklyReturns),
             maxDrawdown: calcMaxDrawdown(equity.map((e) => e.equity)),
-            winRate, // Có thể tính winRate vì đã có WAC
+            winRate,
             numTrades: trades.length,
             finalCapital,
             totalFees,
@@ -668,12 +686,14 @@ function runWqMeanReversion(bars: OHLCVBar[], capital: number, fee: number, look
     let buyCost = 0;
     let totalFees = 0;
     const winTrades: boolean[] = [];
+    let daysHeld = 0;
 
     const bmShares = Math.floor(capital / closes[0]);
     const bmLeftover = capital - bmShares * closes[0];
 
     for (let i = 0; i < bars.length; i++) {
         const bar = bars[i];
+        if (shares > 0) daysHeld++;
 
         let zScore = null;
         if (i >= lookback - 1) {
@@ -687,34 +707,38 @@ function runWqMeanReversion(bars: OHLCVBar[], capital: number, fee: number, look
         if (zScore !== null) {
             // Buy condition
             if (shares === 0 && zScore < threshold) {
-                const adjustedPrice = bar.close * (1 + fee);
+                const slippagePrice = bar.close * 1.002;
+                const adjustedPrice = slippagePrice * (1 + fee);
                 shares = Math.floor(cash / adjustedPrice);
                 if (shares > 0) {
                     buyCost = adjustedPrice;
                     const totalCost = shares * adjustedPrice;
                     cash -= totalCost;
-                    totalFees += shares * bar.close * fee;
+                    totalFees += shares * slippagePrice * fee;
                     trades.push({ type: "BUY", date: bar.date, price: adjustedPrice, shares, value: totalCost });
+                    daysHeld = 0;
                 }
             }
-            // Sell condition
-            else if (shares > 0 && zScore > 0) {
-                const sellValue = shares * bar.close * (1 - fee);
+            // Sell condition (T+2.5 required)
+            else if (shares > 0 && zScore > 0 && daysHeld >= 2) {
+                const slippagePrice = bar.close * 0.998;
+                const sellValue = shares * slippagePrice * (1 - fee);
                 const pnl = sellValue - shares * buyCost;
                 winTrades.push(pnl > 0);
                 trades.push({
                     type: "SELL",
                     date: bar.date,
-                    price: bar.close,
+                    price: slippagePrice,
                     shares,
                     value: sellValue,
                     pnl,
                     pnlPct: (pnl / (shares * buyCost)) * 100
                 });
-                totalFees += shares * bar.close * fee;
+                totalFees += shares * slippagePrice * fee;
                 cash += sellValue;
                 shares = 0;
                 buyCost = 0;
+                daysHeld = 0;
             }
         }
 
@@ -757,6 +781,7 @@ function runWqVolBreakout(bars: OHLCVBar[], capital: number, fee: number, lookba
     let buyCost = 0;
     let totalFees = 0;
     let daysSinceBuy = 0;
+    let daysHeld = 0;
     const maxHoldDays = 10;
     const winTrades: boolean[] = [];
 
@@ -765,6 +790,7 @@ function runWqVolBreakout(bars: OHLCVBar[], capital: number, fee: number, lookba
 
     for (let i = 0; i < bars.length; i++) {
         const bar = bars[i];
+        if (shares > 0) daysHeld++;
 
         let volRatio = null;
         let priceDelta = null;
@@ -777,37 +803,42 @@ function runWqVolBreakout(bars: OHLCVBar[], capital: number, fee: number, lookba
 
         if (shares === 0 && volRatio !== null && priceDelta !== null) {
             if (volRatio > threshold && priceDelta > 0) {
-                const adjustedPrice = bar.close * (1 + fee);
+                const slippagePrice = bar.close * 1.002;
+                const adjustedPrice = slippagePrice * (1 + fee);
                 shares = Math.floor(cash / adjustedPrice);
                 if (shares > 0) {
                     buyCost = adjustedPrice;
                     const totalCost = shares * adjustedPrice;
                     cash -= totalCost;
-                    totalFees += shares * bar.close * fee;
+                    totalFees += shares * slippagePrice * fee;
                     trades.push({ type: "BUY", date: bar.date, price: adjustedPrice, shares, value: totalCost });
                     daysSinceBuy = 0;
+                    daysHeld = 0;
                 }
             }
         }
         else if (shares > 0) {
             daysSinceBuy++;
-            if (bar.close < closes[i - 1] || daysSinceBuy >= maxHoldDays) {
-                const sellValue = shares * bar.close * (1 - fee);
+            // T+2.5 Lock constraint
+            if ((bar.close < closes[i - 1] || daysSinceBuy >= maxHoldDays) && daysHeld >= 2) {
+                const slippagePrice = bar.close * 0.998;
+                const sellValue = shares * slippagePrice * (1 - fee);
                 const pnl = sellValue - shares * buyCost;
                 winTrades.push(pnl > 0);
                 trades.push({
                     type: "SELL",
                     date: bar.date,
-                    price: bar.close,
+                    price: slippagePrice,
                     shares,
                     value: sellValue,
                     pnl,
                     pnlPct: (pnl / (shares * buyCost)) * 100
                 });
-                totalFees += shares * bar.close * fee;
+                totalFees += shares * slippagePrice * fee;
                 cash += sellValue;
                 shares = 0;
                 buyCost = 0;
+                daysHeld = 0;
             }
         }
 

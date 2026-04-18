@@ -1,0 +1,18 @@
+﻿
+>>> PERIOD: BearMarket_2022
+- Breakout Đỉnh 52 Tuần              : CAGR=0.00% (NoFee: 0.00%, BMK: 0.00%) | MDD=0.00% | WR=0.00% | PF=0.00 | Trades=0.0
+- Hộp Darvas Breakout                : CAGR=0.00% (NoFee: 0.00%, BMK: 0.00%) | MDD=0.00% | WR=0.00% | PF=0.00 | Trades=0.0
+- VCP — SMA 10/30                    : CAGR=-1.50% (NoFee: 1.03%, BMK: -21.81%) | MDD=16.56% | WR=30.83% | PF=0.99 | Trades=8.3
+- CANSLIM — Cup & Handle             : CAGR=-1.50% (NoFee: 1.03%, BMK: -21.81%) | MDD=16.56% | WR=30.83% | PF=0.99 | Trades=8.3
+- Alpha 01: Z-Score Mean Reversion   : CAGR=-15.82% (NoFee: -13.53%, BMK: -21.81%) | MDD=36.61% | WR=55.83% | PF=0.84 | Trades=8.5
+- MA30 Tuần — Giai Đoạn 2            : CAGR=-3.22% (NoFee: -2.96%, BMK: -21.81%) | MDD=4.30% | WR=0.00% | PF=0.00 | Trades=1.0
+- Alpha 02: Volatility Breakout      : CAGR=-8.23% (NoFee: -6.56%, BMK: -21.81%) | MDD=8.27% | WR=6.25% | PF=0.01 | Trades=6.0
+
+>>> PERIOD: All_Time
+- VCP — SMA 10/30                    : CAGR=24.33% (NoFee: 27.51%, BMK: 27.39%) | MDD=28.98% | WR=47.09% | PF=2.88 | Trades=32.8
+- CANSLIM — Cup & Handle             : CAGR=24.33% (NoFee: 27.51%, BMK: 27.39%) | MDD=28.98% | WR=47.09% | PF=2.88 | Trades=32.8
+- Breakout Đỉnh 52 Tuần              : CAGR=5.16% (NoFee: 5.76%, BMK: 27.39%) | MDD=25.01% | WR=44.17% | PF=3.82 | Trades=8.3
+- Hộp Darvas Breakout                : CAGR=5.16% (NoFee: 5.76%, BMK: 27.39%) | MDD=25.01% | WR=44.17% | PF=3.82 | Trades=8.3
+- Alpha 01: Z-Score Mean Reversion   : CAGR=-4.43% (NoFee: -2.32%, BMK: 27.39%) | MDD=46.39% | WR=66.64% | PF=1.10 | Trades=28.8
+- Alpha 02: Volatility Breakout      : CAGR=-2.92% (NoFee: 0.17%, BMK: 27.39%) | MDD=22.85% | WR=35.22% | PF=0.68 | Trades=41.5
+- MA30 Tuần — Giai Đoạn 2            : CAGR=-3.57% (NoFee: -2.99%, BMK: 27.39%) | MDD=21.90% | WR=4.17% | PF=0.02 | Trades=7.3
