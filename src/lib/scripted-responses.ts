@@ -37,13 +37,9 @@ const POLITE_DEFAULT_ENABLED = true;
 
 // ── Intent Detection (Keyword-based, NO AI) ─────────────────────
 const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
-  { intent: "greeting", patterns: ["xin chào", "hello", "hi", "chào", "ê", "yo", "hey", "mở app", "quay lại"] },
+  { intent: "greeting", patterns: ["xin chào", "hello", "hi", "chào", "yo", "hey", "mở app", "quay lại"] },
   { intent: "goodbye", patterns: ["bye", "tạm biệt", "tắt", "đi đây", "ngủ", "off", "thôi"] },
   { intent: "thanks", patterns: ["cảm ơn", "thanks", "thank", "tks", "cám ơn", "biết ơn"] },
-  { intent: "ask_spending", patterns: ["chi tiêu", "tiêu bao nhiêu", "tốn bao nhiêu", "tiền đi đâu", "phân tích chi", "xài hết"] },
-  { intent: "ask_debt", patterns: ["nợ", "trả góp", "debt", "vay", "thẻ tín dụng", "tín dụng", "trả nợ"] },
-  { intent: "ask_invest", patterns: ["đầu tư", "invest", "mua gì", "nên mua", "chứng khoán", "cổ phiếu", "portfolio"] },
-  { intent: "ask_save", patterns: ["tiết kiệm", "saving", "để dành", "gửi tiền", "tiền tiết kiệm"] },
   { intent: "ask_gold", patterns: ["vàng", "sjc", "gold", "giá vàng"] },
   { intent: "ask_stock", patterns: ["vnindex", "vn-index", "chứng khoán", "cổ phiếu", "stock", "hose", "hnx"] },
   { intent: "ask_crypto", patterns: ["crypto", "bitcoin", "btc", "eth", "coin"] },
@@ -51,6 +47,10 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
   { intent: "compare_gold_stock", patterns: ["vàng vs", "ck vs", "vàng hay cổ phiếu", "so sánh vàng", "vàng với chứng khoán", "gold vs stock"] },
   { intent: "ask_inflation", patterns: ["lạm phát", "inflation", "cpi", "giá tăng", "mất giá"] },
   { intent: "ask_realestate", patterns: ["mua nhà", "bđs", "bất động sản", "thuê nhà", "nhà ở", "real estate"] },
+  { intent: "ask_spending", patterns: ["chi tiêu", "tiêu bao nhiêu", "tốn bao nhiêu", "tiền đi đâu", "phân tích chi", "xài hết"] },
+  { intent: "ask_debt", patterns: ["nợ", "trả góp", "debt", "vay", "thẻ tín dụng", "tín dụng", "trả nợ"] },
+  { intent: "ask_invest", patterns: ["đầu tư", "invest", "mua gì", "nên mua", "chứng khoán", "cổ phiếu", "portfolio"] },
+  { intent: "ask_save", patterns: ["tiết kiệm", "saving", "để dành", "gửi tiền", "tiền tiết kiệm"] },
   { intent: "motivate", patterns: ["motivate", "động viên", "khích lệ", "mệt"] },
   { intent: "complain", patterns: ["app tệ", "tệ quá", "dở", "ghét", "khó dùng", "bug"] },
   { intent: "curse", patterns: ["quạu", "bực", "điên", "khùng", "cáu", "ghét"] },
@@ -67,7 +67,7 @@ export function detectIntent(text: string): Intent {
 
   // Check time-based greetings
   const hour = new Date().getHours();
-  if (lower.match(/^(chào|hello|hi|ê|yo|hey)\b/)) {
+  if (lower.match(/^(chào|xin chào|hello|hi|yo|hey)\b/)) {
     if (hour >= 5 && hour < 11) return "morning";
     if (hour >= 11 && hour < 17) return "afternoon";
     if (hour >= 17 && hour < 22) return "evening";
@@ -745,10 +745,52 @@ const DATA_INTENTS: Intent[] = [
   "compare_gold_stock", "ask_inflation", "ask_realestate",
 ];
 
+const PERSONAL_CONTEXT_PATTERNS = [
+  "của tôi",
+  "của tớ",
+  "của mình",
+  "của tao",
+  "thu nhập",
+  "lương",
+  "chi tiêu",
+  "tiền tiết kiệm",
+  "số dư",
+  "ngân sách",
+  "danh mục",
+  "portfolio",
+  "mục tiêu",
+  "nợ",
+  "vay",
+  "trả góp",
+  "tài sản",
+  "khẩu vị rủi ro",
+  "risk dna",
+];
+
+function hasPersonalContext(text: string): boolean {
+  const lower = text.toLowerCase();
+  return PERSONAL_CONTEXT_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
+// ── Market intents that must use AI because they depend on live data ───────────────────────────────
+const MARKET_INTENTS: Intent[] = [
+  'ask_gold',
+  'ask_stock',
+  'ask_crypto',
+  'ask_market',
+  'compare_gold_stock',
+  'ask_inflation',
+  'ask_realestate',
+]
+
 // ── Should this message go to AI? ───────────────────────────────
 export function needsAI(intent: Intent, text: string): boolean {
   if (intent === "unknown") return true;
-  if (DATA_INTENTS.includes(intent)) return true; // always use AI for data questions
+  if (MARKET_INTENTS.includes(intent)) return true;
+  if (DATA_INTENTS.includes(intent)) {
+    if (!hasPersonalContext(text) && text.length <= 80) return false;
+    return true;
+  }
   if (text.length > 80) return true;
   return false;
 }
