@@ -19,7 +19,6 @@ export default function RegisterForm() {
     e.preventDefault();
     setError("");
 
-    // Validation
     if (password.length < 6) {
       setError("Mật khẩu phải có ít nhất 6 ký tự!");
       return;
@@ -43,22 +42,18 @@ export default function RegisterForm() {
       });
 
       if (signUpError) {
-        // Log the full error to console for technical debugging
         console.error("Supabase technical error:", signUpError);
 
-        // Map some common errors to Vietnamese, otherwise show raw message
         if (signUpError.message.includes("already registered")) {
           setError("Email này đã được đăng ký!");
         } else if (signUpError.message.includes("valid email")) {
           setError("Email không hợp lệ!");
         } else {
-          // HIỂN THỊ LỖI THẬT TỪ HỆ THỐNG
           setError(`Lỗi hệ thống: ${signUpError.message}`);
         }
         setIsLoading(false);
         return;
       }
-
 
       setError("");
       alert(
@@ -79,7 +74,7 @@ export default function RegisterForm() {
           Tạo tài khoản mới
         </h2>
         <p className="text-text-secondary mt-1 text-sm">
-          Gia nhập cùng Vẹt Vàng ngay hôm nay
+          Bắt đầu hành trình tài chính cùng VietFi
         </p>
       </div>
 
@@ -131,7 +126,6 @@ export default function RegisterForm() {
           />
         </div>
 
-
         {error && (
           <div className="p-3 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
             {error}
@@ -147,10 +141,8 @@ export default function RegisterForm() {
         </button>
       </form>
 
-      {/* OAuth Buttons */}
       <OAuthButtons />
 
-      {/* Guest Login Button */}
       <button
         onClick={() => {
           document.cookie = "vietfi_guest=true; path=/; max-age=86400";

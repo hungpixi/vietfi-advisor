@@ -1,7 +1,7 @@
 'use client';
 import type { LedgerEntry } from '@/lib/calculations/ledger-summary';
 import TransactionItem from './TransactionItem';
-import AnimatedParrot from '@/components/vet-vang/AnimatedParrot';
+import { TrendingUp } from 'lucide-react';
 
 interface Props {
   transactions: LedgerEntry[];
@@ -52,8 +52,8 @@ export default function TransactionList({
   if (!transactions.length) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.01]">
-        <div className="opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700">
-          <AnimatedParrot size={100} state="idle" />
+        <div className="w-20 h-20 rounded-full bg-white/[0.03] flex items-center justify-center border border-white/[0.05]">
+          <TrendingUp className="w-10 h-10 text-white/20" />
         </div>
         <p className="mt-6 font-mono text-[11px] font-black uppercase tracking-[0.2em] text-white/30">Hệ thống chưa ghi nhận giao dịch</p>
         <button

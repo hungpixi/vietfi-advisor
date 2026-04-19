@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Đăng nhập - VietFi Advisor",
-  description: "Đăng nhập vào VietFi Advisor - Quản lý tài chính thông minh cùng Vẹt Vàng",
+  description: "Đăng nhập vào VietFi Advisor - Quản lý tài chính thông minh",
 };
 
 export default function AuthLayout({

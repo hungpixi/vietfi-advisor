@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import VetVangFloat from "@/components/vet-vang/VetVangFloat";
+
 import { CyberBackground } from "@/components/ui/CyberBackground";
 import {
   TrendingUp,
@@ -506,21 +506,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           </div>
         </nav>
 
-        {/* Vẹt Vàng Mini Card */}
-        <div className="px-3 pb-3">
-          <div className="glass-card p-3 border-[#E6B84F]/10">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#E6B84F]" />
-              <span className="text-xs font-medium text-white/70">
-                Vẹt Vàng AI
-              </span>
-            </div>
-            <p className="text-[10px] text-white/90 leading-relaxed">
-              🦜 &ldquo;Hôm nay nhớ ghi chi tiêu nha, đừng để cuối tháng hỏi
-              tiền đi đâu!&rdquo;
-            </p>
-          </div>
-        </div>
+
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-white/[0.04]">
@@ -589,8 +575,7 @@ export default function DashboardLayout({
           </div>
         </main>
 
-        {/* Vẹt Vàng Floating Chatbot */}
-        <VetVangFloat />
+
       </div>
     </div>
   );

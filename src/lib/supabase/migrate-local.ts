@@ -65,9 +65,11 @@ export async function migrateLocalStorageToSupabase(
       await supabase.from("expenses").insert(
         expenses.slice(0, 500).map((exp) => ({
           user_id: userId,
+          pot_id: exp.pot_id ?? exp.potId ?? null,
           amount: Number(exp.amount) || 0,
           note: String(exp.note ?? ""),
           category: String(exp.category ?? ""),
+          created_at: exp.created_at ?? exp.date ?? new Date().toISOString(),
         }))
       );
     }

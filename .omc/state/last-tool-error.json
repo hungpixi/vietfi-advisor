@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /d/D:/vietfi-advisor && grep -RIn --exclude-dir=.git --exclude-dir=.next --include='*.d.ts' 'gemini-3\\\\|gemini-2\\\\.5\\\\|gemini-1\\\\.5\\\\|Gemini' node_modules/@ai-sdk/google node_modules/@a...",
-  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: /d/D:/vietfi-advisor: No such file or directory",
-  "timestamp": "2026-04-18T20:31:55.268Z",
-  "retry_count": 2
-}

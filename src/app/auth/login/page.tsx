@@ -29,7 +29,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <span className="text-success text-xl">✓</span>
             <span className="text-text-secondary">
-              AI thông minh - Chat với cố vấn ảo
+              AI thông minh - Gợi ý tài chính tự động
             </span>
           </div>
           <div className="flex items-center gap-3">

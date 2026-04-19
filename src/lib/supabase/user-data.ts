@@ -204,7 +204,7 @@ export async function addExpense(expense: Omit<Expense, "id">): Promise<void> {
     const supabase = createClient();
     await supabase.from("expenses").insert({
       user_id: userId,
-      pot_id: expense.pot_id || null,
+      pot_id: expense.pot_id ?? expense.potId ?? null,
       amount: expense.amount,
       note: expense.note ?? "",
       category: expense.category ?? "",
@@ -226,7 +226,7 @@ export async function saveExpenses(expenses: Expense[]): Promise<void> {
       await supabase.from("expenses").insert(
         expenses.map((e) => ({
           user_id: userId,
-          pot_id: e.pot_id || null,
+          pot_id: e.pot_id ?? e.potId ?? null,
           amount: e.amount,
           note: e.note ?? "",
           category: e.category ?? "",

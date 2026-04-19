@@ -318,9 +318,9 @@ export default function HousingIntelPage() {
       {/* ═══ Vẹt Vàng Insight ═══ */}
       <CyberCard className="p-5" variant="success">
         <div className="flex items-start gap-4">
-          <span className="text-3xl">🦜</span>
+          <span className="text-3xl">🏠</span>
           <div className="flex-1">
-            <CyberHeader size="xs" className="text-[#22C55E] mb-1">Vẹt Vàng Phân Tích</CyberHeader>
+            <CyberHeader size="xs" className="text-[#22C55E] mb-1">PHÂN TÍCH AN CƯ</CyberHeader>
             <p className="text-xs text-white/60 leading-relaxed font-mono uppercase mb-4">
               &quot;Nhà ở xã hội với lãi suất 4.8% là chìa khóa vàng cho an cư. Đừng nhìn vào tổng giá tiền mà hoảng, hãy nhìn vào khả năng tích lũy hàng tháng. Chỉ cần kỷ luật, căn nhà đầu tiên không hề xa vời!&quot;
             </p>

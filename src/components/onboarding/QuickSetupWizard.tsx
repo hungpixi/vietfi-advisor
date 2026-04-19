@@ -8,7 +8,7 @@ import { getCachedUserId, saveBudgetPots, saveIncome } from "@/lib/supabase/user
 import { setBudgetPots, setExpenses, setIncome as setIncomeStorage, setDebts, setRiskResult } from "@/lib/storage";
 import type { BudgetPot } from "@/lib/domain/personal-finance/types";
 import { calculateRiskProfile } from "@/lib/calculations/risk-scoring";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber, parseNumber } from "@/lib/utils";
 
 interface QuickSetupProps {
   onComplete: () => void;
@@ -22,6 +22,15 @@ const NETWORTH_CHIPS = [
   { label: "1 tỷ", value: 1000000000 },
   { label: "2 tỷ", value: 2000000000 },
   { label: "5 tỷ", value: 5000000000 },
+];
+
+const INCOME_CHIPS = [
+  { label: "5tr", value: 5000000 },
+  { label: "10tr", value: 10000000 },
+  { label: "15tr", value: 15000000 },
+  { label: "20tr", value: 20000000 },
+  { label: "30tr", value: 30000000 },
+  { label: "50tr", value: 50000000 },
 ];
 
 const RISK_QUESTIONS = [
@@ -80,14 +89,17 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
   const [step, setStep] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [customNetWorth, setCustomNetWorth] = useState("");
+  const [income, setIncome] = useState(0);
+  const [customIncome, setCustomIncome] = useState("");
   const [hasDebt, setHasDebt] = useState<boolean | null>(null);
   const [riskAnswers, setRiskAnswers] = useState<number[]>([]);
 
-  const totalSteps = 3;
-  const selectedNetWorth = netWorth || Number(customNetWorth) || 0;
+  const totalSteps = 4;
+  const selectedNetWorth = netWorth || parseNumber(customNetWorth) || 0;
+  const selectedIncome = income || parseNumber(customIncome) || 0;
 
   useEffect(() => {
-    if (step === 3) {
+    if (step === 4) {
       const timer = setTimeout(() => onComplete(), 2000);
       return () => clearTimeout(timer);
     }
@@ -95,12 +107,22 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
 
   const handleNetWorthChip = (val: number) => {
     setNetWorth(val);
-    setCustomNetWorth("");
+    setCustomNetWorth(formatNumber(val));
   };
 
   const handleCustomNetWorth = (val: string) => {
-    setCustomNetWorth(val);
+    setCustomNetWorth(formatNumber(val));
     setNetWorth(0);
+  };
+
+  const handleIncomeChip = (val: number) => {
+    setIncome(val);
+    setCustomIncome(formatNumber(val));
+  };
+
+  const handleCustomIncome = (val: string) => {
+    setCustomIncome(formatNumber(val));
+    setIncome(0);
   };
 
   const handleNetWorthNext = () => {
@@ -108,9 +130,14 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     setStep(1);
   };
 
+  const handleIncomeNext = () => {
+    if (selectedIncome <= 0) return;
+    setStep(2);
+  };
+
   const handleDebtSelection = (val: boolean) => {
     setHasDebt(val);
-    setTimeout(() => setStep(2), 600);
+    setTimeout(() => setStep(3), 600);
   };
 
   const handleRiskAnswer = (qIdx: number, score: number) => {
@@ -128,24 +155,22 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
 
     completeOnboarding({
       netWorth: selectedNetWorth,
-      income: 0,
+      income: selectedIncome,
       hasDebt: hasDebt || false,
       riskProfile,
     });
 
     setRiskResult(riskResult);
-    const defaultPots = generateBudgetPots(12000000);
-    setBudgetPots(defaultPots);
-    setIncomeStorage(0);
+    setBudgetPots([]);
+    setIncomeStorage(selectedIncome);
     setExpenses([]);
     if (!hasDebt) setDebts([]);
 
     if (getCachedUserId()) {
-      saveBudgetPots(defaultPots.map((p, i) => ({ ...p, iconKey: p.iconKey, sort_order: i }))).catch(() => { });
-      saveIncome(0).catch(() => { });
+      saveIncome(selectedIncome).catch(() => { });
     }
 
-    setStep(3);
+    setStep(4);
   };
 
   const slideVariants = {
@@ -180,7 +205,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
               ))}
             </div>
             <div className="flex items-center gap-4">
-              <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/40">STEP_0{step + 1}</span>
+              <span className="font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/60">BƯỚC 0{step + 1}</span>
               <button onClick={onSkip} className="text-white/20 hover:text-white/60 transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -196,7 +221,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   <Landmark className="w-7 h-7 text-[#22C55E]" />
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#22C55E] mb-1">Portfolio Baseline</p>
+                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#22C55E] mb-1">THIẾT LẬP DANH MỤC</p>
                   <h2 className="font-heading text-2xl font-black uppercase text-white tracking-wider leading-none">TỔNG TÀI SẢN RÒNG</h2>
                 </div>
               </div>
@@ -210,7 +235,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                       "py-3 rounded-lg border font-mono text-[10px] font-black uppercase tracking-widest transition-all",
                       netWorth === chip.value
                         ? "bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/40 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
-                        : "bg-white/[0.02] text-white/30 border-white/[0.05] hover:border-white/20"
+                        : "bg-white/[0.02] text-white/70 border-white/[0.05] hover:border-white/20"
                     )}
                   >
                     {chip.label}
@@ -219,11 +244,11 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
               </div>
 
               <div className="mb-8 relative">
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={customNetWorth}
-                  onChange={(e) => handleCustomNetWorth(e.target.value)}
+                  <input
+                    type="text"
+                    placeholder="0.00"
+                    value={customNetWorth}
+                    onChange={(e) => handleCustomNetWorth(e.target.value)}
                   className="w-full px-6 py-10 bg-black/40 border border-white/5 rounded-xl text-5xl font-black text-white placeholder:text-white/5 focus:outline-none focus:border-[#22C55E]/30 transition-all font-mono tracking-tighter"
                 />
                 <div className="absolute right-6 top-1/2 -translate-y-1/2 font-heading text-xl font-black text-white/10 tracking-widest uppercase">VND</div>
@@ -238,19 +263,19 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                     className="mb-8 p-8 bg-gradient-to-b from-[#22C55E]/5 to-transparent rounded-xl border border-white/5 text-center relative overflow-hidden"
                   >
                     <div className="relative z-10">
-                      <p className="font-mono text-[9px] font-black uppercase tracking-[0.4em] text-[#22C55E]/60 mb-3">CURRENT_VALUATION_INDEX</p>
-                      <div className="font-heading text-6xl font-black text-white leading-none tracking-tighter mb-4">
+                      <p className="font-mono text-[11px] font-black uppercase tracking-[0.4em] text-[#22C55E]/80 mb-3">CHỈ SỐ TÀI SẢN HIỆN TẠI</p>
+                      <div className="font-heading text-7xl font-black text-white leading-none tracking-tighter mb-4">
                         {formatVND(selectedNetWorth).toUpperCase()}
                       </div>
                       <div className="h-px w-20 bg-gradient-to-r from-transparent via-[#22C55E]/40 to-transparent mx-auto mb-4" />
-                      <p className="text-[11px] text-white/30 uppercase font-black tracking-widest">Thiết lập điểm khởi đầu của bạn</p>
+                      <p className="text-[12px] text-white/70 uppercase font-black tracking-widest">Thiết lập điểm khởi đầu của bạn</p>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <button
-                onClick={handleNetWorthNext}
+                onClick={() => setStep(1)}
                 disabled={selectedNetWorth <= 0}
                 className="w-full py-5 bg-[#22C55E] text-black text-[12px] font-black rounded-lg shadow-[0_12px_40px_rgba(34,197,94,0.25)] transition-all active:scale-[0.98] disabled:opacity-10 flex items-center justify-center gap-3 uppercase tracking-[0.2em]"
               >
@@ -260,13 +285,86 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
           )}
 
           {step === 1 && (
+            <motion.div key="income" variants={slideVariants} initial="enter" animate="center" exit="exit" className="relative z-10">
+              <div className="flex items-start gap-4 mb-8">
+                <div className="w-14 h-14 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/20 flex items-center justify-center">
+                  <TrendingUp className="w-7 h-7 text-[#22C55E]" />
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#22C55E] mb-1">LƯU THÔNG DÒNG TIỀN</p>
+                  <h2 className="font-heading text-2xl font-black uppercase text-white tracking-wider leading-none">THU NHẬP HÀNG THÁNG</h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
+                {INCOME_CHIPS.map((chip) => (
+                  <button
+                    key={chip.value}
+                    onClick={() => handleIncomeChip(chip.value)}
+                    className={cn(
+                      "py-3 rounded-lg border font-mono text-[10px] font-black uppercase tracking-widest transition-all",
+                      income === chip.value
+                        ? "bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/40 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+                        : "bg-white/[0.02] text-white/70 border-white/[0.05] hover:border-white/20"
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mb-8 relative">
+                <input
+                  type="text"
+                  placeholder="0.00"
+                  value={customIncome}
+                  onChange={(e) => handleCustomIncome(e.target.value)}
+                  className="w-full px-6 py-10 bg-black/40 border border-white/5 rounded-xl text-5xl font-black text-white placeholder:text-white/5 focus:outline-none focus:border-[#22C55E]/30 transition-all font-mono tracking-tighter"
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 font-heading text-xl font-black text-white/10 tracking-widest uppercase">VND</div>
+              </div>
+
+              <AnimatePresence>
+                {selectedIncome > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="mb-8 p-8 bg-gradient-to-b from-[#22C55E]/5 to-transparent rounded-xl border border-white/5 text-center relative overflow-hidden"
+                  >
+                    <div className="relative z-10">
+                      <p className="font-mono text-[11px] font-black uppercase tracking-[0.4em] text-[#22C55E]/80 mb-3">DÒNG TIỀN MỤC TIÊU</p>
+                      <div className="font-heading text-7xl font-black text-white leading-none tracking-tighter mb-4">
+                        {formatVND(selectedIncome).toUpperCase()}
+                      </div>
+                      <div className="h-px w-20 bg-gradient-to-r from-transparent via-[#22C55E]/40 to-transparent mx-auto mb-4" />
+                      <p className="text-[12px] text-white/70 uppercase font-black tracking-widest">Ngân sách dự kiến</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex items-center gap-4">
+                <button onClick={() => setStep(0)} className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white/70">Quay lại</button>
+                <button
+                  onClick={handleIncomeNext}
+                  disabled={selectedIncome <= 0}
+                  className="flex-1 py-5 bg-[#22C55E] text-black text-[12px] font-black rounded-lg shadow-[0_12px_40px_rgba(34,197,94,0.25)] transition-all active:scale-[0.98] disabled:opacity-10 flex items-center justify-center gap-3 uppercase tracking-[0.2em]"
+                >
+                  Tiếp tục <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
             <motion.div key="debt" variants={slideVariants} initial="enter" animate="center" exit="exit" className="relative z-10">
               <div className="flex items-start gap-4 mb-10">
                 <div className="w-14 h-14 rounded-xl bg-[#EF4444]/10 border border-[#EF4444]/20 flex items-center justify-center">
                   <CreditCard className="w-7 h-7 text-[#EF4444]" />
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#EF4444] mb-1">Financial Liabilities</p>
+                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#EF4444] mb-1">NỢ & NGHĨA VỤ</p>
                   <h2 className="font-heading text-2xl font-black uppercase text-white tracking-wider leading-none">TÌNH TRẠNG NỢ</h2>
                 </div>
               </div>
@@ -282,7 +380,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   )}
                 >
                   <div className="text-5xl mb-4">😰</div>
-                  <div className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">CÓ_NỢ_PHẢI_TRẢ</div>
+                  <div className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">CÓ NỢ PHẢI TRẢ</div>
                 </button>
                 <button
                   onClick={() => handleDebtSelection(false)}
@@ -294,24 +392,24 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   )}
                 >
                   <div className="text-5xl mb-4">🛡️</div>
-                  <div className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">ZERO_DEBT_MODE</div>
+                  <div className="font-mono text-[10px] font-black uppercase tracking-[0.2em]">SẠCH NỢ HOÀN TOÀN</div>
                 </button>
               </div>
 
-              <button onClick={() => setStep(0)} className="flex items-center gap-2 mx-auto font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/20 hover:text-white/50 transition-colors">
+              <button onClick={() => setStep(1)} className="flex items-center gap-2 mx-auto font-mono text-[9px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white/70 transition-colors">
                 <ArrowLeft className="w-4 h-4" /> Quay lại
               </button>
             </motion.div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <motion.div key="risk" variants={slideVariants} initial="enter" animate="center" exit="exit" className="relative z-10">
               <div className="flex items-start gap-4 mb-10">
                 <div className="w-14 h-14 rounded-xl bg-[#AB47BC]/10 border border-[#AB47BC]/20 flex items-center justify-center">
                   <Brain className="w-7 h-7 text-[#AB47BC]" />
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#AB47BC] mb-1">Genetic Risk DNA</p>
+                  <p className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-[#AB47BC] mb-1">KHẨU VỊ ĐẦU TƯ</p>
                   <h2 className="font-heading text-2xl font-black uppercase text-white tracking-wider leading-none">KHẨU VỊ RỦI RO</h2>
                 </div>
               </div>
@@ -322,18 +420,18 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                   if (isHidden) return null;
 
                   return (
-                    <motion.div key={qi} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-                      <p className="font-mono text-[10px] font-black uppercase tracking-[0.15em] text-white/30">Hỏi_{qi + 1}: {rq.q}</p>
-                      <div className="grid grid-cols-1 gap-2">
+                    <motion.div key={qi} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                      <p className="font-mono text-[13px] font-black uppercase tracking-[0.1em] text-white/90">CÂU {qi + 1}: {rq.q}</p>
+                      <div className="grid grid-cols-1 gap-2.5">
                         {rq.options.map((opt, oi) => (
                           <button
                             key={oi}
                             onClick={() => handleRiskAnswer(qi, opt.score)}
                             className={cn(
-                              "w-full text-left px-5 py-4 rounded-lg border transition-all text-[11px] font-black uppercase tracking-wide",
+                              "w-full text-left px-5 py-4 rounded-xl border transition-all text-[14px] font-bold tracking-tight",
                               riskAnswers[qi] === opt.score
-                                ? "bg-[#AB47BC]/10 border-[#AB47BC]/40 text-[#AB47BC]"
-                                : "bg-white/[0.02] border-white/[0.05] text-white/40 hover:border-white/15"
+                                ? "bg-[#AB47BC]/20 border-[#AB47BC]/50 text-[#E1BEE7] shadow-[0_0_20px_rgba(171,71,188,0.2)]"
+                                : "bg-white/[0.03] border-white/[0.08] text-white/80 hover:border-white/20 hover:bg-white/[0.05]"
                             )}
                           >
                             {opt.label}
@@ -346,7 +444,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
               </div>
 
               <div className="flex items-center gap-4">
-                <button onClick={() => setStep(1)} className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Quay lại</button>
+                <button onClick={() => setStep(2)} className="font-mono text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white/70">Quay lại</button>
                 {riskAnswers.length === 3 && (
                   <button onClick={() => handleComplete()} className="flex-1 py-4 bg-[#22C55E] text-black text-[12px] font-black rounded-lg uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(34,197,94,0.2)]">
                     Hoàn tất phân tích
@@ -356,7 +454,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
             </motion.div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <motion.div key="done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 relative z-10">
               <motion.div
                 animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.1, 1] }}
@@ -366,7 +464,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
                 ⚙️
               </motion.div>
               <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tighter mb-4 italic">Hệ thống sẵn sàng</h2>
-              <p className="font-mono text-[11px] font-black text-white/30 uppercase tracking-[0.4em] mb-12 italic">Calibrating Strategy...</p>
+              <p className="font-mono text-[11px] font-black text-white/60 uppercase tracking-[0.4em] mb-12 italic">Đang chuẩn bị lộ trình...</p>
               <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden max-w-[240px] mx-auto">
                 <motion.div
                   initial={{ width: 0 }}
