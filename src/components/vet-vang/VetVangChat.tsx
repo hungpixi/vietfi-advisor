@@ -13,6 +13,7 @@ import {
   getComparison, needsAI, DATA_INTENTS,
   type ScriptedResponseItem, type Intent,
 } from "@/lib/scripted-responses";
+import { parseBoldFormatting, type TextPart } from "@/lib/text-formatting";
 import { type PersonaMode, PERSONAS, getVetvangPersona } from "@/lib/vetvang-persona";
 import VetVangConfig from "./VetVangConfig";
 import { analyzeDTI } from "@/lib/calculations/debt-optimizer";
@@ -134,17 +135,29 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   const [greetingItem] = useState(() => getScriptedResponse("greeting"));
   const greetingId = greetingItem ? `bot-scripted-${greetingItem.id}-1` : "greet-1";
 
-  const { messages, setMessages, sendMessage, status, error } = useChat({
+  const { 
+    messages, 
+    setMessages, 
+    sendMessage, 
+    status, 
+    error 
+  } = useChat({
     messages: [
       {
         id: greetingId,
         role: "assistant",
-        parts: [{ type: "text", text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
-      } as any
+        parts: [{ type: "text" as const, text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
+      }
     ]
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';
+  
+  useEffect(() => {
+    console.log("Chat Messages updated:", messages);
+    console.log("Is sendMessage available?", typeof sendMessage);
+    console.log("Current status:", status);
+  }, [messages, sendMessage, status]);
 
   // ── Khi AI fail → hiện fallback response ──
   useEffect(() => {
@@ -277,15 +290,32 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     }
 
     // Inject user data context for data-dependent questions
+    if (!sendMessage || typeof sendMessage !== 'function') {
+      console.error("sendMessage (append) is not available!");
+      return;
+    }
+
+    // Inject user data context for data-dependent questions
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
       const ctx = getUserDataContext(persona);
       if (MARKET_INTENTS.includes(intent)) {
         fetchMarketContext().then(mkt => {
-          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+          sendMessage({ text }, {
+            body: { data: {
+              context: ctx, 
+              market: mkt,
+              instruction: "Hãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
+            } }
+          });
         });
       } else {
-        sendMessage({ text: `${ctx}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+        sendMessage({ text }, {
+          body: { data: {
+            context: ctx,
+            instruction: "Hãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
+          } }
+        });
       }
     } else {
       sendMessage({ text });
@@ -383,10 +413,21 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       const ctx = getUserDataContext(persona);
       if (MARKET_INTENTS.includes(intent) || MARKET_INTENTS.includes(key)) {
         fetchMarketContext().then(mkt => {
-          sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực.` });
+          sendMessage({ text }, {
+            body: { data: {
+              context: ctx,
+              market: mkt,
+              instruction: "Hãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực."
+            } }
+          });
         });
       } else {
-        sendMessage({ text: `${ctx}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên dữ liệu tài chính thực tế của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
+        sendMessage({ text }, {
+          body: { data: {
+            context: ctx,
+            instruction: "Hãy trả lời dựa trên dữ liệu tài chính thực tế của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
+          } }
+        });
       }
     } else {
       sendMessage({ text });
@@ -404,6 +445,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     if (voiceStatus === "auto-submit") return "Đang ghi chi tiêu...";
     if (isListening) return "Đang nghe... nói chi tiêu của bạn";
     return "Nói để ghi chi tiêu nhanh";
+  };
+
+  const lastMessage = messages[messages.length - 1] as { role?: string } | undefined;
+  const getMessageText = (msg: any): string => {
+    if (typeof msg?.content === "string" && msg.content.trim()) return msg.content;
+    if (Array.isArray(msg?.parts)) {
+      return msg.parts
+        .filter((part: any) => part?.type === "text" && typeof part.text === "string")
+        .map((part: any) => part.text)
+        .join("")
+        .trim();
+    }
+    return "";
   };
 
   return (
@@ -498,22 +552,28 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
               >
                 {msg.role === "assistant" && <span className="text-lg mr-1.5 mt-1 flex-shrink-0">🦜</span>}
                 <div
-                  className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
+                  className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed shadow-sm ${msg.role === "user"
                     ? "text-white/90 rounded-br-sm"
-                    : "bg-white/[0.04] text-white/80 rounded-bl-sm border border-white/[0.06]"
+                    : "bg-white/[0.08] text-white/90 rounded-bl-sm border border-white/[0.12]"
                     }`}
                   style={msg.role === "user" ? {
-                    backgroundColor: `${activePersonaConfig.color}20`,
-                    border: `1px solid ${activePersonaConfig.color}30`
+                    backgroundColor: `${activePersonaConfig.color}30`,
+                    border: `1px solid ${activePersonaConfig.color}40`
                   } : {}}
                 >
-                  {msg.parts?.[0]?.text || msg.content}
+                  {getMessageText(msg) ? (
+                    parseBoldFormatting(getMessageText(msg)).map((part, index) => (
+                      <span key={index} className={part.bold ? 'font-semibold' : undefined}>
+                        {part.text}
+                      </span>
+                    ))
+                  ) : (msg.role === "assistant" && isLoading ? "Đang nghĩ..." : "")}
                 </div>
               </motion.div>
             ))}
 
             {/* Typing indicator */}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            {isLoading && lastMessage?.role === "user" && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
