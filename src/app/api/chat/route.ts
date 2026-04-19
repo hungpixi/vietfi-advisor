@@ -1,3 +1,9 @@
+import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  tool,
+} from "ai";
+import { z } from "zod";
 import { streamLLM } from "@/lib/infrastructure/llm/client";
 import {
   checkFixedWindowRateLimit,
@@ -6,214 +12,118 @@ import {
   rateLimitResponse,
   readJsonWithLimit,
 } from "@/lib/api-security";
-import { parseExpenseWithContext, type ParsedExpense } from "@/lib/expense-parser";
+import { parseExpenseWithContext } from "@/lib/expense-parser";
 import {
   detectIntent,
   getScriptedResponse,
   getExpenseRoast,
-  getComparison,
   needsAI,
 } from "@/lib/scripted-responses";
 
 export const runtime = "edge";
 
-interface AIMessagePart {
-  type?: string;
-  text?: string;
-}
-
 interface AIMessage {
-  role?: string;
-  content?: string;
-  parts?: AIMessagePart[];
+  role: "user" | "assistant";
+  content: string;
 }
 
 interface RequestBody {
-  messages: AIMessage[];
+  messages: any[];
+  data?: { context?: string; market?: string; instruction?: string };
 }
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5;
-const WINDOW_MS = 60_000;
-const MAX_BODY_BYTES = 64 * 1024;
-const MAX_MESSAGES = 12;
-const MAX_MESSAGE_CHARS = 4_000;
-const MAX_TOTAL_CHARS = 16_000;
-
-const SYSTEM_PROMPT = `
-Bạn là linh vật (mascot) AI tư vấn tài chính của ứng dụng VietFi Advisor, tên là "Vẹt Vàng 🦜".
-Sứ mệnh của bạn là giúp người dùng Việt Nam thoát khỏi nợ nần, quản lý chi tiêu cá nhân hiệu quả và đạt tự do tài chính.
-
-Quy tắc cốt lõi:
-1. Đọc kỹ khối [HƯỚNG DẪN TÍNH CÁCH CỦA VẸT VÀNG MÀ BẠN PHẢI NHẬP VAI] ở đầu tin nhắn của người dùng để biết bạn đang ở CHẾ ĐỘ NÀO (Mỏ Hỗn, Chữa Lành, hay Chuyên Gia). Từ vựng, xưng hô và thái độ phải TUYỆT ĐỐI TUÂN THỦ chế độ đó.
-2. Đọc kỹ khối [DỮ LIỆU TÀI CHÍNH CỦA USER] (DTI, Cashflow 50-30-20, Thu nhập, Nợ) để đưa ra lời khuyên cá nhân hóa. Nếu DTI > 60%, hãy coi đây là tình trạng khẩn cấp. TUYỆT ĐỐI KHÔNG xúi giục từ bỏ kế hoạch trả nợ.
-3. Đọc khối [DỮ LIỆU THỊ TRƯỜNG REALTIME] (nếu có) để trả lời các câu hỏi phân bổ vốn, so sánh kênh đầu tư. ĐẶC BIỆT CHÚ Ý: CHỈ phân tích dựa trên dữ liệu OHLCV JSON hoặc DTI được cung cấp. TUYỆT ĐỐI KHÔNG bịa đặt (hallucinate) giá cổ phiếu, lợi nhuận, hoặc tự đưa ra lời khuyên mua bán mã cụ thể nếu không có dữ liệu thực tế backtest chứng minh. Hãy nói "Tôi không có dữ liệu" nếu thiếu số liệu.
-4. Câu trả lời CỰC KỲ SÚC TÍCH, CÓ SỨC NẶNG (dưới 100 chữ), đi thẳng vào vấn đề bằng con số.
-5. Không bao giờ tự xưng là "Trợ lý ảo AI", bạn là Vẹt Vàng.
-`;
-
-function extractMessageText(message: AIMessage): string {
-  if (typeof message.content === "string") {
-    return message.content;
-  }
-
-  if (Array.isArray(message.parts)) {
-    return message.parts
-      .filter((part) => !part.type || part.type === "text")
-      .map((part) => (typeof part.text === "string" ? part.text : ""))
-      .join("\n");
-  }
-
-  return "";
-}
-
-function sanitizeMessages(
-  messages: AIMessage[],
-): { ok: true; messages: { role: "user" | "assistant"; content: string }[]; userText: string } | { ok: false; response: Response } {
-  const sanitized: { role: "user" | "assistant"; content: string }[] = [];
-  let totalChars = 0;
-
-  for (const message of messages.slice(-MAX_MESSAGES)) {
-    if (!message || typeof message !== "object") continue;
-    if (!["user", "assistant", "model"].includes(String(message.role))) continue;
-
-    const text = extractMessageText(message).trim();
-    if (!text) continue;
-
-    if (text.length > MAX_MESSAGE_CHARS) {
-      return { ok: false, response: jsonError("Message too long", 413) };
-    }
-
-    totalChars += text.length;
-    if (totalChars > MAX_TOTAL_CHARS) {
-      return { ok: false, response: jsonError("Chat context too large", 413) };
-    }
-
-    sanitized.push({
-      role: message.role === "assistant" || message.role === "model" ? "assistant" : "user",
-      content: text,
-    });
-  }
-
-  const lastUserMsg = [...sanitized].reverse().find((message) => message.role === "user");
-  if (!lastUserMsg) {
-    return { ok: false, response: jsonError("No valid messages", 400) };
-  }
-
-  return { ok: true, messages: sanitized, userText: lastUserMsg.content };
-}
 
 export async function POST(req: Request) {
   try {
-    const rl = checkFixedWindowRateLimit(
-      rateLimitMap,
-      getClientIdentifier(req),
-      RATE_LIMIT,
-      WINDOW_MS,
-    );
-    if (!rl.allowed) {
-      return rateLimitResponse(rl.retryAfter, "Too many requests. Vui lòng chờ vài giây rồi thử lại.");
-    }
+    const rl = checkFixedWindowRateLimit(rateLimitMap, getClientIdentifier(req), 10, 60000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
-    const parsed = await readJsonWithLimit(req, MAX_BODY_BYTES);
-    if (parsed.ok === false) return parsed.response;
+    const parsed = await readJsonWithLimit(req, 64 * 1024);
+    if (!parsed.ok) return parsed.response;
 
     const body = parsed.value as RequestBody;
-    if (!body || typeof body !== "object" || !Array.isArray(body.messages)) {
-      return jsonError("Invalid request format", 400);
-    }
+    const messages: AIMessage[] = (body.messages || []).slice(-10).map(m => ({
+      role: (m.role === "assistant" || m.role === "model" ? "assistant" : "user") as "user" | "assistant",
+      content: extractText(m).trim()
+    })).filter(m => m.content);
 
-    const sanitized = sanitizeMessages(body.messages);
-    if (sanitized.ok === false) return sanitized.response;
+    if (messages.length === 0) return jsonError("No messages", 400);
+    const lastUserMsg = messages[messages.length - 1].content;
 
-    const expense = parseExpenseWithContext(sanitized.userText);
+    // 1. Fast logic (Expense & Intent)
+    const expense = parseExpenseWithContext(lastUserMsg);
     if (expense && expense.confidence >= 0.5) {
-      return createTextResponse(buildExpenseResponse(expense));
+      const amt = expense.amount.toLocaleString("vi-VN");
+      return createLocalResponse(`Ghi ${amt}đ - ${expense.item}. ${getExpenseRoast(expense.category, expense.amount)} 🦜`);
     }
 
-    const intent = detectIntent(sanitized.userText);
-    if (intent !== "unknown" && !needsAI(intent, sanitized.userText)) {
-      const response = getScriptedResponse(intent);
-      if (response) return createTextResponse(response.text);
+    const intent = detectIntent(lastUserMsg);
+    if (intent !== "unknown" && !needsAI(intent, lastUserMsg)) {
+      const scripted = getScriptedResponse(intent);
+      if (scripted) return createLocalResponse(scripted.text);
     }
 
-    const result = await streamLLM(sanitized.messages, SYSTEM_PROMPT);
+    // 2. Dynamic System Prompt
+    let dynamicSystemPrompt = `Bạn là Vẹt Vàng 🦜 - Mascot mỏ hỗn của VietFi Advisor. 
 
-    const streamResult = result as {
-      toDataStreamResponse?: () => Response;
-      toTextStreamResponse?: () => Response;
-    };
-    const response = streamResult.toDataStreamResponse
-      ? streamResult.toDataStreamResponse()
-      : streamResult.toTextStreamResponse?.() ?? new Response("Streaming error", { status: 500 });
+DỮ LIỆU THỰC TẾ (SỐ LIỆU DUY NHẤT ĐƯỢC TIN TƯỞNG):
+${body.data?.context || "Chưa có dữ liệu cá nhân."}
+${body.data?.market ? `Thị trường: ${body.data.market}` : "Đang tải dữ liệu thị trường..."}
 
-    response.headers.set("Cache-Control", "no-store");
-    return response;
-  } catch (error) {
-    console.error("Chat API Error:", error);
+QUY TẮC CHI TIÊU (CỰC KỲ KHẮT KHE):
+1. Mỗi khi người dùng bảo vừa mua đồ/chi tiêu, bạn PHẢI HỎI GIÁ NGAY LẬP TỨC.
+2. TUYỆT ĐỐI KHÔNG được tự ý lấy số tiền từ lịch sử chat cũ để áp vào món đồ mới. Phải hỏi lại như chưa từng biết gì.
+3. CHỈ dùng tool 'record_expense' khi người dùng đã cung cấp số tiền ngay trong câu chat HIỆN TẠI.
+4. Trả lời mỉa mai, xéo xắt, ngắn gọn dưới 50 chữ.
+`;
 
-    const fallback = getScriptedResponse("greeting");
-    return new Response(
-      JSON.stringify({
-        error: fallback?.text || "Vẹt Vàng đang bận đi mổ thóc, vui lòng thử lại sau. 🦜",
-      }),
-      { status: 500, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
-    );
+    // 3. Stream with Tools
+    const result = await streamLLM(messages, dynamicSystemPrompt, {
+      tools: {
+        record_expense: tool({
+          description: "Ghi lại một khoản chi tiêu vào sổ thu chi.",
+          parameters: z.object({
+            amount: z.number().describe("Số tiền chi tiêu (VND)"),
+            item: z.string().describe("Tên món đồ hoặc dịch vụ"),
+            category: z.string().optional().describe("Danh mục (Ăn uống, Giải trí, Shopping, etc.)"),
+          }),
+          execute: async ({ amount, item, category }) => {
+            return { success: true, recorded: { amount, item, category } };
+          },
+        }),
+      },
+    });
+
+    return result.toUIMessageStreamResponse({ headers: { "Cache-Control": "no-store" } });
+
+  } catch (error: any) {
+    console.error("Chat Error:", error);
+    return new Response(JSON.stringify({ error: "Hệ thống bận" }), { status: 500 });
   }
 }
 
-function buildExpenseResponse(expense: ParsedExpense): string {
-  const amt = expense.amount.toLocaleString("vi-VN");
-  const roast = getExpenseRoast(expense.category, expense.amount);
-
-  if (expense.amount >= 500_000) {
-    const compare = getComparison(expense.amount);
-    const tmpl = getScriptedResponse("expense_high", {
-      amount: `${amt}đ`,
-      item: expense.item,
-      compare,
-    });
-    return tmpl?.text || `${amt}đ cho ${expense.item}?! ${roast} 🦜`;
+function extractText(m: any): string {
+  if (typeof m.content === "string") return m.content;
+  if (Array.isArray(m.content)) {
+    return m.content.map((c: any) => (typeof c === "string" ? c : c.text || "")).join("\n");
   }
-
-  if (expense.amount <= 20_000) {
-    const tmpl = getScriptedResponse("expense_low", {
-      amount: `${amt}đ`,
-      item: expense.item,
-    });
-    return tmpl?.text || `${amt}đ - tiết kiệm ghê! ${roast} 🦜`;
+  if (Array.isArray(m.parts)) {
+    return m.parts.map((p: any) => p.text || "").join("\n");
   }
-
-  const tmpl = getScriptedResponse("expense_logged", {
-    amount: `${amt}đ`,
-    item: expense.item,
-    category: expense.category,
-    pot: expense.pot,
-    roast,
-    total: "...",
-    remaining: "...",
-  });
-  return tmpl?.text || `Ghi ${amt}đ - ${expense.item} (${expense.category}). ${roast} 🦜`;
+  return "";
 }
 
-function createTextResponse(text: string): Response {
-  const encoder = new TextEncoder();
-  const escaped = JSON.stringify(text);
-
-  const stream = new ReadableStream({
-    start(controller) {
-      controller.enqueue(encoder.encode(`0:${escaped}\n`));
-      controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
-      controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
-      controller.close();
+function createLocalResponse(text: string): Response {
+  const stream = createUIMessageStream({
+    execute: ({ writer }) => {
+      const id = Date.now().toString();
+      writer.write({ type: "start", messageId: "msg-" + id });
+      writer.write({ type: "text-start", id: "text-" + id });
+      writer.write({ type: "text-delta", id: "text-" + id, delta: text });
+      writer.write({ type: "text-end", id: "text-" + id });
+      writer.write({ type: "finish", finishReason: "stop" });
     },
   });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "X-Vercel-AI-Data-Stream": "v1",
-      "Cache-Control": "no-store",
-    },
-  });
+  return createUIMessageStreamResponse({ stream });
 }

@@ -152,7 +152,7 @@ export default function QuickSetupWizard({ onComplete, onSkip }: QuickSetupProps
     enter: { x: 40, opacity: 0 },
     center: { x: 0, opacity: 1, transition: { duration: 0.4, ease: "circOut" } },
     exit: { x: -40, opacity: 0, transition: { duration: 0.3, ease: "circIn" } },
-  };
+  } as const;
 
   return (
     <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex items-center justify-center p-4">

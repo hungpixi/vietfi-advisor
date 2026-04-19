@@ -37,20 +37,20 @@ const POLITE_DEFAULT_ENABLED = true;
 
 // ── Intent Detection (Keyword-based, NO AI) ─────────────────────
 const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
-  { intent: "greeting", patterns: ["xin chào", "hello", "hi", "chào", "yo", "hey", "mở app", "quay lại"] },
-  { intent: "goodbye", patterns: ["bye", "tạm biệt", "tắt", "đi đây", "ngủ", "off", "thôi"] },
-  { intent: "thanks", patterns: ["cảm ơn", "thanks", "thank", "tks", "cám ơn", "biết ơn"] },
-  { intent: "ask_gold", patterns: ["vàng", "sjc", "gold", "giá vàng"] },
+  { intent: "ask_gold", patterns: ["giá vàng", "vàng", "sjc", "gold", "vàng miếng"] },
   { intent: "ask_stock", patterns: ["vnindex", "vn-index", "chứng khoán", "cổ phiếu", "stock", "hose", "hnx"] },
   { intent: "ask_crypto", patterns: ["crypto", "bitcoin", "btc", "eth", "coin"] },
   { intent: "ask_market", patterns: ["thị trường", "market", "kinh tế", "lãi suất", "tỷ giá", "usd"] },
   { intent: "compare_gold_stock", patterns: ["vàng vs", "ck vs", "vàng hay cổ phiếu", "so sánh vàng", "vàng với chứng khoán", "gold vs stock"] },
   { intent: "ask_inflation", patterns: ["lạm phát", "inflation", "cpi", "giá tăng", "mất giá"] },
   { intent: "ask_realestate", patterns: ["mua nhà", "bđs", "bất động sản", "thuê nhà", "nhà ở", "real estate"] },
-  { intent: "ask_spending", patterns: ["chi tiêu", "tiêu bao nhiêu", "tốn bao nhiêu", "tiền đi đâu", "phân tích chi", "xài hết"] },
+  { intent: "ask_spending", patterns: ["chi tiêu", "tiêu bao nhiêu", "tốn bao nhiêu", "tiền đi đâu", "phân tích chi", "xài hết", "tiêu hết"] },
   { intent: "ask_debt", patterns: ["nợ", "trả góp", "debt", "vay", "thẻ tín dụng", "tín dụng", "trả nợ"] },
   { intent: "ask_invest", patterns: ["đầu tư", "invest", "mua gì", "nên mua", "chứng khoán", "cổ phiếu", "portfolio"] },
   { intent: "ask_save", patterns: ["tiết kiệm", "saving", "để dành", "gửi tiền", "tiền tiết kiệm"] },
+  { intent: "greeting", patterns: ["xin chào", "hello", "hi", "chào", "yo", "hey", "mở app", "quay lại"] },
+  { intent: "goodbye", patterns: ["bye", "tạm biệt", "tắt", "đi đây", "ngủ", "off", "thôi"] },
+  { intent: "thanks", patterns: ["cảm ơn", "thanks", "thank", "tks", "cám ơn", "biết ơn"] },
   { intent: "motivate", patterns: ["motivate", "động viên", "khích lệ", "mệt"] },
   { intent: "complain", patterns: ["app tệ", "tệ quá", "dở", "ghét", "khó dùng", "bug"] },
   { intent: "curse", patterns: ["quạu", "bực", "điên", "khùng", "cáu", "ghét"] },
@@ -65,7 +65,7 @@ const INTENT_PATTERNS: { intent: Intent; patterns: string[] }[] = [
 export function detectIntent(text: string): Intent {
   const lower = text.toLowerCase().trim();
 
-  // Check time-based greetings
+  // 1. Check time-based greetings (regex already has word boundary \b)
   const hour = new Date().getHours();
   if (lower.match(/^(chào|xin chào|hello|hi|yo|hey)\b/)) {
     if (hour >= 5 && hour < 11) return "morning";
@@ -74,9 +74,16 @@ export function detectIntent(text: string): Intent {
     return "night";
   }
 
+  // 2. Check other patterns with word boundaries for safety
   for (const { intent, patterns } of INTENT_PATTERNS) {
     for (const pattern of patterns) {
-      if (lower.includes(pattern)) return intent;
+      // Use word boundaries if the pattern is short (<= 3 chars) to avoid matching substrings
+      if (pattern.length <= 3) {
+        const regex = new RegExp(`\\b${pattern}\\b`, "i");
+        if (regex.test(lower)) return intent;
+      } else {
+        if (lower.includes(pattern)) return intent;
+      }
     }
   }
 

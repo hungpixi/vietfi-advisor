@@ -7,7 +7,8 @@ import { X, Send, Sparkles, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { playPop, playDing } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
-import { getBudgetPots, getExpenses, getDebts, getIncome, getRiskResult } from "@/lib/storage";
+import { getBudgetPots, getExpenses, getDebts, getIncome, getRiskResult, getOnboardingState } from "@/lib/storage";
+import { getOnboardingData } from "@/lib/onboarding-state";
 import {
   detectIntent, getScriptedResponse, getExpenseRoast,
   getComparison, needsAI, DATA_INTENTS,
@@ -24,7 +25,6 @@ function getUserDataContext(personaMode: PersonaMode): string {
   const parts: string[] = [];
   const persona = PERSONAS[personaMode];
 
-  parts.push(`[HƯỚNG DẪN TÍNH CÁCH CỦA VẸT VÀNG MÀ BẠN PHẢI NHẬP VAI]`);
   parts.push(`Tên: Vẹt Vàng (Mascot tư vấn tài chính của ứng dụng Vietfi Advisor).`);
   parts.push(`Tính cách hiện tại: ${persona.name} - ${persona.desc}`);
   parts.push(`Luôn trả lời theo tính cách này. Không bao giờ tự xưng là AI hay ngôn ngữ máy móc.\n`);
@@ -74,6 +74,26 @@ function getUserDataContext(personaMode: PersonaMode): string {
       }
     }
 
+    // Net Worth & Assets (Sync with Dashboard logic)
+    const onboarding = getOnboardingData();
+    const potTotal = pots.reduce((sum, p) => sum + p.allocated, 0);
+    const spentTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    let netWorth = 0;
+    const hasData = pots.length > 0 || expenses.length > 0;
+    
+    if (onboarding.netWorth > 0) {
+      netWorth = onboarding.netWorth;
+    } else if (hasData) {
+      netWorth = potTotal - spentTotal;
+    } else if (income > 0) {
+      netWorth = income * 2.5; // Fallback logic from Dashboard
+    }
+
+    parts.push(`[TỔNG TÀI SẢN RÒNG HIỆN TẠI]`);
+    parts.push(`Con số hiển thị trên Dashboard: ${netWorth.toLocaleString("vi-VN")}đ.`);
+    parts.push(`(Ghi chú: Nếu người dùng bảo số này sai, hãy nhắc họ cập nhật lại trong Onboarding hoặc Sổ thu chi.)\n`);
+
     // Debt & DTI Analysis
     if (debts.length > 0) {
       const mappedDebts = debts.map((d, index) => ({
@@ -99,7 +119,7 @@ function getUserDataContext(personaMode: PersonaMode): string {
 
   } catch { /* ignore parse errors */ }
 
-  return `[DỮ LIỆU TÀI CHÍNH CỦA USER]\n${parts.join("\n")}`;
+  return parts.join("\n");
 }
 
 const QUICK_ACTIONS = [
@@ -148,7 +168,50 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
         role: "assistant",
         parts: [{ type: "text" as const, text: greetingItem?.text || "Chào mày! Ghi chi tiêu đi! 🦜" }],
       }
-    ]
+    ],
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.toolName === "record_expense") {
+        const { amount, item, category } = toolCall.args as any;
+        
+        try {
+          const { getExpenses, setExpenses, getLedgerEntries, setLedgerEntries } = require("@/lib/storage");
+          const { addXP } = require("@/lib/gamification");
+
+          // 1. Save Expense
+          const currentExpenses = getExpenses();
+          setExpenses([...currentExpenses, {
+            id: Date.now().toString(),
+            pot_id: category?.toLowerCase() === "shopping" ? "shopping" : "other",
+            amount,
+            note: item,
+            category: category || "Khác",
+            date: new Date().toISOString(),
+            created_at: new Date().toISOString()
+          }]);
+
+          // 2. Save Ledger
+          const currentLedger = getLedgerEntries();
+          setLedgerEntries([...currentLedger, {
+            id: "ledger-" + Date.now(),
+            amount,
+            type: "expense",
+            category: category || "Khác",
+            note: item,
+            date: new Date().toISOString(),
+            createdAt: new Date().toISOString()
+          }]);
+
+          // 3. Add XP
+          addXP(10, "log_expense");
+          playDing();
+
+          return { success: true, recorded: { amount, item, category } };
+        } catch (err) {
+          console.error("Tool execution failed:", err);
+          return { success: false, error: "Lỗi hệ thống ghi chép" };
+        }
+      }
+    }
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';
@@ -202,8 +265,15 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       const resp = await fetch("/api/market-data", { cache: "no-store" });
       if (!resp.ok) return "";
       const data = await resp.json();
-      const parts: string[] = ["[DỮ LIỆU THỊ TRƯỜNG REALTIME]"];
-      if (data.vnIndex) parts.push(`VN-Index: ${data.vnIndex.price} (${data.vnIndex.changePct >= 0 ? "+" : ""}${data.vnIndex.changePct}%)`);
+      const parts: string[] = [];
+      
+      // Market Data (Enhanced with trends)
+      if (data.vnIndex) {
+        const trend1W = data.vnIndex.change1W >= 0 ? "tăng 1 tuần" : "giảm 1 tuần";
+        const trend1M = data.vnIndex.change1M >= 0 ? "tăng 1 tháng" : "giảm 1 tháng";
+        parts.push(`VN-Index: ${data.vnIndex.price} (${data.vnIndex.changePct >= 0 ? "+" : ""}${data.vnIndex.changePct}% ngày, ${trend1W}, ${trend1M})`);
+      }
+      
       if (data.goldSjc) parts.push(`Vàng SJC: ${data.goldSjc.goldVnd?.toLocaleString("vi-VN")}đ/lượng (${data.goldSjc.changePct >= 0 ? "+" : ""}${data.goldSjc.changePct}%)`);
       if (data.usdVnd) parts.push(`USD/VND: ${data.usdVnd.rate?.toLocaleString("vi-VN")}`);
       if (data.btc) parts.push(`BTC: $${data.btc.priceUsd?.toLocaleString("en-US")} (${data.btc.changePct24h >= 0 ? "+" : ""}${data.btc.changePct24h}%)`);
@@ -227,17 +297,51 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     if (expense && expense.confidence >= 0.5) {
       const amt = expense.amount.toLocaleString('vi-VN');
       const roast = getExpenseRoast(expense.category, expense.amount);
+      
+      // REAL WORK: Save the expense to storage
+      try {
+        const { getExpenses, setExpenses, getLedgerEntries, setLedgerEntries } = require("@/lib/storage");
+        
+        // 1. Add to Expenses
+        const currentExpenses = getExpenses();
+        const newExpense = {
+          id: Date.now().toString(),
+          pot_id: expense.pot || "other",
+          amount: expense.amount,
+          note: expense.item,
+          category: expense.category,
+          date: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+        setExpenses([...currentExpenses, newExpense]);
+
+        // 2. Add to Ledger
+        const currentLedger = getLedgerEntries();
+        const newEntry = {
+          id: "ledger-" + Date.now(),
+          amount: expense.amount,
+          type: "expense",
+          category: expense.category,
+          note: expense.item,
+          date: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+        setLedgerEntries([...currentLedger, newEntry]);
+
+        // 3. Add XP (Log Expense = 10 XP)
+        const { addXP } = require("@/lib/gamification");
+        addXP(10, "log_expense");
+      } catch (err) {
+        console.error("Failed to save expense from chat:", err);
+      }
+
       if (expense.amount >= 500_000) {
         const compare = getComparison(expense.amount);
         return getScriptedResponse('expense_high', { amount: `${amt}đ`, item: expense.item, compare })
-          || { id: 'fallback', text: `${amt}đ cho ${expense.item}?! ${roast} 🦜`, ttsText: `${amt} đồng cho ${expense.item}? ${roast}` };
+          || { id: 'fallback', text: `Đã ghi ${amt}đ cho ${expense.item}. ${roast} 🦜`, ttsText: `Đã ghi ${amt} đồng cho ${expense.item}. ${roast}` };
       }
-      if (expense.amount <= 20_000) {
-        return getScriptedResponse('expense_low', { amount: `${amt}đ`, item: expense.item })
-          || { id: 'fallback', text: `${amt}đ — tiết kiệm ghê! 🦜`, ttsText: `${amt} đồng, tiết kiệm ghê!` };
-      }
-      return getScriptedResponse('expense_logged', { amount: `${amt}đ`, item: expense.item, category: expense.category, pot: expense.pot, roast, total: '...', remaining: '...' })
-        || { id: 'fallback', text: `✅ Ghi ${amt}đ — ${expense.item}. ${roast} 🦜`, ttsText: `Ghi ${amt} đồng, ${expense.item}. ${roast}` };
+      return getScriptedResponse('expense_logged', { amount: `${amt}đ`, item: expense.item, category: expense.category, pot: expense.pot || "Khác", roast, total: 'vừa tăng', remaining: 'giảm' })
+        || { id: 'fallback', text: `✅ Đã ghi ${amt}đ — ${expense.item}. ${roast} 🦜`, ttsText: `Đã ghi ${amt} đồng, ${expense.item}. ${roast}` };
     }
 
     // Step 2: Try scripted response
@@ -247,7 +351,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     }
 
     // Edge Case: Zero Income Mỏ Hỗn Roast
-    const ZERO_INCOME_INTENTS = ['ask_invest', 'ask_realestate', 'ask_gold', 'ask_stock', 'ask_crypto', 'compare_gold_stock'];
+    const ZERO_INCOME_INTENTS = ['ask_invest', 'ask_realestate', 'compare_gold_stock'];
     if (ZERO_INCOME_INTENTS.includes(intent)) {
       if (typeof window !== "undefined") {
         try {
@@ -295,31 +399,29 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       return;
     }
 
-    // Inject user data context for data-dependent questions
-    const intent = detectIntent(text);
-    if (DATA_INTENTS.includes(intent as Intent)) {
-      const ctx = getUserDataContext(persona);
-      if (MARKET_INTENTS.includes(intent)) {
-        fetchMarketContext().then(mkt => {
-          sendMessage({ text }, {
-            body: { data: {
-              context: ctx, 
-              market: mkt,
-              instruction: "Hãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
-            } }
-          });
-        });
-      } else {
-        sendMessage({ text }, {
-          body: { data: {
-            context: ctx,
-            instruction: "Hãy trả lời dựa trên dữ liệu tài chính thực tế của user ở trên. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
-          } }
-        });
-      }
-    } else {
-      sendMessage({ text });
+    // Inject user data and market context ALWAYS to ensure AI is always informed
+    if (!sendMessage || typeof sendMessage !== 'function') {
+      console.error("sendMessage (append) is not available!");
+      return;
     }
+
+    const ctx = getUserDataContext(persona);
+    fetchMarketContext().then(mkt => {
+      sendMessage({ text }, {
+        body: { 
+          data: {
+            context: ctx, 
+            market: mkt,
+            instruction: "Hãy nhập vai Vẹt Vàng xéo xắt. Dùng số liệu thực tế để mỉa mai. Ngắn gọn dưới 60 chữ."
+          } 
+        }
+      });
+    }).catch(() => {
+      // Fallback if market fetch fails
+      sendMessage({ text }, {
+        body: { data: { context: ctx } }
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, persona, fetchMarketContext, sendMessage]);
 
@@ -417,7 +519,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
             body: { data: {
               context: ctx,
               market: mkt,
-              instruction: "Hãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME và tình hình tài chính cá nhân. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực."
+              instruction: "Hãy trả lời dựa trên <market_data> và tình hình tài chính cá nhân. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên phân bổ vốn CỤ THỂ: nên bỏ bao nhiêu % vào mỗi kênh, kèm lý do dựa trên số liệu thực."
             } }
           });
         });
@@ -425,7 +527,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
         sendMessage({ text }, {
           body: { data: {
             context: ctx,
-            instruction: "Hãy trả lời dựa trên dữ liệu tài chính thực tế của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
+            instruction: "Hãy trả lời dựa trên <user_financial_data> thực tế của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU."
           } }
         });
       }

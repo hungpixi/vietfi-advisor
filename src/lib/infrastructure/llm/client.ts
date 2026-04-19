@@ -38,10 +38,11 @@ export interface GeminiOptions {
 }
 
 const DEFAULT_OPTIONS: GeminiOptions = {
-    temperature: 0.7,
+    temperature: 0.1,
     maxTokens: 5000,
     retries: 3,
     delayMs: 1000,
+    model: "gemini-2.5-flash-lite",
 };
 
 function sleep(ms: number) {

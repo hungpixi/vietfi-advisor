@@ -433,7 +433,7 @@ export default function BudgetPage() {
                       fontSize: 11,
                       fontVariantNumeric: "slashed-zero"
                     }}
-                    formatter={(value: number, name: string) => [formatFull(value), name]}
+                    formatter={(value, name) => [formatFull(Number(value ?? 0)), name]}
                   />
                   <Pie
                     data={pots.length === 0 ? [{ name: "Trống", value: 1, color: "rgba(255,255,255,0.05)" }] : pieData}
