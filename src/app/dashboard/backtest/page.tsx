@@ -32,6 +32,7 @@ const TradingViewChart = dynamic(
 
 /* ─── Types ─── */
 
+
 interface BacktestResponse extends BacktestResult {
     ticker: string;
     strategy: Strategy;
@@ -163,7 +164,7 @@ function BacktestInner() {
         const entry = saveStrategy({
             name,
             ticker, fromDate, toDate, capital,
-            strategy: sStrategy,
+            strategy: sStrategy as any,
             guruId: sGuru,
             lastMetrics: result?.metrics,
         });
@@ -578,6 +579,10 @@ function BacktestInner() {
                                 </div>
                             </motion.div>
                         )}
+                        {/* Disclaimer */}
+                        <p className="text-[11px] text-white/20 text-center mt-6">
+                            ⚠️ Kết quả backtest dựa trên dữ liệu lịch sử cuối ngày (End-Of-Day) để tối ưu swing-trading. Hiệu suất quá khứ KHÔNG đảm bảo lợi nhuận tương lai.
+                        </p>
                     </AnimatePresence>
                 </div>
             </div>

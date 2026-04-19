@@ -3,9 +3,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, Volume2, VolumeX, Mic } from "lucide-react";
+import { X, Send, Sparkles, Mic } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
-import { playPop, playDing, getSoundMuted, setSoundMuted } from "@/lib/sounds";
+import { playPop, playDing } from "@/lib/sounds";
 import { parseExpenseWithContext } from "@/lib/expense-parser";
 import { getBudgetPots, getExpenses, getDebts, getIncome, getRiskResult } from "@/lib/storage";
 import {
@@ -83,7 +83,7 @@ function getUserDataContext(personaMode: PersonaMode): string {
         rate: d.rate,
         minPayment: d.minPayment ?? 0,
       }));
-      const dti = analyzeDTI(mappedDebts, income || 1); // fallback income=1 to avoid Infinity
+      const dti = analyzeDTI(mappedDebts, income || 1);
       const debtList = debts.map(d => `${d.name}: lố ${d.principal.toLocaleString("vi-VN")}đ, lãi ${d.rate}%/năm`).join("; ");
       parts.push(`[PHÂN TÍCH NỢ & DTI]`);
       parts.push(`Tổng nợ: ${dti.totalDebt.toLocaleString("vi-VN")}đ.`);
@@ -163,148 +163,49 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
   }, [error, setMessages]);
 
   const [isListening, setIsListening] = useState(false);
-  const [soundMuted, setSoundMutedState] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
-  const [lastSpokenMsgId, setLastSpokenMsgId] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "auto-submit">("idle");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Init sound muted state from localStorage
-  useEffect(() => { setSoundMutedState(getSoundMuted()); }, []);
-
-  // ── TTS: On-demand tap-to-speak ──
-  const speakMessage = useCallback(async (msgId: string, text: string) => {
-    // Cancel audio đang phát
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      if (speakingMsgId === msgId) {
-        setIsSpeaking(false);
-        setSpeakingMsgId(null);
-        return; // toggle off
-      }
-    }
-
-    try {
-      setIsSpeaking(true);
-      setSpeakingMsgId(msgId);
-
-      let audioUrl = "";
-
-      // Nếu msgId bắt đầu bằng bot-scripted-
-      const match = msgId.match(/^bot-scripted-(.+)-\d+$/);
-      if (match) {
-        const id = match[1];
-        try {
-          const res = await fetch(`/audio/tts/${id}.mp3`, { method: "HEAD" });
-          if (res.ok) {
-            audioUrl = `/audio/tts/${id}.mp3`;
-          }
-        } catch { }
-      }
-
-      let isBlob = false;
-      if (!audioUrl) {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text.slice(0, 500) }),
-        });
-        if (!res.ok) throw new Error("TTS thất bại");
-        const audioBlob = await res.blob();
-        audioUrl = URL.createObjectURL(audioBlob);
-        isBlob = true;
-      }
-
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      const cleanup = () => {
-        setIsSpeaking(false);
-        setSpeakingMsgId(null);
-        if (isBlob) URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-      };
-
-      audio.onended = cleanup;
-      audio.onerror = cleanup;
-
-      await audio.play();
-    } catch {
-      setIsSpeaking(false);
-      setSpeakingMsgId(null);
-    }
-  }, [speakingMsgId]);
-
-  // Greeting autoplay
-  useEffect(() => {
-    if (isOpen && !soundMuted && lastSpokenMsgId !== greetingId) {
-      setLastSpokenMsgId(greetingId);
-      const text = greetingItem?.ttsText || greetingItem?.text || "Chào mày! Ghi chi tiêu đi!";
-      setTimeout(() => {
-        speakMessage(greetingId, text).catch(() => console.log("Trình duyệt chặn phát tự động"));
-      }, 500);
-    }
-  }, [isOpen, soundMuted, lastSpokenMsgId, greetingId, greetingItem, speakMessage]);
-
-  // Play audio/ding when new assistant message arrives
+  // Play ding when new assistant message arrives
   useEffect(() => {
     if (messages.length < 2) return;
     const lastMsg = messages[messages.length - 1] as any;
     if (lastMsg?.role === "assistant" && lastMsg.id !== greetingId && status !== "streaming") {
-      if (lastSpokenMsgId !== lastMsg.id) {
-        setLastSpokenMsgId(lastMsg.id);
-        if (!soundMuted) {
-          speakMessage(lastMsg.id, lastMsg.parts?.[0]?.text || lastMsg.content || "").catch(() => playDing());
-        } else {
-          playDing();
-        }
-      }
+      playDing();
     }
-  }, [messages, status, soundMuted, speakMessage, lastSpokenMsgId, greetingId]);
-
-  // Stop speaking when chat closes
-  useEffect(() => {
-    if (!isOpen && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      setIsSpeaking(false);
-    }
-  }, [isOpen]);
+  }, [messages, status, greetingId]);
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle Voice Input (Web Speech API)
-  const startListening = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Trình duyệt không hỗ trợ nhận diện giọng nói!");
-      return;
+  // ── Market-related intents that need live data ──
+  const MARKET_INTENTS = ["ask_gold", "ask_stock", "ask_crypto", "ask_market", "compare_gold_stock", "ask_inflation", "ask_realestate"];
+
+  const fetchMarketContext = useCallback(async (): Promise<string> => {
+    try {
+      const resp = await fetch("/api/market-data", { cache: "no-store" });
+      if (!resp.ok) return "";
+      const data = await resp.json();
+      const parts: string[] = ["[DỮ LIỆU THỊ TRƯỜNG REALTIME]"];
+      if (data.vnIndex) parts.push(`VN-Index: ${data.vnIndex.price} (${data.vnIndex.changePct >= 0 ? "+" : ""}${data.vnIndex.changePct}%)`);
+      if (data.goldSjc) parts.push(`Vàng SJC: ${data.goldSjc.goldVnd?.toLocaleString("vi-VN")}đ/lượng (${data.goldSjc.changePct >= 0 ? "+" : ""}${data.goldSjc.changePct}%)`);
+      if (data.usdVnd) parts.push(`USD/VND: ${data.usdVnd.rate?.toLocaleString("vi-VN")}`);
+      if (data.btc) parts.push(`BTC: $${data.btc.priceUsd?.toLocaleString("en-US")} (${data.btc.changePct24h >= 0 ? "+" : ""}${data.btc.changePct24h}%)`);
+      if (data.macro) {
+        const gdp = data.macro.gdpYoY?.[0];
+        const cpi = data.macro.cpiYoY?.[0];
+        if (gdp) parts.push(`GDP: ${gdp.value}% (${gdp.period})`);
+        if (cpi) parts.push(`CPI: ${cpi.value}% (${cpi.period})`);
+        if (data.macro.deposit12m) parts.push(`Lãi suất tiết kiệm 12T: ${data.macro.deposit12m.min}-${data.macro.deposit12m.max}%`);
+      }
+      return parts.join("\n");
+    } catch {
+      return "";
     }
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'vi-VN';
-    recognition.interimResults = false;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event: any) => {
-      const raw = event.results[0][0].transcript as string;
-      // Strip HTML special chars from speech recognition output (user-controlled)
-      const transcript = raw.replace(/[<>&"']/g, "").trim();
-      setInput((prev) => (prev + " " + transcript).trim());
-    };
-    recognition.onerror = (e: any) => {
-      console.error("Speech error", e);
-      setIsListening(false);
-    };
-    recognition.onend = () => setIsListening(false);
-
-    recognition.start();
-  };
+  }, []);
 
   // ── Client-side local-first handler ──
   const tryLocalResponse = (text: string): ScriptedResponseItem | null => {
@@ -364,37 +265,8 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     setMessages((prev: any) => [...prev, userMsg, botMsg]);
   };
 
-  // ── Market-related intents that need live data ──
-  const MARKET_INTENTS = ["ask_gold", "ask_stock", "ask_crypto", "ask_market", "compare_gold_stock", "ask_inflation", "ask_realestate"];
-
-  const fetchMarketContext = useCallback(async (): Promise<string> => {
-    try {
-      const resp = await fetch("/api/market-data", { cache: "no-store" });
-      if (!resp.ok) return "";
-      const data = await resp.json();
-      const parts: string[] = ["[DỮ LIỆU THỊ TRƯỜNG REALTIME]"];
-      if (data.vnIndex) parts.push(`VN-Index: ${data.vnIndex.price} (${data.vnIndex.changePct >= 0 ? "+" : ""}${data.vnIndex.changePct}%)`);
-      if (data.goldSjc) parts.push(`Vàng SJC: ${data.goldSjc.goldVnd?.toLocaleString("vi-VN")}đ/lượng (${data.goldSjc.changePct >= 0 ? "+" : ""}${data.goldSjc.changePct}%)`);
-      if (data.usdVnd) parts.push(`USD/VND: ${data.usdVnd.rate?.toLocaleString("vi-VN")}`);
-      if (data.btc) parts.push(`BTC: $${data.btc.priceUsd?.toLocaleString("en-US")} (${data.btc.changePct24h >= 0 ? "+" : ""}${data.btc.changePct24h}%)`);
-      if (data.macro) {
-        const gdp = data.macro.gdpYoY?.[0];
-        const cpi = data.macro.cpiYoY?.[0];
-        if (gdp) parts.push(`GDP: ${gdp.value}% (${gdp.period})`);
-        if (cpi) parts.push(`CPI: ${cpi.value}% (${cpi.period})`);
-        if (data.macro.deposit12m) parts.push(`Lãi suất tiết kiệm 12T: ${data.macro.deposit12m.min}-${data.macro.deposit12m.max}%`);
-      }
-      return parts.join("\n");
-    } catch {
-      return "";
-    }
-  }, []);
-
-  const submitForm = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!input.trim() || isLoading) return;
-    const text = input.trim();
-    setInput("");
+  const doSubmit = useCallback((text: string) => {
+    if (!text.trim() || isLoading) return;
     playPop();
 
     // Try local-first (0 API calls)
@@ -408,7 +280,6 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
       const ctx = getUserDataContext(persona);
-      // Market intents → also fetch live data
       if (MARKET_INTENTS.includes(intent)) {
         fetchMarketContext().then(mkt => {
           sendMessage({ text: `${ctx}\n\n${mkt}\n\nCâu hỏi của User: ${text}\n\nHãy trả lời dựa trên DỮ LIỆU THỊ TRƯỜNG REALTIME ở trên và tình hình tài chính cá nhân của user. Nhập vai Tính cách Vẹt Vàng đã giao. Đưa ra lời khuyên CỤ THỂ, CÓ SỐ LIỆU.` });
@@ -419,10 +290,74 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     } else {
       sendMessage({ text });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, persona, fetchMarketContext, sendMessage]);
+
+  const submitForm = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim() || isLoading) return;
+    const text = input.trim();
+    setInput("");
+    doSubmit(text);
+  };
+
+  // ── Handle Voice Input (Web Speech API) ──
+  // Khi nói xong, nếu nhận ra chi tiêu (confidence ≥ 0.7) → tự auto-submit
+  // Nếu không nhận ra → điền vào input chờ user tự sửa/submit
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Trình duyệt không hỗ trợ nhận diện giọng nói!");
+      return;
+    }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'vi-VN';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceStatus("listening");
+    };
+
+    recognition.onresult = (event: any) => {
+      const raw = event.results[0][0].transcript as string;
+      // Strip HTML special chars từ speech recognition output (user-controlled)
+      const transcript = raw.replace(/[<>&"']/g, "").trim();
+
+      // Kiểm tra xem có phải chi tiêu không
+      const expense = parseExpenseWithContext(transcript);
+      if (expense && expense.confidence >= 0.7) {
+        // Nhận ra chi tiêu với confidence cao → auto-submit
+        setVoiceStatus("auto-submit");
+        setInput(""); // clear input
+        setTimeout(() => {
+          doSubmit(transcript);
+          setVoiceStatus("idle");
+        }, 300); // nhỏ delay để user thấy feedback
+      } else {
+        // Không nhận ra chi tiêu → điền vào input
+        setInput((prev) => (prev + " " + transcript).trim());
+        setVoiceStatus("idle");
+        // Focus input để user có thể sửa/submit
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    };
+
+    recognition.onerror = (e: any) => {
+      console.error("Speech error", e);
+      setIsListening(false);
+      setVoiceStatus("idle");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      if (voiceStatus === "listening") setVoiceStatus("idle");
+    };
+
+    recognition.start();
   };
 
   const handleQuickAction = (key: string) => {
-    // Labels chứa keyword khớp intent patterns
     const labels: Record<string, string> = {
       ask_spending: "phân tích chi tiêu của tôi",
       ask_debt: "tình hình nợ của tôi và cách trả nợ tối ưu",
@@ -443,7 +378,6 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
       return;
     }
 
-    // Inject user data context + market data for data-dependent questions
     const intent = detectIntent(text);
     if (DATA_INTENTS.includes(intent as Intent)) {
       const ctx = getUserDataContext(persona);
@@ -457,6 +391,19 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
     } else {
       sendMessage({ text });
     }
+  };
+
+  // Mic button style based on status
+  const micBtnClass = () => {
+    if (voiceStatus === "auto-submit") return "bg-green-500/20 border-green-500/50 text-green-400";
+    if (isListening) return "bg-red-500/20 border-red-500/50 text-red-400";
+    return "bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white/80 hover:bg-white/[0.06]";
+  };
+
+  const micTooltip = () => {
+    if (voiceStatus === "auto-submit") return "Đang ghi chi tiêu...";
+    if (isListening) return "Đang nghe... nói chi tiêu của bạn";
+    return "Nói để ghi chi tiêu nhanh";
   };
 
   return (
@@ -501,27 +448,6 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                   }`}
               >
                 ⚙️
-              </button>
-              <button
-                onClick={() => {
-                  const newMuted = !soundMuted;
-                  setSoundMutedState(newMuted);
-                  setSoundMuted(newMuted);
-                  if (newMuted && audioRef.current) {
-                    audioRef.current.pause();
-                    audioRef.current = null;
-                    setIsSpeaking(false);
-                    setSpeakingMsgId(null);
-                  }
-                }}
-                className={`p-1.5 rounded-lg transition-colors ${!soundMuted ? 'bg-[#E6B84F]/10 text-[#E6B84F] hover:bg-[#E6B84F]/20' : 'hover:bg-white/[0.05] text-white/30 hover:text-white/60'}`}
-                title={soundMuted ? "Bật âm thanh" : "Tắt âm thanh"}
-              >
-                {!soundMuted ? (
-                  <Volume2 className={`w-3.5 h-3.5 ${isSpeaking ? 'animate-pulse' : ''}`} />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
-                )}
               </button>
               <button
                 onClick={onClose}
@@ -571,31 +497,17 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {msg.role === "assistant" && <span className="text-lg mr-1.5 mt-1 flex-shrink-0">🦜</span>}
-                <div className="relative group">
-                  <div
-                    className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
-                      ? "text-white/90 rounded-br-sm"
-                      : "bg-white/[0.04] text-white/80 rounded-bl-sm border border-white/[0.06]"
-                      }`}
-                    style={msg.role === "user" ? {
-                      backgroundColor: `${activePersonaConfig.color}20`,
-                      border: `1px solid ${activePersonaConfig.color}30`
-                    } : {}}
-                  >
-                    {msg.parts?.[0]?.text || msg.content}
-                  </div>
-                  {msg.role === "assistant" && msg.id !== "greet-1" && (
-                    <button
-                      onClick={() => speakMessage(msg.id, msg.parts?.[0]?.text || msg.content || "")}
-                      className={`absolute -bottom-1 right-0 p-1 rounded-full transition-all ${speakingMsgId === msg.id
-                        ? "bg-[#E6B84F]/20 text-[#E6B84F] opacity-100"
-                        : "bg-white/[0.06] text-white/25 opacity-0 group-hover:opacity-100 hover:text-[#E6B84F]"
-                        }`}
-                      title="Nghe tin nhắn này"
-                    >
-                      <Volume2 className={`w-3 h-3 ${speakingMsgId === msg.id && isSpeaking ? 'animate-pulse' : ''}`} />
-                    </button>
-                  )}
+                <div
+                  className={`max-w-[280px] px-3 py-2 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
+                    ? "text-white/90 rounded-br-sm"
+                    : "bg-white/[0.04] text-white/80 rounded-bl-sm border border-white/[0.06]"
+                    }`}
+                  style={msg.role === "user" ? {
+                    backgroundColor: `${activePersonaConfig.color}20`,
+                    border: `1px solid ${activePersonaConfig.color}30`
+                  } : {}}
+                >
+                  {msg.parts?.[0]?.text || msg.content}
                 </div>
               </motion.div>
             ))}
@@ -658,11 +570,34 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
 
           {/* Input */}
           <div className="px-3 py-2.5 border-t border-white/[0.06]">
+            {/* Voice status feedback */}
+            {voiceStatus === "auto-submit" && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[10px] text-green-400/70 text-center mb-1.5 flex items-center justify-center gap-1"
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Đã nhận chi tiêu — đang ghi...
+              </motion.div>
+            )}
+            {isListening && voiceStatus === "listening" && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[10px] text-red-400/70 text-center mb-1.5 flex items-center justify-center gap-1"
+              >
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                Đang nghe... nói tên & giá chi tiêu
+              </motion.div>
+            )}
             <form onSubmit={submitForm} className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={startListening}
-                className={`p-2 rounded-xl border transition-all ${isListening ? 'bg-red-500/20 border-red-500/50 text-red-400' : 'bg-white/[0.03] border-white/[0.08] text-white/40 hover:text-white/80 hover:bg-white/[0.06]'}`}
+                disabled={isListening || voiceStatus === "auto-submit"}
+                title={micTooltip()}
+                className={`p-2 rounded-xl border transition-all ${micBtnClass()}`}
               >
                 {isListening ? (
                   <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
@@ -678,7 +613,7 @@ export default function VetVangChat({ isOpen, onClose, xp, level, levelName }: V
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submitForm(e)}
-                placeholder="Hỏi Vẹt Vàng..."
+                placeholder="Ghi chi tiêu hoặc hỏi Vẹt Vàng..."
                 className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#E6B84F]/30 transition-colors"
                 disabled={isLoading}
               />

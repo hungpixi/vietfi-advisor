@@ -350,7 +350,7 @@ export default function ScreenerPage() {
 
         {/* Disclaimer */}
         <CyberSubHeader className="text-center block opacity-30">
-          Dữ liệu từ TCBS API. Hãy tự nghiên cứu trước khi quyết định đầu tư.
+          Dữ liệu chốt ngày (End-Of-Day) từ TCBS API. Không phù hợp cho scalping/day-trading. Hãy tự nghiên cứu trước quyết định.
         </CyberSubHeader>
       </div>
     </RequireTier>
