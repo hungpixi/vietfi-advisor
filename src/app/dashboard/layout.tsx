@@ -251,7 +251,6 @@ function GamificationBar() {
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [setupStatus, setSetupStatus] = useState<Record<string, boolean>>({});
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [isGuestSession, setIsGuestSession] = useState(false);
@@ -296,23 +295,6 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     return () => {
       active = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const check = () => {
-      const pots = getBudgetPots();
-      const debts = getDebts();
-      const onboarding = getOnboardingState();
-      setSetupStatus({
-        "/dashboard/cashflow": pots.length > 0,
-        "/dashboard/debt":
-          debts.length > 0 || (!!onboarding && !onboarding.hasDebt),
-        "/dashboard/spending-insights": pots.length > 0,
-      });
-    };
-    check();
-    window.addEventListener("storage", check);
-    return () => window.removeEventListener("storage", check);
   }, []);
 
   // ── Market volatility alerts (client-side, no cron needed) ──
@@ -472,16 +454,6 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
                         )}
                       />
                       <span className="flex-1 font-semibold">{item.label}</span>
-                      {setupStatus[item.href] !== undefined && (
-                        <span
-                          className={cn(
-                            "w-2 h-2 rounded-full flex-shrink-0",
-                            setupStatus[item.href]
-                              ? "bg-[#22C55E]"
-                              : "bg-white/10",
-                          )}
-                        />
-                      )}
                       {active && (
                         <ChevronRight className="w-4 h-4 text-[#E6B84F]/50" />
                       )}
