@@ -82,3 +82,17 @@ context.md
 # Chạy: python scripts/sync_market_data.py để tạo lại
 /public/data/ohlcv/
 .osgrep
+
+# Scratch & Junk files
+*.log
+*.sqlite
+out.txt
+diff.txt
+build_output*.txt
+test_err*.log
+ts_errors*.txt
+tsc_errors.txt
+sync_out.txt
+last_5_commits.txt
+git_log_tmp.txt
+test_tcbs.js
