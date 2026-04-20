@@ -8,7 +8,7 @@ export default function TestSupabasePage() {
 
     useEffect(() => {
         async function getTodos() {
-            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
                 setTodos([{ id: 'missing-env', name: 'Missing Supabase public env vars' }])
                 return
             }

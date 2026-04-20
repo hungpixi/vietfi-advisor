@@ -48,9 +48,7 @@ const nextConfig: any = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
   allowedDevOrigins: ["localhost:3000", "192.168.100.111:3000", "192.168.100.111"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

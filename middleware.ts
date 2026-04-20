@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
 
     // 4. Get updated session to make routing decisions
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const { createServerClient } = await import("@supabase/ssr");
 
     const supabase = createServerClient(supabaseUrl!, supabaseKey!, {

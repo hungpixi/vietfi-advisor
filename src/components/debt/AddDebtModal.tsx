@@ -38,12 +38,13 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
   const showScaryWarning = isDarkDebt && hVal > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, y: 100 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md glass-card p-6 my-8 border-t border-[#E6B84F]/20 relative overflow-hidden"
+        className="w-full max-w-md glass-card p-5 sm:p-6 border-t border-[#E6B84F]/20 relative overflow-hidden rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto"
       >
         {/* Glow effect for dark debts */}
         {isDarkDebt && (
@@ -100,9 +101,9 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
 
           <AnimatePresence>
             {isDarkDebt && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: "auto" }} 
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
@@ -118,13 +119,13 @@ export function AddDebtModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
                     <input type="number" value={hiddenFees} onChange={(e) => setHiddenFees(Number(e.target.value))} className="w-full px-4 py-3 bg-black/60 border border-[#EF4444]/50 rounded-xl text-sm text-white focus:outline-none focus:border-[#EF4444] transition-colors shadow-inner" placeholder="Ví dụ: 30000" />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#EF4444]">₫/Tháng</div>
                   </div>
-                  
+
                   {showScaryWarning && (
                     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="mt-3 pt-3 border-t border-[#EF4444]/20">
                       <div className="flex items-start gap-2 text-xs">
                         <AlertTriangle className="w-4 h-4 text-[#FFD700] flex-shrink-0 mt-0.5 animate-pulse" />
                         <div>
-                          Sự thật mất lòng: Lãi suất thực tế của khoản vay này không phải là {rVal}%/năm, mà là <span className="font-black text-[#FFD700] text-sm bg-[#EF4444]/20 px-1 rounded">{realInterestRate.toFixed(1)}%/năm</span>! 
+                          Sự thật mất lòng: Lãi suất thực tế của khoản vay này không phải là {rVal}%/năm, mà là <span className="font-black text-[#FFD700] text-sm bg-[#EF4444]/20 px-1 rounded">{realInterestRate.toFixed(1)}%/năm</span>!
                           Bạn đang trả <strong className="text-white">{formatVND(yearlyFees)}</strong> tiền phí vô lý mỗi năm.
                         </div>
                       </div>

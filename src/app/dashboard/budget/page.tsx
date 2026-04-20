@@ -91,10 +91,11 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-[#040807]/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-[#040807]/80 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#08110f] p-8 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative overflow-hidden rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#08110f] p-5 sm:p-8 w-full max-w-md shadow-2xl max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,197,94,0.15),transparent_50%)]" />
 
         <div className="relative z-10">
@@ -166,10 +167,11 @@ function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => voi
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-[#040807]/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-[#040807]/80 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}>
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#08110f] p-8 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative overflow-hidden rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#08110f] p-5 sm:p-8 w-full max-w-sm shadow-2xl max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="pointer-events-none absolute inset-0 z-0 opacity-40 transition-opacity duration-700"
           style={{ background: `radial-gradient(circle at 50% 0%, ${pot.color}, transparent 60%)` }} />
 

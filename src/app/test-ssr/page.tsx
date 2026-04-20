@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 export const dynamic = 'force-dynamic'
 
 export default async function TestSSRPage() {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         return (
             <div className="p-8 bg-[#0A0A0F] min-h-screen text-white">
                 <h1 className="text-2xl font-bold mb-4 text-yellow-400">Supabase SSR Test</h1>
