@@ -16,11 +16,50 @@ function normalizeOrigin(candidate: string | undefined | null): string | null {
   }
 }
 
+function isLocalOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    return url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+function isVercelDeploymentOrigin(origin: string, canonicalOrigin: string): boolean {
+  try {
+    const candidateUrl = new URL(origin);
+    const canonicalUrl = new URL(canonicalOrigin);
+
+    if (candidateUrl.origin === canonicalUrl.origin) return false;
+    if (!candidateUrl.hostname.endsWith(".vercel.app") || !canonicalUrl.hostname.endsWith(".vercel.app")) {
+      return false;
+    }
+
+    const candidateLabel = candidateUrl.hostname.replace(/\.vercel\.app$/, "");
+    const canonicalLabel = canonicalUrl.hostname.replace(/\.vercel\.app$/, "");
+    return candidateLabel.startsWith(`${canonicalLabel}-`);
+  } catch {
+    return false;
+  }
+}
+
+export function resolvePreferredAppOrigin(candidate: string | null): string | null {
+  const normalizedCandidate = normalizeOrigin(candidate);
+  if (!normalizedCandidate) return null;
+  if (isLocalOrigin(normalizedCandidate)) return normalizedCandidate;
+
+  const canonicalOrigin = getCanonicalAppOrigin();
+  if (isVercelDeploymentOrigin(normalizedCandidate, canonicalOrigin)) {
+    return canonicalOrigin;
+  }
+
+  return normalizedCandidate;
+}
+
 export function getCanonicalAppOrigin(): string {
   return (
     normalizeOrigin(process.env.APP_ORIGIN) ||
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
-    normalizeOrigin(process.env.VERCEL_URL) ||
     DEFAULT_ORIGIN
   );
 }
@@ -38,12 +77,12 @@ export function getOriginFromHeaders(headerStore: Pick<Headers, "get">): string 
       ? "http"
       : "https";
 
-  return normalizeOrigin(`${protocol}://${host}`);
+  return resolvePreferredAppOrigin(`${protocol}://${host}`);
 }
 
 export function getBrowserAppOrigin(): string {
   if (typeof window !== "undefined") {
-    return normalizeOrigin(window.location.origin) || DEFAULT_ORIGIN;
+    return resolvePreferredAppOrigin(window.location.origin) || getCanonicalAppOrigin();
   }
 
   return getCanonicalAppOrigin();
