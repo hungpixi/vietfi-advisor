@@ -302,6 +302,12 @@
   },
   "hotPaths": [
     {
+      "path": "",
+      "accessCount": 37,
+      "lastAccessed": 1776672308938,
+      "type": "directory"
+    },
+    {
       "path": "src\\app\\dashboard\\page.tsx",
       "accessCount": 34,
       "lastAccessed": 1775557197708,
@@ -312,12 +318,6 @@
       "accessCount": 26,
       "lastAccessed": 1775556919476,
       "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 20,
-      "lastAccessed": 1776611422409,
-      "type": "directory"
     },
     {
       "path": "src\\app\\api\\chat\\route.ts",
@@ -351,8 +351,14 @@
     },
     {
       "path": "package.json",
+      "accessCount": 6,
+      "lastAccessed": 1776670595357,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\layout.tsx",
       "accessCount": 5,
-      "lastAccessed": 1776610837050,
+      "lastAccessed": 1776670590535,
       "type": "file"
     },
     {
@@ -377,12 +383,6 @@
       "path": "next.config.ts",
       "accessCount": 2,
       "lastAccessed": 1775556870864,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\dashboard\\layout.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775556948169,
       "type": "file"
     },
     {
@@ -422,6 +422,12 @@
       "type": "file"
     },
     {
+      "path": "src\\app\\dashboard\\screener\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776670535041,
+      "type": "file"
+    },
+    {
       "path": "src\\app\\globals.css",
       "accessCount": 1,
       "lastAccessed": 1775551367043,
@@ -443,12 +449,6 @@
       "path": "src\\app\\dashboard\\budget\\page.tsx",
       "accessCount": 1,
       "lastAccessed": 1775556535860,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\dashboard\\screener\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776450366893,
       "type": "file"
     },
     {

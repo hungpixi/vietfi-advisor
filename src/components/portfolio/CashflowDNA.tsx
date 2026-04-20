@@ -69,9 +69,12 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
           {/* Cashflow Breakdown */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Wallet className="w-4 h-4 text-white/20" />
-                <CyberSubHeader>THU NHẬP VS NGHĨA VỤ CỐ ĐỊNH</CyberSubHeader>
+              <div className="flex flex-col gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-white/70" />
+                  <CyberSubHeader className="whitespace-normal">THU NHẬP VS</CyberSubHeader>
+                </div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">NGHĨA VỤ CỐ ĐỊNH</p>
               </div>
 
               {income === 0 ? (
@@ -99,7 +102,7 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between items-end px-1">
                       <CyberSubHeader>BIỂU ĐỒ PHÂN BỔ DÒNG TIỀN</CyberSubHeader>
-                      <CyberTypography size="xs" variant="mono" className="text-white/20">{(100 - freePct).toFixed(0)}% NGHĨA VỤ</CyberTypography>
+                      <CyberTypography size="xs" variant="mono" className="text-white/60">{(100 - freePct).toFixed(0)}% NGHĨA VỤ</CyberTypography>
                     </div>
                     <div className="h-6 w-full bg-white/5 rounded-lg overflow-hidden flex p-1 border border-white/5">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${essentialPct}%` }} className="bg-[#E6B84F] h-full rounded-sm mr-[2px]" />
@@ -119,13 +122,17 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
                         {isNegative ? <ShieldAlert className="w-5 h-5" /> : <BatteryCharging className="w-5 h-5" />}
                       </div>
                       <div>
-                        <CyberSubHeader color={isNegative ? "text-[#EF4444]" : "text-[#22C55E]"}>
-                          {isNegative ? "CẢNH BÁO THÂM HỤT" : "DƯ ĐỊA ĐẦU TƯ MỖI THÁNG"}
-                        </CyberSubHeader>
-                        <CyberMetric size="md" color={isNegative ? "text-[#EF4444]" : "text-[#22C55E]"}>
-                          {formatVND(freeCashflow)}
-                        </CyberMetric>
-                        <p className="text-[11px] text-white/30 font-mono uppercase mt-2 leading-relaxed">
+                        <div className="mb-2">
+                          <CyberSubHeader color={isNegative ? "text-[#EF4444]" : "text-[#22C55E]"}>
+                            {isNegative ? "CẢNH BÁO THÂM HỤT" : "DƯ ĐỊA ĐẦU TƯ MỖI THÁNG"}
+                          </CyberSubHeader>
+                        </div>
+                        <div className="mb-2">
+                          <CyberMetric size="md" color={isNegative ? "text-[#EF4444]" : "text-[#22C55E]"}>
+                            {formatVND(freeCashflow)}
+                          </CyberMetric>
+                        </div>
+                        <p className="text-[11px] text-white/50 font-mono uppercase mt-2 leading-relaxed">
                           {isNegative ? "Tình trạng tài chính báo động. Cần cắt giảm chi phí lập tức trước khi nghĩ đến đầu tư." : "Đạn dược sẵn sàng. Đây là số tiền bạn có thể tự tin bơm vào các tài sản rủi ro."}
                         </p>
                       </div>
@@ -138,9 +145,12 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
 
           {/* Goals Radar */}
           <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="w-4 h-4 text-white/20" />
-              <CyberSubHeader>PROGRESS RADAR (VỐN TÍCH LŨY: {formatVND(currentCapital)})</CyberSubHeader>
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-white/70" />
+                <CyberSubHeader>PROGRESS RADAR</CyberSubHeader>
+              </div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/60">VỐN TÍCH LŨY: {formatVND(currentCapital)}</p>
             </div>
 
             <div className="space-y-8">
@@ -151,9 +161,9 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
                     <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E]">
                       <ShieldAlert className="w-5 h-5" />
                     </div>
-                    <div>
-                      <CyberTypography size="sm" className="text-white font-black leading-none">QUỸ SINH TỒN</CyberTypography>
-                      <CyberSubHeader className="mt-1">AN TOÀN TRONG 6 THÁNG</CyberSubHeader>
+                    <div className="leading-tight">
+                      <div className="text-[14px] font-black uppercase text-white">QUỸ SINH TỒN</div>
+                      <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/60">AN TOÀN TRONG 6 THÁNG</div>
                     </div>
                   </div>
                   <CyberMetric size="xs" color="text-[#22C55E]">{emergencyPct.toFixed(0)}%</CyberMetric>
@@ -183,15 +193,15 @@ export function CashflowDNA({ currentCapital }: CashflowProps) {
               <div className="group">
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/40">
+                    <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/60">
                       <Flag className="w-5 h-5" />
                     </div>
-                    <div>
-                      <CyberTypography size="sm" className="text-white font-black leading-none">TỰ DO TÀI CHÍNH</CyberTypography>
-                      <CyberSubHeader className="mt-1">MỤC TIÊU MUA NHÀ / NGHỈ HƯU</CyberSubHeader>
+                    <div className="leading-tight">
+                      <div className="text-[14px] font-black uppercase text-white">TỰ DO TÀI CHÍNH</div>
+                      <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/40">MỤC TIÊU MUA NHÀ / NGHỈ HƯU</div>
                     </div>
                   </div>
-                  <CyberMetric size="xs" color="text-white/40">{housePct.toFixed(1)}%</CyberMetric>
+                  <CyberMetric size="xs" color="text-white/60">{housePct.toFixed(1)}%</CyberMetric>
                 </div>
 
                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[2px]">
