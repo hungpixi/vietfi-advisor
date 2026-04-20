@@ -1,4 +1,4 @@
-const LOCAL_ORIGIN = "http://localhost:3000";
+const DEFAULT_ORIGIN = "https://vietfi-advisor.vercel.app";
 
 function normalizeOrigin(candidate: string | undefined | null): string | null {
   if (!candidate) return null;
@@ -21,13 +21,29 @@ export function getCanonicalAppOrigin(): string {
     normalizeOrigin(process.env.APP_ORIGIN) ||
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
     normalizeOrigin(process.env.VERCEL_URL) ||
-    LOCAL_ORIGIN
+    DEFAULT_ORIGIN
   );
+}
+
+export function getOriginFromHeaders(headerStore: Pick<Headers, "get">): string | null {
+  const forwardedHost = headerStore.get("x-forwarded-host");
+  const host = forwardedHost || headerStore.get("host");
+
+  if (!host) return null;
+
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const protocol = forwardedProto === "http" || forwardedProto === "https"
+    ? forwardedProto
+    : host.includes("localhost") || host.startsWith("127.0.0.1")
+      ? "http"
+      : "https";
+
+  return normalizeOrigin(`${protocol}://${host}`);
 }
 
 export function getBrowserAppOrigin(): string {
   if (typeof window !== "undefined") {
-    return normalizeOrigin(window.location.origin) || LOCAL_ORIGIN;
+    return normalizeOrigin(window.location.origin) || DEFAULT_ORIGIN;
   }
 
   return getCanonicalAppOrigin();
@@ -40,8 +56,8 @@ export function safeRedirectPath(candidate: string | null | undefined, fallback 
   }
 
   try {
-    const url = new URL(candidate, LOCAL_ORIGIN);
-    if (url.origin !== LOCAL_ORIGIN) return fallback;
+    const url = new URL(candidate, DEFAULT_ORIGIN);
+    if (url.origin !== DEFAULT_ORIGIN) return fallback;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return fallback;
@@ -49,7 +65,7 @@ export function safeRedirectPath(candidate: string | null | undefined, fallback 
 }
 
 export function buildAuthCallbackUrl(origin: string, next = "/dashboard"): string {
-  const callback = new URL("/auth/confirm", origin);
+  const callback = new URL("/auth/callback", origin);
   callback.searchParams.set("next", safeRedirectPath(next));
   return callback.toString();
 }
