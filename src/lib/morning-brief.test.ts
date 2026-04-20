@@ -33,7 +33,11 @@ vi.mock('@/lib/news/crawler', () => ({
   })),
 }))
 
-vi.mock('@/lib/gemini-batch', () => ({
+vi.mock('@/lib/infrastructure/llm/client', () => ({
+  isLlmConfigured: vi.fn(() => true),
+}))
+
+vi.mock('@/lib/infrastructure/llm/batch', () => ({
   generateMorningBrief: vi.fn(async () => ({
     summary: 'VN-Index và thị trường vàng có tín hiệu tích cực. Nên theo dõi USD/VND và news từ doanh nghiệp lớn.',
     takeaways: [
@@ -44,12 +48,15 @@ vi.mock('@/lib/gemini-batch', () => ({
 }))
 
 import { buildMorningBrief, getMorningBriefCached, refreshMorningBriefCache, resetMorningBriefCache } from './morning-brief'
+import * as llmClient from '@/lib/infrastructure/llm/client'
+import * as marketCrawler from '@/lib/market-data/crawler'
 
 
 
 describe('morning-brief utils', () => {
   beforeEach(() => {
     resetMorningBriefCache()
+    vi.restoreAllMocks()
   })
 
   it('buildMorningBrief returns an object with summary and takeaways', async () => {
@@ -80,9 +87,19 @@ describe('morning-brief utils', () => {
   })
 
   it('buildMorningBrief falls back to heuristic when GEMINI_API_KEY missing', async () => {
-    delete process.env.GEMINI_API_KEY
+    vi.spyOn(llmClient, 'isLlmConfigured').mockReturnValue(false)
     const brief = await buildMorningBrief()
     expect(brief.source).toBe('heuristic')
     expect(brief.summary).toContain('VN-Index bật tăng')
+  })
+
+  it('buildMorningBrief still returns heuristic when market crawler fails', async () => {
+    vi.spyOn(llmClient, 'isLlmConfigured').mockReturnValue(false)
+    vi.spyOn(marketCrawler, 'crawlMarketData').mockRejectedValue(new Error('cafef timeout'))
+
+    const brief = await buildMorningBrief()
+
+    expect(brief.source).toBe('heuristic')
+    expect(brief.summary).toContain('Tin tức đáng chú ý')
   })
 })

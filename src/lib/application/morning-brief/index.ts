@@ -5,8 +5,9 @@
  * Moved from src/lib/morning-brief.ts
  */
 import { crawlMarketData, type MarketSnapshot } from "@/lib/market-data/crawler";
-import { crawlNews, type NewsArticle } from "@/lib/news/crawler";
+import { crawlNews, type NewsArticle, type NewsSnapshot } from "@/lib/news/crawler";
 import { generateMorningBrief, type MorningBriefResponse } from "@/lib/infrastructure/llm/batch";
+import { isLlmConfigured } from "@/lib/infrastructure/llm/client";
 
 export interface MorningBriefTakeaway {
     emoji: string;
@@ -30,6 +31,40 @@ interface CacheEntry {
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
 let cache: CacheEntry | null = null;
+
+function buildFallbackMarketSnapshot(): MarketSnapshot {
+    return {
+        fetchedAt: new Date().toISOString(),
+        vnIndex: null,
+        goldSjc: null,
+        silver: null,
+        usdVnd: null,
+        btc: null,
+        news: [],
+        macro: {
+            gdpYoY: [],
+            cpiYoY: [],
+            deposit12m: { min: 0, max: 0, source: "fallback" },
+        },
+        aiSummary: null,
+    };
+}
+
+function buildFallbackNewsSnapshot(): NewsSnapshot {
+    return {
+        fetchedAt: new Date().toISOString(),
+        articles: [],
+        metrics: {
+            fetchedAt: new Date().toISOString(),
+            totalArticles: 0,
+            sentimentCounts: { bullish: 0, bearish: 0, neutral: 0 },
+            overallNewsScore: 50,
+            overallZone: "neutral",
+            assetSentiment: [],
+            history: [],
+        },
+    };
+}
 
 export function resetMorningBriefCache() {
     cache = null;
@@ -95,14 +130,30 @@ function buildSimulatedGeminiBrief(marketSnapshot: MarketSnapshot, newsSnapshot:
     return { date: `Hôm nay, ${new Date().toLocaleDateString("vi-VN")}`, title: "Morning Brief (Dữ liệu thực)", summary: promptText, raw: promptText, source: "heuristic", takeaways: formatTakeaways(newsSnapshot.articles) };
 }
 
-export async function buildMorningBrief(): Promise<MorningBriefData> {
-    const [marketSnapshot, newsSnapshot] = await Promise.all([
+async function getMorningBriefInputs() {
+    const [marketResult, newsResult] = await Promise.allSettled([
         crawlMarketData(),
         crawlNews({ includeContent: false, enableAiReview: false, limitPerSection: 4 }),
     ]);
 
-    if (!process.env.GEMINI_API_KEY) {
-        console.warn("[morning-brief] GEMINI_API_KEY missing, using simulated brief");
+    const marketSnapshot = marketResult.status === "fulfilled" ? marketResult.value : buildFallbackMarketSnapshot();
+    const newsSnapshot = newsResult.status === "fulfilled" ? newsResult.value : buildFallbackNewsSnapshot();
+
+    if (marketResult.status === "rejected") {
+        console.error("[morning-brief] Market crawler failed, using fallback snapshot:", marketResult.reason);
+    }
+    if (newsResult.status === "rejected") {
+        console.error("[morning-brief] News crawler failed, using fallback snapshot:", newsResult.reason);
+    }
+
+    return { marketSnapshot, newsSnapshot };
+}
+
+export async function buildMorningBrief(): Promise<MorningBriefData> {
+    const { marketSnapshot, newsSnapshot } = await getMorningBriefInputs();
+
+    if (!isLlmConfigured()) {
+        console.warn("[morning-brief] Active LLM provider is not configured, using heuristic brief");
         return buildSimulatedGeminiBrief(marketSnapshot, newsSnapshot);
     }
 

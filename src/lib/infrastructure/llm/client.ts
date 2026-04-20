@@ -10,23 +10,48 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, streamText } from "ai";
 import { checkLlmRateLimit } from "@/lib/llm-limiter";
 
-const AI_PROVIDER = (process.env.AI_PROVIDER || "gemini").toLowerCase().trim();
+function getDefaultProvider() {
+    return (process.env.AI_PROVIDER || "gemini").toLowerCase().trim();
+}
 
-// Zen Configuration
-const ZEN_API_KEY = process.env.ZEN_API_KEY || process.env.OPENAI_API_KEY;
+function getZenApiKey() {
+    return process.env.ZEN_API_KEY || process.env.OPENAI_API_KEY;
+}
+
 const ZEN_BASE_URL = "https://opencode.ai/zen/v1";
 
-// Gemini Configuration
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_BASE_URL = process.env.GEMINI_BASE_URL;
+function getGeminiApiKey() {
+    return process.env.GEMINI_API_KEY
+        || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+        || process.env.GOOGLE_API_KEY;
+}
 
-// OpenAI Configuration
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;
+function getGeminiBaseUrl() {
+    return process.env.GEMINI_BASE_URL;
+}
 
-// Model overrides
-const ZEN_MODEL = process.env.ZEN_MODEL || process.env.OPENAI_MODEL;
-const GEMINI_MODEL = process.env.GEMINI_MODEL;
+function getOpenAiApiKey() {
+    return process.env.OPENAI_API_KEY;
+}
+
+function getOpenAiBaseUrl() {
+    return process.env.OPENAI_BASE_URL;
+}
+
+function getZenModel() {
+    return process.env.ZEN_MODEL || process.env.OPENAI_MODEL;
+}
+
+function getGeminiModel() {
+    return process.env.GEMINI_MODEL;
+}
+
+export function isLlmConfigured(provider = getDefaultProvider()): boolean {
+    const normalizedProvider = provider.toLowerCase().trim();
+    if (normalizedProvider === "zen") return Boolean(getZenApiKey());
+    if (normalizedProvider === "openai") return Boolean(getOpenAiApiKey());
+    return Boolean(getGeminiApiKey());
+}
 
 export interface GeminiOptions {
     temperature?: number;
@@ -53,31 +78,36 @@ function sleep(ms: number) {
  * Gets the configured LLM model instance based on provider.
  */
 export function getLlmModel(options: { provider?: string; model?: string } = {}) {
-    const provider = (options.provider || AI_PROVIDER).toLowerCase();
+    const provider = (options.provider || getDefaultProvider()).toLowerCase();
     const isZen = provider === "zen";
     const isOpenAi = provider === "openai" || isZen;
+    const zenApiKey = getZenApiKey();
+    const openAiApiKey = getOpenAiApiKey();
+    const openAiBaseUrl = getOpenAiBaseUrl();
+    const geminiApiKey = getGeminiApiKey();
+    const geminiBaseUrl = getGeminiBaseUrl();
 
     if (isOpenAi) {
-        if (!ZEN_API_KEY && isZen) throw new Error("ZEN_API_KEY (or OPENAI_API_KEY) not configured");
-        if (!OPENAI_API_KEY && !isZen) throw new Error("OPENAI_API_KEY not configured");
+        if (!zenApiKey && isZen) throw new Error("ZEN_API_KEY (or OPENAI_API_KEY) not configured");
+        if (!openAiApiKey && !isZen) throw new Error("OPENAI_API_KEY not configured");
 
         const client = createOpenAI({
-            apiKey: isZen ? ZEN_API_KEY : OPENAI_API_KEY,
-            baseURL: isZen ? ZEN_BASE_URL : OPENAI_BASE_URL,
+            apiKey: isZen ? zenApiKey : openAiApiKey,
+            baseURL: isZen ? ZEN_BASE_URL : openAiBaseUrl,
         });
 
         // Default models
-        const defaultModel = isZen ? (ZEN_MODEL || "minimax-m2.5-free") : (process.env.OPENAI_MODEL || "gpt-4o-mini");
+        const defaultModel = isZen ? (getZenModel() || "minimax-m2.5-free") : (process.env.OPENAI_MODEL || "gpt-4o-mini");
         return client.chat(options.model || defaultModel);
     }
 
     // Default to Gemini (Google)
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    if (!geminiApiKey) throw new Error("GEMINI_API_KEY not configured");
     const google = createGoogleGenerativeAI({
-        apiKey: GEMINI_API_KEY,
-        ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {}),
+        apiKey: geminiApiKey,
+        ...(geminiBaseUrl ? { baseURL: geminiBaseUrl } : {}),
     });
-    return google(options.model || GEMINI_MODEL || "gemini-2.5-flash-lite");
+    return google(options.model || getGeminiModel() || "gemini-2.5-flash-lite");
 }
 
 function getModel(provider: string, modelName?: string) {
@@ -89,7 +119,7 @@ export async function callGemini(
     options: GeminiOptions = {}
 ): Promise<string> {
     const opts = { ...DEFAULT_OPTIONS, ...options };
-    const provider = opts.provider || AI_PROVIDER;
+    const provider = opts.provider || getDefaultProvider();
 
     checkLlmRateLimit();
 
@@ -113,7 +143,7 @@ export async function callGemini(
             // Automatic fallback to gemini if zen fails
             const isAuthError = error.statusCode === 401 || error.message?.includes("API key");
 
-            if (provider === "zen" && GEMINI_API_KEY && (attempt === 1 || isAuthError)) {
+            if (provider === "zen" && getGeminiApiKey() && (attempt === 1 || isAuthError)) {
                 console.warn(`Zen failed (${error.message}), falling back to Gemini...`);
                 try {
                     const fallbackModel = getModel("gemini", "gemini-2.5-flash-lite");
@@ -167,7 +197,7 @@ export async function streamLLM(
     systemPrompt?: string,
     options: GeminiOptions = {}
 ) {
-    const provider = options.provider || AI_PROVIDER;
+    const provider = options.provider || getDefaultProvider();
     const model = getModel(provider, options.model);
 
     checkLlmRateLimit();
