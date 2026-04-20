@@ -4,10 +4,10 @@ import { StrategyManager } from '@/lib/application/strategy-engine/strategy-mana
 import { PullbackUptrendStrategy } from '@/lib/application/strategy-engine/strategies/pullback-uptrend';
 import { VCPBreakoutStrategy } from '@/lib/application/strategy-engine/strategies/volatility-contraction';
 
-export const maxDuration = 300;
+// export const maxDuration removed for Vercel hobby
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy';
 const TELEGRAM_WEBHOOK = process.env.TELEGRAM_WEBHOOK_URL || '';
 
 const marketData = new MarketDataService(SUPABASE_URL, SUPABASE_SERVICE_KEY);

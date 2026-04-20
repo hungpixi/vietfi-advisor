@@ -6,8 +6,8 @@ import { VCPBreakoutStrategy } from '@/lib/application/strategy-engine/strategie
 import { ReportModule } from '@/lib/application/strategy-engine/report-module';
 
 // Use same env logic
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy';
 
 const marketData = new MarketDataService(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

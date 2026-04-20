@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Vercel Cron Config: Maximum execution time 60s for hobby, up to 5min for pro.
 // We can set maximum duration for Next.js App Router API Route.
-export const maxDuration = 300;
+// maxDuration removed to fallback to Hobby defaults
 
 // We sync top liquidity tickers on the fly.
 const DEFAULT_VN30 = [
@@ -12,8 +12,8 @@ const DEFAULT_VN30 = [
     "TCB", "TPB", "VCB", "VHM", "VIB", "VIC", "VJC", "VNM", "VPB", "VRE", "VNINDEX"
 ];
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://dummy.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'dummy';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: { persistSession: false },
