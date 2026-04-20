@@ -184,8 +184,8 @@ export default function PersonalCPIPage() {
         <motion.div variants={fadeIn}>
           <CyberCard className="p-8 mb-8" variant="success">
             <div className="flex items-center gap-4 mb-8 pb-4 border-b border-white/[0.05]">
-              <span className="text-4xl animate-bounce">🦜</span>
-              <CyberHeader size="md" className="text-[#22C55E] !tracking-[0.2em]">VẸT VÀNG INSIGHT</CyberHeader>
+              <span className="text-4xl animate-bounce">💡</span>
+              <CyberHeader size="md" className="text-[#22C55E] !tracking-[0.2em]">NHẬN ĐỊNH THÔNG MINH</CyberHeader>
             </div>
 
             <div className="space-y-6">

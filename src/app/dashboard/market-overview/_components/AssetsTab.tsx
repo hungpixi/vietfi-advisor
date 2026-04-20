@@ -17,7 +17,7 @@ export function AssetsTab({
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-3">
                                 <span className="text-2xl animate-bounce">{personalizedAlert.icon}</span>
-                                <CyberHeader size="sm" className="text-[#E6B84F] !tracking-[0.15em]">VẸT VÀNG NHÌN DÒNG TIỀN CỦA BẠN</CyberHeader>
+                                <CyberHeader size="sm" className="text-[#E6B84F] !tracking-[0.15em]">PHÂN TÍCH DÒNG TIỀN</CyberHeader>
                             </div>
                             <p className="text-[16px] md:text-[18px] text-white font-black font-mono uppercase leading-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
                                 {personalizedAlert.msg}

@@ -8,13 +8,14 @@ import {
 import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { addXP } from "@/lib/gamification";
-import { getCachedUserId, saveBudgetPots, addExpense } from "@/lib/supabase/user-data";
+import { getCachedUserId, saveBudgetPots, addExpense, saveIncome as saveIncomeRemote } from "@/lib/supabase/user-data";
 import type { BudgetPot, Expense } from "@/lib/types/budget";
-import { getBudgetPots, setBudgetPots, getExpenses, setExpenses, getIncome, setIncome, getLedgerEntries, setLedgerEntries } from "@/lib/storage";
-import { cn } from "@/lib/utils";
+import { getBudgetPots, setBudgetPots, getExpenses, setExpenses as setExpensesLocal, getIncome, setIncome as setIncomeLocal, getLedgerEntries, setLedgerEntries } from "@/lib/storage";
+import { cn, formatNumber, parseNumber } from "@/lib/utils";
 
 /* ─── Local alias — budget page uses "Pot" internally ─── */
 type Pot = BudgetPot;
+const getExpensePotId = (expense: Expense) => expense.potId ?? expense.pot_id ?? "";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; color?: string }>> = {
   Coffee, ShoppingBag, Car, Home, Gamepad2, Heart, GraduationCap, TrendingUp, Wallet,
@@ -72,17 +73,17 @@ function CyberCard({ children, className, glowColor = "rgba(34,197,94,0.08)" }: 
 /* ─── Add Pot Modal ─── */
 function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot) => void }) {
   const [name, setName] = useState("");
-  const [allocated, setAllocated] = useState("");
+  const [allocatedDisplay, setAllocatedDisplay] = useState("");
   const [iconKey, setIconKey] = useState("Wallet");
   const [color, setColor] = useState(COLOR_OPTIONS[0]);
 
   const handleSubmit = () => {
-    if (!name.trim() || !allocated) return;
+    if (!name.trim() || !allocatedDisplay) return;
     onAdd({
       id: Date.now().toString(),
       name: name.trim(),
       iconKey,
-      allocated: parseInt(allocated),
+      allocated: parseNumber(allocatedDisplay),
       color,
     });
     onClose();
@@ -110,7 +111,7 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
             </div>
             <div>
               <label className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-[#22C55E]/60 block mb-2">Ngân sách (VND)</label>
-              <input type="number" value={allocated} onChange={(e) => setAllocated(e.target.value)} placeholder="1.000.000"
+              <input type="text" value={allocatedDisplay} onChange={(e) => setAllocatedDisplay(formatNumber(e.target.value))} placeholder="1,000,000"
                 className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.1] rounded-xl text-sm text-white placeholder:text-white/10 focus:outline-none focus:border-[#22C55E]/40 transition-all font-heading font-black" />
             </div>
             <div>
@@ -134,7 +135,7 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
               </div>
             </div>
 
-            <button onClick={handleSubmit} disabled={!name.trim() || !allocated}
+            <button onClick={handleSubmit} disabled={!name.trim() || !allocatedDisplay}
               className="group relative w-full py-4 bg-[#22C55E] text-black font-heading text-[14px] font-black uppercase tracking-widest rounded-xl disabled:opacity-30 hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] transition-all overflow-hidden mt-4">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               <span className="relative z-10 flex items-center justify-center gap-2"><Check className="w-5 h-5" /> TẠO HŨ NGAY</span>
@@ -148,15 +149,15 @@ function AddPotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (pot: Pot
 
 /* ─── Log Expense Modal ─── */
 function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => void; onLog: (expense: Expense) => void }) {
-  const [amount, setAmount] = useState("");
+  const [amountDisplay, setAmountDisplay] = useState("");
   const [note, setNote] = useState("");
 
   const handleSubmit = () => {
-    if (!amount) return;
+    if (!amountDisplay) return;
     onLog({
       id: Date.now().toString(),
       potId: pot.id,
-      amount: parseInt(amount),
+      amount: parseNumber(amountDisplay),
       note: note.trim() || "Chi tiêu",
       date: new Date().toISOString(),
     });
@@ -187,14 +188,14 @@ function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => voi
           <div className="space-y-6">
             <div>
               <label className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-[#22C55E]/60 block mb-2">Số tiền (VND)</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="50.000" autoFocus
+              <input type="text" value={amountDisplay} onChange={(e) => setAmountDisplay(formatNumber(e.target.value))} placeholder="50,000" autoFocus
                 className="w-full px-4 py-4 bg-white/[0.03] border border-white/[0.1] rounded-xl text-3xl font-heading font-black text-white placeholder:text-white/10 focus:outline-none focus:border-[#22C55E]/40" />
             </div>
 
             <div className="flex flex-wrap gap-2">
               {[50000, 100000, 200000, 500000].map((v) => (
-                <button key={v} onClick={() => setAmount(v.toString())}
-                  className={`flex-1 px-3 py-2.5 font-mono text-[10px] font-black uppercase rounded-lg border transition-all ${amount === v.toString() ? "bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/30" : "bg-white/[0.03] text-white/30 border-white/[0.06] hover:border-white/20"
+                <button key={v} onClick={() => setAmountDisplay(formatNumber(v))}
+                  className={`flex-1 px-3 py-2.5 font-mono text-[10px] font-black uppercase rounded-lg border transition-all ${amountDisplay === formatNumber(v) ? "bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/30" : "bg-white/[0.03] text-white/30 border-white/[0.06] hover:border-white/20"
                     }`}>
                   {v >= 1000000 ? `${v / 1000000}tr` : `${v / 1000}K`}
                 </button>
@@ -207,7 +208,7 @@ function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => voi
                 className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.1] rounded-xl text-sm font-semibold text-white placeholder:text-white/10 focus:outline-none focus:border-[#22C55E]/40" />
             </div>
 
-            <button onClick={handleSubmit} disabled={!amount}
+            <button onClick={handleSubmit} disabled={!amountDisplay}
               className="group relative w-full py-4 text-black font-heading text-[14px] font-black uppercase tracking-widest rounded-xl disabled:opacity-30 hover:shadow-[0_0_30px_rgba(0,0,0,0.4)] transition-all overflow-hidden mt-4"
               style={{ backgroundColor: pot.color }}>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
@@ -224,7 +225,7 @@ function LogExpenseModal({ pot, onClose, onLog }: { pot: Pot; onClose: () => voi
 export default function BudgetPage() {
   const [pots, setPots] = useState<Pot[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [income, setIncome] = useState(12000000);
+  const [income, setIncome] = useState(0);
   const [showAddPot, setShowAddPot] = useState(false);
   const [logPot, setLogPot] = useState<Pot | null>(null);
   const [editIncome, setEditIncome] = useState(false);
@@ -234,17 +235,22 @@ export default function BudgetPage() {
     const timer = window.setTimeout(() => {
       setPots(getBudgetPots());
       setExpenses(getExpenses());
-      setIncome(getIncome());
+      const loadedIncome = getIncome();
+      setIncome(loadedIncome);
+      if (loadedIncome <= 0) {
+        setEditIncome(true);
+      }
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
   const save = useCallback((p: Pot[], e: Expense[], i: number) => {
     setBudgetPots(p);
-    setExpenses(e);
-    setIncome(i);
+    setExpensesLocal(e);
+    setIncomeLocal(i);
     if (getCachedUserId()) {
       saveBudgetPots(p).catch(() => { });
+      saveIncomeRemote(i).catch(() => { });
     }
   }, []);
 
@@ -257,7 +263,7 @@ export default function BudgetPage() {
 
   const removePot = (id: string) => {
     const newPots = pots.filter((p) => p.id !== id);
-    const newExpenses = expenses.filter((e) => e.potId !== id);
+    const newExpenses = expenses.filter((e) => getExpensePotId(e) !== id);
     setPots(newPots);
     setExpenses(newExpenses);
     save(newPots, newExpenses, income);
@@ -269,7 +275,7 @@ export default function BudgetPage() {
     save(pots, newExpenses, income);
     addXP("log_expense");
 
-    const pot = pots.find(p => p.id === expense.potId);
+    const pot = pots.find(p => p.id === getExpensePotId(expense));
     const ledgerEntry = {
       id: expense.id,
       amount: expense.amount,
@@ -282,7 +288,13 @@ export default function BudgetPage() {
     setLedgerEntries([...getLedgerEntries(), ledgerEntry]);
 
     if (getCachedUserId()) {
-      addExpense({ amount: expense.amount, category: pot?.name || "Khác", note: expense.note, date: new Date().toISOString() }).catch(() => { });
+      addExpense({
+        amount: expense.amount,
+        category: pot?.name || "Khác",
+        note: expense.note,
+        date: new Date().toISOString(),
+        pot_id: getExpensePotId(expense) || null,
+      }).catch(() => { });
     }
   };
 
@@ -295,7 +307,7 @@ export default function BudgetPage() {
   const exportCSV = () => {
     const header = "Ngày,Hũ,Số tiền,Ghi chú\n";
     const rows = expenses.map(e => {
-      const pot = pots.find(p => p.id === e.potId);
+      const pot = pots.find(p => p.id === getExpensePotId(e));
       return `${new Date(e.date).toLocaleDateString("vi-VN")},${pot?.name || "Khác"},${e.amount},"${e.note}"`;
     }).join("\n");
     const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
@@ -304,10 +316,11 @@ export default function BudgetPage() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const getSpent = (potId: string) => expenses.filter((e) => e.potId === potId).reduce((s, e) => s + e.amount, 0);
+  const getSpent = (potId: string) => expenses.filter((e) => getExpensePotId(e) === potId).reduce((s, e) => s + e.amount, 0);
   const totalAllocated = pots.reduce((s, p) => s + p.allocated, 0);
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const remaining = income - totalSpent;
+  const allocationRate = income > 0 ? Math.round((totalAllocated / income) * 100) : 0;
 
   const pieData = pots.map((p) => {
     const spent = getSpent(p.id);
@@ -364,7 +377,7 @@ export default function BudgetPage() {
             <button onClick={() => setEditIncome(true)} className="p-1 hover:text-[#22C55E] transition-colors"><Edit3 className="w-3.5 h-3.5 opacity-20 group-hover:opacity-100" /></button>
           </div>
           {editIncome ? (
-            <input type="number" autoFocus value={income} onChange={(e) => setIncome(Number(e.target.value))}
+            <input type="text" autoFocus value={formatNumber(income)} onChange={(e) => setIncome(parseNumber(e.target.value))}
               onBlur={() => updateIncome(income)} onKeyDown={(e) => e.key === "Enter" && updateIncome(income)}
               className="w-full font-heading text-[24px] md:text-[32px] font-black tracking-tighter bg-transparent text-[#22C55E] border-b border-[#22C55E]/30 outline-none" />
           ) : (
@@ -391,7 +404,7 @@ export default function BudgetPage() {
         <CyberCard glowColor="rgba(0,229,255,0.1)">
           <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/30 block mb-3">Tỷ lệ phân bổ</span>
           <div className="font-heading text-[24px] md:text-[32px] font-black tracking-tighter text-[#00E5FF]">
-            {Math.round((totalAllocated / income) * 100)}%
+            {allocationRate}%
           </div>
         </CyberCard>
       </motion.div>
@@ -433,7 +446,7 @@ export default function BudgetPage() {
                       fontSize: 11,
                       fontVariantNumeric: "slashed-zero"
                     }}
-                    formatter={(value: number, name: string) => [formatFull(value), name]}
+                    formatter={(value, name) => [formatFull(Number(value ?? 0)), name]}
                   />
                   <Pie
                     data={pots.length === 0 ? [{ name: "Trống", value: 1, color: "rgba(255,255,255,0.05)" }] : pieData}
@@ -469,7 +482,7 @@ export default function BudgetPage() {
                 <h4 className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/20 mb-4">GIAO DỊCH GẦN ĐÂY</h4>
                 <div className="space-y-3">
                   {recentExpenses.map((exp) => {
-                    const pot = pots.find((p) => p.id === exp.potId);
+                    const pot = pots.find((p) => p.id === getExpensePotId(exp));
                     return (
                       <div key={exp.id} className="group/item flex items-center justify-between border-b border-white/[0.03] pb-2 last:border-0 hover:bg-white/[0.02] transition-colors rounded-sm px-1">
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -571,3 +584,5 @@ export default function BudgetPage() {
     </motion.div>
   );
 }
+
+

@@ -248,7 +248,6 @@ function Navbar() {
           {[
             { href: "#features", label: "Tính năng" },
             { href: "#how", label: "3 Bước" },
-            { href: "#vet", label: "Vẹt Vàng 🦜" },
             { href: "#stats", label: "Số liệu" },
             { href: "#faq", label: "FAQ" },
           ].map((item) => (
@@ -303,7 +302,7 @@ function Navbar() {
         }}
         className="md:hidden overflow-hidden bg-[#0A0A0F]/95 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="px-6 py-4 space-y-1">
-          {["#features", "#how", "#vet", "#stats", "#faq"].map((href) => (
+          {["#features", "#how", "#stats", "#faq"].map((href) => (
             <a
               key={href}
               href={href}
@@ -330,7 +329,7 @@ function TrustBar() {
     { value: "3 bước", label: "triết lý tài chính" },
     { value: "100%", label: "miễn phí mãi mãi" },
     { value: "8+", label: "nguồn dữ liệu thực" },
-    { value: "🦜 Vẹt Vàng", label: "AI cố vấn 24/7" },
+    { value: "AI", label: "Cố vấn 24/7" },
   ];
 
   return (
@@ -876,7 +875,7 @@ function HowItWorks() {
       emoji: "💰",
       color: "#22C55E",
       title: "Quản lý Chi tiêu",
-      desc: "Chia hũ ngân sách, ghi chi tiêu hàng ngày cùng Vẹt Vàng AI.",
+      desc: "Chia hũ ngân sách, ghi chi tiêu hàng ngày dễ dàng.",
       tools: ["6 quỹ", "CPI cá nhân", "Biểu đồ"],
     },
     {
@@ -1017,234 +1016,6 @@ function StickyCTABar() {
 }
 
 /* ═══════════════════ VẸT VÀNG SHOWCASE ═══════════════════ */
-function VetVangShowcase() {
-  const modes = [
-    {
-      badge: "🔥 Mổ Mode",
-      color: "#EF4444",
-      bg: "from-[#EF4444]/10",
-      border: "border-[#EF4444]/20",
-      quote:
-        '"3 ngày rồi mày biến đâu? Tao ngồi đây nhìn số dư tài khoản mày mà muốn khóc thay. Không phải khóc vì thương — khóc vì buồn cười 🦜"',
-      trigger: "Khi chi vượt hũ, bỏ app ≥2 ngày, quên trả nợ",
-    },
-    {
-      badge: "💛 Khen Mode",
-      color: "#E6B84F",
-      bg: "from-[#E6B84F]/10",
-      border: "border-[#E6B84F]/20",
-      quote:
-        '"Ơ hôm nay mày ghi chi tiêu sớm thế? Tao tưởng mày chỉ siêng khi vào Shopee thôi chứ. Nể thiệt! +20 XP 🦜✨"',
-      trigger: "Khi tiết kiệm đạt target, ghi đúng giờ, streak dài",
-    },
-    {
-      badge: "🧠 Thâm Mode",
-      color: "#A855F7",
-      bg: "from-[#A855F7]/10",
-      border: "border-[#A855F7]/20",
-      quote:
-        '"Mua đi mua đi, tao đâu có cấm. Tao chỉ thầm tính: ly trà sữa này = 3 ngày lãi tiết kiệm. Nhưng kệ, hạnh phúc quan trọng hơn mà... phải không? 🦜"',
-      trigger: "Khi sắp vượt hũ, chi tiêu tăng dần",
-    },
-  ];
-
-  const scenarios = [
-    [
-      "Mở app lần đầu:",
-      '"Ồ có người mới à? Để tao đoán: lương về 3 ngày là sạch bách, đúng không? Yên tâm, tao sẽ mổ cho mày giàu 🦜"',
-    ],
-    [
-      "Streak 7 ngày:",
-      '"7 ngày liên tiếp! Lần cuối có ai chu đáo với tao vậy là... à chưa có bao giờ. Keep going! 🦜🔥"',
-    ],
-    [
-      "Cuối tháng hết tiền:",
-      '"Cuối tháng rồi, ví mày mỏng hơn tao. Mà tao là vẹt, tao mỏng là đúng rồi. Còn mày thì... 🦜"',
-    ],
-    [
-      "Trả hết 1 khoản nợ:",
-      '"Wait... trả hết nợ SPayLater rồi á?! Tao xin lỗi đã nghi ngờ mày. Mày xứng đáng tốt hơn 🦜🥹"',
-    ],
-  ];
-
-  const levels = [
-    {
-      emoji: "🐣",
-      name: "Vẹt Con",
-      xp: "0 XP",
-      desc: "Lông xơ xác, mới tập nói. Chỉ biết đếm tiền chứ chưa biết giữ.",
-      unlock: "Ghi chi tiêu + chia hũ",
-      color: "#9CA3AF",
-    },
-    {
-      emoji: "🦜",
-      name: "Vẹt Teen",
-      xp: "500 XP",
-      desc: "Mọc lông vàng, tập nói xéo. Quy đổi trà sữa ra ngày lãi tiết kiệm.",
-      unlock: "Roast card + streak",
-      color: "#FFD700",
-    },
-    {
-      emoji: "🦜✨",
-      name: "Vẹt Phố",
-      xp: "2,000 XP",
-      desc: "Lông vàng óng, đeo kính mát. Mổ đau nhưng khen ngọt.",
-      unlock: "Market insight",
-      color: "#FFB300",
-    },
-    {
-      emoji: "👑",
-      name: "Vẹt Nhà Giàu",
-      xp: "5,000 XP",
-      desc: 'Lông vàng kim, đeo chain vàng. "Tự do tài chính" trong mắt vẹt.',
-      unlock: "Full analysis",
-      color: "#F59E0B",
-      final: true,
-    },
-  ];
-
-  return (
-    <section id="vet" className="py-28 px-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,#FFD700_0%,transparent_70%)] opacity-[0.04] pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* Header */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={fadeInUp}
-          className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 text-[#FFD700] text-xs font-medium tracking-wider uppercase mb-6">
-            <Star className="w-3 h-3" />
-            VẸT VÀNG AI 🦜
-          </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-5">
-            <WordReveal text="Cố vấn tài chính" className="text-white block" />
-            <GradientText>xéo sắc nhất Việt Nam</GradientText>
-          </h2>
-          <p className="text-white/40 text-base max-w-xl mx-auto leading-relaxed">
-            Lấy cảm hứng từ{" "}
-            <strong className="text-white/60">Cleo Roast Mode</strong> +{" "}
-            <strong className="text-white/60">Duolingo Owl</strong>. Giọng choe
-            choé, hay than, guilt-tripping level max.
-          </p>
-        </motion.div>
-
-        {/* Mode cards */}
-        <div className="grid md:grid-cols-3 gap-5 mb-8">
-          {modes.map((m, i) => (
-            <motion.div
-              key={m.badge}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{
-                delay: i * 0.12,
-                duration: 0.6,
-                ease: [0.25, 0.46, 0.45, 0.94],
-              }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className={`glass-card p-6 border ${m.border} bg-gradient-to-b ${m.bg}`}>
-              <div className="flex items-center justify-between mb-4">
-                <span
-                  className="text-xs font-bold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: `${m.color}18`, color: m.color }}>
-                  {m.badge}
-                </span>
-              </div>
-              <p className="text-sm text-white/60 italic leading-relaxed mb-4">
-                &quot;{m.quote.replace(/^"|"$/g, "")}&quot;
-              </p>
-              <div className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                <span className="text-[11px] text-white/30 leading-relaxed">
-                  {m.trigger}
-                </span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Scenarios */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="glass-card p-7 mb-12 border-[#FFD700]/10">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="text-lg">🎬</span>
-            <span className="text-sm font-bold text-white">
-              Vẹt nói gì khi...
-            </span>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {scenarios.map(([label, quote]) => (
-              <div
-                key={label}
-                className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                <div className="text-xs font-bold text-[#FFD700] mb-2">
-                  {label}
-                </div>
-                <p className="text-sm text-white/45 leading-relaxed italic">
-                  {quote}
-                </p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Level system */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-white mb-2">
-            Lộ trình trưởng thành cùng Vẹt
-          </h3>
-          <p className="text-sm text-white/35">
-            Ghi chi tiêu mỗi ngày = &quot;cho vẹt ăn&quot; → tích XP → level up
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {levels.map((l, i) => (
-            <motion.div
-              key={l.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className={`glass-card p-5 text-center relative ${l.final ? "border-[#FFD700]/25 shadow-[0_0_30px_rgba(255,215,0,0.08)]" : ""}`}>
-              {l.final && (
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2.5 py-0.5 bg-[#FFD700] text-black font-bold rounded-full">
-                  CAO NHẤT
-                </div>
-              )}
-              <div className="text-4xl mb-3">{l.emoji}</div>
-              <div className="text-sm font-bold text-white mb-0.5">
-                {l.name}
-              </div>
-              <div
-                className="text-xs font-mono mb-3"
-                style={{ color: l.color }}>
-                {l.xp}
-              </div>
-              <p className="text-[11px] text-white/35 mb-3 leading-relaxed">
-                {l.desc}
-              </p>
-              <div className="text-[10px] text-white/25">{l.unlock}</div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ═══════════════════ STATS / SOCIAL PROOF ═══════════════════ */
 function Stats() {
@@ -1432,21 +1203,21 @@ function FinalCTA() {
             damping: 20,
           }}
           className="text-7xl mb-8">
-          🦜
+          🚀
         </motion.div>
 
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
           <WordReveal
-            text="Sẵn sàng bị Vẹt Vàng"
+            text="Sẵn sàng làm chủ"
             className="text-white block"
           />
-          <GradientText>&quot;mổ&quot; cho giàu?</GradientText>
+          <GradientText>tài chính cá nhân?</GradientText>
         </h2>
 
         <p className="text-lg text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">
           Bắt đầu miễn phí. Không cần thẻ tín dụng.
           <br className="hidden sm:block" />
-          Chỉ cần dũng cảm nghe Vẹt chửi.
+          Bắt đầu lộ trình tài chính mới ngay hôm nay.
         </p>
 
         <motion.div
@@ -1601,7 +1372,7 @@ export default function HomePage() {
           <Hero />
           <Features />
           <HowItWorks />
-          <VetVangShowcase />
+
           <Stats />
           <FAQ />
           <FinalCTA />

@@ -26,7 +26,6 @@ export default function LoginForm() {
       });
 
       if (signInError) {
-        // Vietnamese error messages
         if (signInError.message.includes("Invalid login credentials")) {
           setError("Email hoặc mật khẩu không đúng!");
         } else if (signInError.message.includes("Email not confirmed")) {
@@ -48,8 +47,7 @@ export default function LoginForm() {
   };
 
   const handleGuest = () => {
-    // Set a client-side cookie so middleware lets us through
-    document.cookie = "vietfi_guest=true; path=/; max-age=86400"; // 1 day
+    document.cookie = "vietfi_guest=true; path=/; max-age=86400";
     router.push("/dashboard");
     router.refresh();
   };
@@ -59,12 +57,11 @@ export default function LoginForm() {
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gradient">Chào đã quay lại!</h2>
         <p className="text-text-secondary mt-1 text-sm">
-          Đăng nhập để tiếp tục với Vẹt Vàng
+          Đăng nhập để tiếp tục quản lý tài chính
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Field */}
         <div>
           <label
             htmlFor="email"
@@ -83,7 +80,6 @@ export default function LoginForm() {
           />
         </div>
 
-        {/* Password Field */}
         <div>
           <label
             htmlFor="password"
@@ -102,14 +98,12 @@ export default function LoginForm() {
           />
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="p-3 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
             {error}
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading}
@@ -141,10 +135,8 @@ export default function LoginForm() {
         </button>
       </form>
 
-      {/* OAuth Buttons */}
       <OAuthButtons />
 
-      {/* Guest Login Button */}
       <button
         onClick={handleGuest}
         className="w-full py-2.5 bg-secondary/10 text-text-secondary font-medium rounded-lg hover:bg-secondary/20 transition-all duration-200 flex items-center justify-center gap-2 border border-border"
@@ -155,7 +147,6 @@ export default function LoginForm() {
         <span>Tiếp tục với tư cách Khách</span>
       </button>
 
-      {/* Register Link */}
       <p className="text-center text-sm text-text-secondary">
         Chưa có tài khoản?{" "}
         <Link
@@ -168,4 +159,3 @@ export default function LoginForm() {
     </div>
   );
 }
-
