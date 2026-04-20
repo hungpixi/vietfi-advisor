@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { updateSession } from "@/utils/supabase/middleware";
 
 // Danh sách các điều hướng cũ từ proxy.ts
@@ -25,41 +26,32 @@ export async function middleware(request: NextRequest) {
 
     // 2. Clear out public paths and auth paths
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/auth/login');
-    const isPublicStaticPath = pathname === "/" ||
-        pathname.startsWith('/auth/callback') ||
-        pathname.startsWith('/api/auth');
 
     // 3. Update session for all requests
-    // Important: updateSession also refreshes the session if needed
     const response = await updateSession(request);
 
-    // 4. Get updated session to make routing decisions
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const { createServerClient } = await import("@supabase/ssr");
-
-    const supabase = createServerClient(supabaseUrl!, supabaseKey!, {
-        cookies: {
-            getAll() { return request.cookies.getAll(); },
-            setAll(cookiesToSet) { }, // setAll not needed for checking
+    // 4. Get updated session to make routing decisions (static import, no dynamic import)
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() { return request.cookies.getAll(); },
+                setAll() { },
+            },
         },
-    });
+    );
 
     const { data: { user } } = await supabase.auth.getUser();
     const isGuest = request.cookies.get("vietfi_guest")?.value === "true";
 
     // 5. Auth logic
-    // If logged in (or guest) and trying to access login page -> redirect to dashboard
     if ((user || isGuest) && isAuthPage) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // If NOT logged in (and not a guest) and trying to access dashboard -> redirect to login
     if (!user && !isGuest && pathname.startsWith('/dashboard')) {
-        const url = new URL("/login", request.url);
-        // Save history to redirect after login (optional)
-        // url.searchParams.set("next", pathname); 
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return response;
