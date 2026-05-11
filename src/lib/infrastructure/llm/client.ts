@@ -31,11 +31,11 @@ function getGeminiBaseUrl() {
 }
 
 function getOpenAiApiKey() {
-    return process.env.OPENAI_API_KEY;
+    return process.env.OPENAI_API_KEY || process.env.NINEROUTER_KEY;
 }
 
 function getOpenAiBaseUrl() {
-    return process.env.OPENAI_BASE_URL;
+    return process.env.OPENAI_BASE_URL || process.env.NINEROUTER_REMOTE_URL || process.env.NINEROUTER_URL;
 }
 
 function getZenModel() {
