@@ -1,29 +1,64 @@
 name: API Route Endpoints Runner
+
 on:
   schedule:
     - cron: '0 23 * * *'
     - cron: '30 8 * * 1-5'
     - cron: '0 0 1 * *'
   workflow_dispatch:
+    inputs:
+      endpoint:
+        description: 'Endpoint to trigger manually'
+        required: false
+        default: 'morning-brief'
+        type: choice
+        options:
+          - morning-brief
+          - market-data
+          - macro-update
 
 jobs:
   run-api:
     runs-on: ubuntu-latest
+    env:
+      PROD_BASE_URL: ${{ vars.PROD_BASE_URL || 'https://vietfi-advisor.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
-      - name: Trigger Morning Brief
-        if: github.event.schedule == '0 23 * * *'
+      - name: Resolve endpoint
+        id: endpoint
+        shell: bash
         run: |
-          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/morning-brief \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "${{ inputs.endpoint }}" in
+              market-data) echo "path=/api/cron/market-data" >> "$GITHUB_OUTPUT" ;;
+              macro-update) echo "path=/api/cron/macro-update" >> "$GITHUB_OUTPUT" ;;
+              *) echo "path=/api/cron/morning-brief" >> "$GITHUB_OUTPUT" ;;
+            esac
+          else
+            case "${{ github.event.schedule }}" in
+              '0 23 * * *') echo "path=/api/cron/morning-brief" >> "$GITHUB_OUTPUT" ;;
+              '30 8 * * 1-5') echo "path=/api/cron/market-data" >> "$GITHUB_OUTPUT" ;;
+              '0 0 1 * *') echo "path=/api/cron/macro-update" >> "$GITHUB_OUTPUT" ;;
+              *) echo "Unknown schedule: ${{ github.event.schedule }}"; exit 1 ;;
+            esac
+          fi
 
-      - name: Trigger Market Data
-        if: github.event.schedule == '30 8 * * 1-5'
+      - name: Trigger API endpoint
+        shell: bash
         run: |
-          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/market-data \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
-
-      - name: Trigger Macro Update
-        if: github.event.schedule == '0 0 1 * *'
-        run: |
-          curl -X POST https://vietfi.phamphunguyenhung.com/api/cron/macro-update \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "CRON_SECRET is not configured"
+            exit 1
+          fi
+          url="${PROD_BASE_URL%/}${{ steps.endpoint.outputs.path }}"
+          header_name="Authorization"
+          header_value="Bearer ${CRON_SECRET}"
+          echo "Triggering ${url}"
+          curl --fail --show-error --silent --location \
+            --connect-timeout 20 \
+            --max-time 120 \
+            --retry 2 \
+            --retry-delay 5 \
+            -X POST "$url" \
+            -H "${header_name}: ${header_value}"
